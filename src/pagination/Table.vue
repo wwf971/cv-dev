@@ -1,0 +1,160 @@
+<template>
+  <table ref="tableRef" class="table-component">
+    <tbody>
+      <component
+        v-for="(row, index) in displayRows"
+        :key="index"
+        :is="getComponent(row.type)"
+        v-bind="row.data"
+        :ref="(el: any) => { if (el) rowRefs[index] = el }"
+      />
+    </tbody>
+  </table>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, inject, onBeforeUpdate } from 'vue'
+import Tr from './TableTr.vue'
+
+const props = withDefaults(defineProps<{
+  rows: any[]
+}>(), {
+  rows: () => []
+})
+
+const tableRef = ref<HTMLElement | null>(null)
+const rowRefs = ref<any[]>([])
+const logger = inject('paginationLogger', null) as any
+
+onBeforeUpdate(() => {
+  rowRefs.value = []
+})
+
+const displayRows = computed(() => props.rows)
+
+const getComponent = (type: string) => {
+  switch (type) {
+    case 'Tr':
+      return Tr
+    default:
+      return null
+  }
+}
+
+// Split function - tables split by splitting rows
+const trySplit = (pageContext: any, docContext: any) => {
+  if (!tableRef.value || !docContext || !pageContext) {
+    if (logger) {
+      const reason = !tableRef.value ? 'tableRef is null' : !docContext ? 'docContext param is null' : 'pageContext param is null'
+      logger.addLog(`Error: Cannot split - ${reason}`, 'Table.trySplit', 2)
+    }
+    return {
+      code: -1,
+      data: null
+    }
+  }
+
+  const tableBottom = docContext.measureVerticalPosEnd(tableRef.value)
+  const pageBottomY = pageContext.pageBottomY
+  
+  // If entire table fits, no split needed
+  if (tableBottom <= pageBottomY) {
+    return {
+      code: 0,
+      data: null
+    }
+  }
+
+  if (logger) {
+    logger.addLog(`Table needs split. Rows: ${props.rows.length}`, 'Table.trySplit')
+  }
+
+  // Try to split rows
+  let splitIndex = 0
+  let rowNeedsSplit = false
+  let rowSplitData: any = null
+
+  for (let i = 0; i < rowRefs.value.length; i++) {
+    const rowRef = rowRefs.value[i]
+    if (rowRef && typeof rowRef.trySplit === 'function') {
+      const result = rowRef.trySplit(pageContext, docContext)
+      
+      if (result.code === 1) {
+        // This row needs to split
+        rowNeedsSplit = true
+        rowSplitData = {
+          splitAtIndex: i,
+          parts: result.data
+        }
+        splitIndex = i
+        
+        if (logger) {
+          logger.addLog(`Row ${i} needs split`, 'Table.trySplit')
+        }
+        break
+      } else if (result.code === 0) {
+        // This row fits
+        splitIndex = i + 1
+      } else {
+        // Error
+        if (logger) {
+          logger.addLog(`Row ${i} returned error code ${result.code}`, 'Table.trySplit', 1)
+        }
+        splitIndex = i + 1
+      }
+    } else {
+      splitIndex = i + 1
+    }
+  }
+
+  // Create split parts
+  let firstPartRows: any[] = []
+  let secondPartRows: any[] = []
+
+  if (rowNeedsSplit && rowSplitData) {
+    const splitAtIndex = rowSplitData.splitAtIndex
+    const parts = rowSplitData.parts
+    
+    firstPartRows = [...props.rows.slice(0, splitAtIndex), parts[0]]
+    secondPartRows = [parts[1], ...props.rows.slice(splitAtIndex + 1)]
+  } else {
+    firstPartRows = props.rows.slice(0, splitIndex)
+    secondPartRows = props.rows.slice(splitIndex)
+  }
+
+  if (logger) {
+    logger.addLog(`Split Table: first part has ${firstPartRows.length} rows, second part has ${secondPartRows.length} rows`, 'Table.trySplit')
+  }
+
+  return {
+    code: 1,
+    data: [
+      {
+        type: 'Table',
+        data: {
+          rows: firstPartRows
+        }
+      },
+      {
+        type: 'Table',
+        data: {
+          rows: secondPartRows
+        }
+      }
+    ]
+  }
+}
+
+defineExpose({
+  trySplit
+})
+</script>
+
+<style scoped>
+.table-component {
+  border-collapse: collapse;
+  width: 100%;
+  border: 1px solid #000;
+}
+</style>
+

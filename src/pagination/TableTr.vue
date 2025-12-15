@@ -1,0 +1,172 @@
+<template>
+  <tr ref="trRef" class="tr-component">
+    <Td
+      v-for="(td, index) in displayTds"
+      :key="index"
+      :items="td.items"
+      :widthRatio="td.widthRatio"
+      :isEmpty="td.isEmpty"
+      :alignBottom="td.alignBottom"
+      :ref="(el: any) => { if (el) tdRefs[index] = el }"
+    />
+  </tr>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, inject, onBeforeUpdate } from 'vue'
+import Td from './TableTd.vue'
+
+const props = withDefaults(defineProps<{
+  items: Array<{
+    items: any[]
+    widthRatio: number
+    isEmpty?: boolean
+    alignBottom?: boolean
+  }>
+}>(), {})
+
+const trRef = ref<HTMLElement | null>(null)
+const tdRefs = ref<any[]>([])
+const logger = inject('paginationLogger', null) as any
+
+onBeforeUpdate(() => {
+  tdRefs.value = []
+})
+
+const displayTds = computed(() => props.items)
+
+// Split function
+const trySplit = (pageContext: any, docContext: any) => {
+  if (!trRef.value || !docContext || !pageContext) {
+    if (logger) {
+      const reason = !trRef.value ? 'trRef is null' : !docContext ? 'docContext param is null' : 'pageContext param is null'
+      logger.addLog(`Error: Cannot split - ${reason}`, 'Tr.trySplit', 2)
+    }
+    return {
+      code: -1,
+      data: null
+    }
+  }
+
+  const trBottom = docContext.measureVerticalPosEnd(trRef.value)
+  const pageBottomY = pageContext.pageBottomY
+  
+  // If entire tr fits, no split needed
+  if (trBottom <= pageBottomY) {
+    return {
+      code: 0,
+      data: null
+    }
+  }
+
+  if (logger) {
+    logger.addLog(`Tr needs split. Tds: ${props.items.length}`, 'Tr.trySplit')
+  }
+
+  // Try to split each Td and find which one needs splitting
+  const tdSplitResults: any[] = []
+  let needsSplit = false
+
+  for (let i = 0; i < tdRefs.value.length; i++) {
+    const tdRef = tdRefs.value[i]
+    if (tdRef && typeof tdRef.trySplit === 'function') {
+      const result = tdRef.trySplit(pageContext, docContext)
+      tdSplitResults.push(result)
+      
+      if (result.code === 1) {
+        needsSplit = true
+        if (logger) {
+          logger.addLog(`Td ${i} needs split (code: 1)`, 'Tr.trySplit')
+        }
+      } else if (logger) {
+        logger.addLog(`Td ${i} fits (code: ${result.code})`, 'Tr.trySplit')
+      }
+    } else {
+      tdSplitResults.push({ code: 0, data: null })
+    }
+  }
+
+  if (!needsSplit) {
+    // None of the Tds need splitting, but we're here because Tr overflows
+    // This shouldn't happen normally, but return no split needed
+    if (logger) {
+      logger.addLog(`Tr overflows but no Td needs split - this is unexpected`, 'Tr.trySplit', 1)
+    }
+    return {
+      code: 0,
+      data: null
+    }
+  }
+
+  // Create first and second Tr based on Td split results
+  const firstTrTds: any[] = []
+  const secondTrTds: any[] = []
+
+  for (let i = 0; i < tdSplitResults.length; i++) {
+    const result = tdSplitResults[i]
+    
+    if (result.code === 1) {
+      // This Td was split
+      if (logger) {
+        logger.addLog(`Creating split Td ${i} with alignBottom=true`, 'Tr.trySplit')
+      }
+      firstTrTds.push({
+        items: result.data[0].data.items,
+        widthRatio: props.items[i].widthRatio,
+        alignBottom: true // Align to bottom when this Td is split
+      })
+      secondTrTds.push({
+        items: result.data[1].data.items,
+        widthRatio: props.items[i].widthRatio
+      })
+    } else {
+      // This Td was not split
+      // Put all content in first part, empty in second part
+      if (logger) {
+        logger.addLog(`Creating non-split Td ${i} without alignBottom (stays top)`, 'Tr.trySplit')
+      }
+      firstTrTds.push({
+        items: props.items[i].items,
+        widthRatio: props.items[i].widthRatio,
+        alignBottom: false // Explicitly set to false to ensure top alignment
+      })
+      secondTrTds.push({
+        items: [],
+        widthRatio: props.items[i].widthRatio,
+        isEmpty: true
+      })
+    }
+  }
+
+  if (logger) {
+    logger.addLog(`Split Tr: first part has ${firstTrTds.length} tds, second part has ${secondTrTds.length} tds`, 'Tr.trySplit')
+  }
+
+  return {
+    code: 1,
+    data: [
+      {
+        type: 'Tr',
+        data: {
+          items: firstTrTds
+        }
+      },
+      {
+        type: 'Tr',
+        data: {
+          items: secondTrTds
+        }
+      }
+    ]
+  }
+}
+
+defineExpose({
+  trySplit
+})
+</script>
+
+<style scoped>
+/* No specific styles needed for tr */
+</style>
+

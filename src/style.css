@@ -1,0 +1,15 @@
+@media print {
+  .page-break-after-always {
+    page-break-after: always;
+  }
+  
+  /* Hide all non-content elements in print */
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Ensure page containers are visible */
+  .print\:block {
+    display: block !important;
+  }
+}
