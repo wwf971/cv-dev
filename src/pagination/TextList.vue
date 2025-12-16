@@ -1,7 +1,11 @@
 <template>
   <div ref="textListRef" class="text-list-component">
     <div v-for="(item, index) in displayItems" :key="index" class="list-item">
-      <span v-if="shouldShowBullet(index)" class="bullet" :class="{ invisible: isInvisibleBullet(index) }">
+      <span 
+        v-if="shouldShowBullet(index)" 
+        class="bullet" 
+        :class="{ invisible: isInvisibleBullet(index) }"
+      >
         {{ getBullet(index) }}
       </span>
       <Text 
@@ -81,6 +85,17 @@ const trySplit = (pageContext: any, docContext: any) => {
 
   const listBottom = docContext.measureVerticalPosEnd(textListRef.value)
   const pageBottomY = pageContext.pageBottomY
+  
+  // Safety check: invalid pageBottomY
+  if (pageBottomY <= 0) {
+    if (logger) {
+      logger.addLog(`Error: Invalid pageBottomY=${pageBottomY}. Component not visible?`, 'TextList.trySplit', 2)
+    }
+    return {
+      code: -1,
+      data: null
+    }
+  }
   
   // If entire list fits, no split needed
   if (listBottom <= pageBottomY) {
@@ -191,7 +206,8 @@ const trySplit = (pageContext: any, docContext: any) => {
     secondPartStartBullet = props.startBulletNumber + splitAtIndex
     
     // Track if first item in each part is a split
-    isFirstChildSplit = (splitAtIndex === 0) // First item of first part is split
+    // Inherit existing isFirstChildSplit, or set it if we're splitting at index 0
+    isFirstChildSplit = props.isFirstChildSplit || (splitAtIndex === 0)
     isSecondChildSplit = true // First item of second part is always split (it's the second half)
     
     if (logger) {
@@ -211,7 +227,7 @@ const trySplit = (pageContext: any, docContext: any) => {
       items: firstPartItems,
       startBulletNumber: props.startBulletNumber,
       isSplit: true,
-      isFirstSplit: true,
+      isFirstSplit: props.isFirstSplit ?? true, // Inherit from parent, default to true if not set
       isFirstChildSplit: isFirstChildSplit
     }
   }
@@ -225,6 +241,32 @@ const trySplit = (pageContext: any, docContext: any) => {
       isSplit: true,
       isFirstSplit: false,
       isFirstChildSplit: isSecondChildSplit
+    }
+  }
+
+  // Safety check: ensure we're making progress
+  if (secondPartItems.length === 0) {
+    if (logger) {
+      logger.addLog(`Error: Split resulted in empty second part. Cannot split further.`, 'TextList.trySplit', 2)
+    }
+    return {
+      code: 0,
+      data: null
+    }
+  }
+  
+  if (firstPartItems.length === 0) {
+    if (logger) {
+      logger.addLog(`Error: Split resulted in empty first part. Forcing minimal split.`, 'TextList.trySplit', 2)
+    }
+    // Put one item in first part to make progress
+    firstPartItems = [secondPartItems[0]]
+    secondPartItems = secondPartItems.slice(1)
+    if (secondPartItems.length === 0) {
+      return {
+        code: 0,
+        data: null
+      }
     }
   }
 

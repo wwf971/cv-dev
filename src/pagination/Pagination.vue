@@ -327,7 +327,6 @@ const runPagination = async () => {
   await loadPageDataExtra()
   
   addLog(`Starting pagination with ${docData.value.length} components`, 'runPagination')
-  console.log('Running pagination with docData:', docData.value)
   
   // Wait for docContext to be available (Doc.vue needs to mount first)
   await nextTick()
@@ -352,8 +351,16 @@ const runPagination = async () => {
   const docDataCopy: ComponentData[] = [...docData.value]
   
   let compIndexCurrent = 0
+  let pageCreationCount = 0
+  const MAX_PAGES = 100 // Safety limit
   
   while (docDataCopy.length > 0) {
+    pageCreationCount++
+    if (pageCreationCount > MAX_PAGES) {
+      addLog(`ERROR: Safety break triggered after ${MAX_PAGES} pages`, 'runPagination', LogType.Error)
+      break
+    }
+    
     const { pageIndexCurrent, pageDataCurrent } = appendEmptyPage(pageData)
     addLog(`Created page ${pageIndexCurrent + 1}`, 'runPagination')
     
@@ -436,7 +443,6 @@ const runPagination = async () => {
   
   pages.value = pageData
   addLog(`Pagination complete: ${pages.value.length} pages created`, 'runPagination')
-  console.log('Pagination complete, pages:', pages.value.length)
   
   // Measure actual page positions from DOM
   await measurePagePos()

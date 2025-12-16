@@ -77,6 +77,17 @@ const trySplit = (pageCtx: any, docCtx: any) => {
   const textBottom = docCtx.measureVerticalPosEnd(textRef.value)
   const pageBottomY = pageCtx.pageBottomY
   
+  // Safety check: invalid pageBottomY
+  if (pageBottomY <= 0) {
+    if (logger) {
+      logger.addLog(`Error: Invalid pageBottomY=${pageBottomY}. Component not visible?`, 'Text.trySplit', 2)
+    }
+    return {
+      code: -1,
+      data: null
+    }
+  }
+  
   // If fits in current page, no split needed
   if (textBottom <= pageBottomY) {
     return {

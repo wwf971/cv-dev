@@ -64,15 +64,37 @@
       </TabsOnTop>
     </div>
 
-    <!-- Content Panel (Right) -->
+    <!-- Content Panel (Right) with Tabs -->
     <div class="content-panel">
-      <PaginationWrapper 
-        ref="paginationRef"
-        docId="test-text-cross-page"
-        :pageHeight="1122.24"
-        :pagePadding="{ top: 40, bottom: 40, left: 40, right: 40 }"
-        :docDataInit="docData"
-      />
+      <TabsOnTop defaultTab="Doc(Original)" ref="contentTabsRef">
+        <TabOnTop label="Doc(Original)">
+          <div class="doc-content-wrapper">
+            <div style="padding: 20px; max-width: 800px;">
+              <h3>Original Content (Non-Paginated)</h3>
+              <Doc docId="test-text-cross-page-original">
+                <component
+                  v-for="(comp, idx) in docData"
+                  :key="idx"
+                  :is="getComponent(comp.type)"
+                  v-bind="comp.data"
+                />
+              </Doc>
+            </div>
+          </div>
+        </TabOnTop>
+        
+        <TabOnTop label="Paginated">
+          <div class="paginated-content-wrapper">
+            <PaginationWrapper 
+              ref="paginationRef"
+              docId="test-text-cross-page"
+              :pageHeight="1122.24"
+              :pagePadding="{ top: 40, bottom: 40, left: 40, right: 40 }"
+              :docDataInit="docData"
+            />
+          </div>
+        </TabOnTop>
+      </TabsOnTop>
     </div>
   </div>
 </template>
@@ -84,10 +106,21 @@ import TabsOnTop from '@wwf971/vue-comp-misc/src/layout/tabs/TabsOnTop.vue'
 import { TabOnTop } from '@wwf971/vue-comp-misc/src/layout/tabs/TabsOnTopSlots'
 import PageInfo from '@/pagination/PageInfo.vue'
 import LogView from '@/pagination/LogView.vue'
+import Doc from '@/pagination/Doc.vue'
+import Text from '@/pagination/Text.vue'
+
+// Component mapping
+const getComponent = (type) => {
+  const componentMap = {
+    'Text': Text
+  }
+  return componentMap[type] || 'div'
+}
 
 const paginationRef = ref(null)
 const logs = ref([])
 const selectedPageIndex = ref(0)
+const contentTabsRef = ref(null)
 
 // Reactive page count
 const pageCount = computed(() => {
@@ -122,6 +155,11 @@ const docData = ref([
 
 const runPagination = () => {
   if (paginationRef.value) {
+    // Switch to Paginated tab using the exposed method
+    if (contentTabsRef.value) {
+      contentTabsRef.value.switchTab('Paginated')
+    }
+    
     paginationRef.value.setDocData(docData.value)
     paginationRef.value.runPagination()
     // Update logs after pagination - force reactivity
@@ -210,6 +248,12 @@ watch(logs, (newLogs) => {
   color: white;
   border-color: #0066cc;
   font-weight: bold;
+}
+
+.doc-content-wrapper,
+.paginated-content-wrapper {
+  height: 100%;
+  overflow: auto;
 }
 </style>
 

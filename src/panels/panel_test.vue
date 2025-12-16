@@ -57,9 +57,25 @@
       </TabsOnTop>
     </div>
 
-    <!-- Content Panel (Right) -->
+    <!-- Content Panel (Right) with Tabs -->
     <div class="content-panel">
-      <slot name="content"></slot>
+      <TabsOnTop defaultTab="Doc(Original)" ref="contentTabsRef">
+        <TabOnTop label="Doc(Original)">
+          <div class="doc-content-wrapper">
+            <slot name="original-content">
+              <div style="padding: 20px; color: #999;">
+                No original content provided
+              </div>
+            </slot>
+          </div>
+        </TabOnTop>
+        
+        <TabOnTop label="Paginated">
+          <div class="paginated-content-wrapper">
+            <slot name="content"></slot>
+          </div>
+        </TabOnTop>
+      </TabsOnTop>
     </div>
   </div>
 </template>
@@ -99,6 +115,7 @@ const emit = defineEmits(['runPagination'])
 
 const logs = ref([])
 const selectedPageIndex = ref(0)
+const contentTabsRef = ref(null)
 
 // Reactive page count
 const pageCount = computed(() => {
@@ -111,8 +128,37 @@ const currentPageInfo = computed(() => {
   return props.paginationRef.getPageInfo(selectedPageIndex.value)
 })
 
-const handleRunPagination = () => {
+const handleRunPagination = async () => {
+  // Switch to Paginated tab FIRST
+  if (contentTabsRef.value) {
+    contentTabsRef.value.switchTab('Paginated')
+  }
+  
+  // Wait for tab content to be actually visible (check pagination component is visible)
+  let attempts = 0
+  const maxAttempts = 10000 // 100 * 20ms = 2 seconds max wait
+  while (attempts < maxAttempts) {
+    await new Promise(resolve => setTimeout(resolve, 50))
+    
+    // Check if pagination component is visible by checking if it has non-zero dimensions
+    if (props.paginationRef) {
+      const paginationEl = props.paginationRef.$el
+      if (paginationEl) {
+        const rect = paginationEl.getBoundingClientRect()
+        if (rect.width > 0 && rect.height > 0) {
+          break
+        }
+      }
+    }
+    attempts++
+  }
+  
+  // Extra safety: always wait a bit more to ensure DOM is fully settled
+  await new Promise(resolve => setTimeout(resolve, 50))
+  
+  // Then emit to trigger actual pagination
   emit('runPagination')
+  
   // Update logs after pagination
   setTimeout(() => {
     if (props.paginationRef) {
@@ -140,10 +186,6 @@ const handleChangePageHeight = async (pageIndex, newHeight) => {
   }
 }
 
-// Debug: watch logs
-watch(logs, (newLogs) => {
-  console.log('Logs updated:', newLogs.length, 'entries')
-}, { deep: true })
 </script>
 
 <style scoped>
@@ -187,6 +229,12 @@ watch(logs, (newLogs) => {
   color: white;
   border-color: #0066cc;
   font-weight: bold;
+}
+
+.doc-content-wrapper,
+.paginated-content-wrapper {
+  height: 100%;
+  overflow: auto;
 }
 </style>
 

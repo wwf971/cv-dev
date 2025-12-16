@@ -7,30 +7,57 @@
     :componentCount="testData.length"
     @runPagination="handleRunPagination"
   >
+    <template #original-content>
+      <div style="padding: 20px; max-width: 800px;">
+        <h3>Original Content (Non-Paginated)</h3>
+        <Doc docId="test-table-tr-td-original">
+          <component
+            v-for="(comp, idx) in testData"
+            :key="idx"
+            :is="getComponent(comp.type)"
+            v-bind="comp.data"
+          />
+        </Doc>
+      </div>
+    </template>
+    
     <template #content>
       <Pagination
         ref="paginationRef"
         docId="test-table-tr-td"
         :pageHeight="pageHeight"
         :pagePadding="{ top: 40, bottom: 40, left: 40, right: 40 }"
+        :docDataInit="testData"
       />
     </template>
   </PanelTest>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import Pagination from '@/pagination/Pagination.vue'
 import PanelTest from './panel_test.vue'
+import Doc from '@/pagination/Doc.vue'
+import Text from '@/pagination/Text.vue'
+import TextList from '@/pagination/TextList.vue'
+import Table from '@/pagination/Table.vue'
+import TableTr from '@/pagination/TableTr.vue'
+import TableTd from '@/pagination/TableTd.vue'
+
+// Component mapping
+const getComponent = (type) => {
+  const componentMap = {
+    'Text': Text,
+    'TextList': TextList,
+    'Table': Table,
+    'Tr': TableTr,
+    'Td': TableTd
+  }
+  return componentMap[type] || 'div'
+}
 
 const paginationRef = ref(null)
 const pageHeight = ref(300)
-
-const handleRunPagination = () => {
-  if (paginationRef.value) {
-    paginationRef.value.runPagination()
-  }
-}
 
 const testData = [
   {
@@ -106,10 +133,10 @@ const testData = [
   }
 ]
 
-onMounted(() => {
+const handleRunPagination = () => {
   if (paginationRef.value) {
-    paginationRef.value.setDocData(testData)
+    paginationRef.value.runPagination()
   }
-})
+}
 </script>
 

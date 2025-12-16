@@ -122,6 +122,17 @@ const trySplit = (pageContext: any, docContext: any) => {
     secondPartRows = props.rows.slice(splitIndex)
   }
 
+  // If second part is empty, no split is actually needed
+  if (secondPartRows.length === 0) {
+    if (logger) {
+      logger.addLog(`All rows fit in Table, no split needed`, 'Table.trySplit')
+    }
+    return {
+      code: 0,
+      data: null
+    }
+  }
+
   if (logger) {
     logger.addLog(`Split Table: first part has ${firstPartRows.length} rows, second part has ${secondPartRows.length} rows`, 'Table.trySplit')
   }
