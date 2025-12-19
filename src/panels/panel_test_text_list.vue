@@ -58,8 +58,8 @@
 import { ref } from 'vue'
 import PaginationWrapper from '../pagination/Pagination.vue'
 import PanelTest from './panel_test.vue'
-import Doc from '@/pagination/Doc.vue'
-import TextList from '@/pagination/TextList.vue'
+import Doc from '@/pagination/component_core/Doc.vue'
+import TextList from '@/pagination/component/TextList.vue'
 
 // Component mapping
 const getComponent = (type) => {

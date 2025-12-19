@@ -57,7 +57,7 @@
 import { ref, computed, onMounted } from 'vue'
 import Pagination2 from '@/pagination/Pagination_2.vue'
 import TrCrossPage from '../pagination/TrCrossPage.vue'
-import TdCrossPage from '@/pagination/TdCrossPage.vue'
+import TdCrossPage from '@/pagination/component_old/TdCrossPage.vue'
 import { usePaginationStore } from './paginationStore.js'
 
 const pagination2Ref = ref(null)

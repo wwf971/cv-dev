@@ -82,8 +82,8 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import TrCrossPage from '@/pagination/TrCrossPage.vue'
-import TdCrossPage from '@/pagination/TdCrossPage.vue'
+import TrCrossPage from '@/pagination/component_old/TrCrossPage.vue'
+import TdCrossPage from '@/pagination/component_old/TdCrossPage.vue'
 import ListComponent from '@/components/list.vue'
 import { useInfoStore } from '@/content/info.js'
 

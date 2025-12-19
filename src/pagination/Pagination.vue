@@ -34,13 +34,13 @@
 
 <script setup lang="ts">
 import { ref, computed, h, provide, nextTick, inject, getCurrentInstance } from 'vue'
-import Doc from './Doc.vue'
-import Page from './Page.vue'
-import Text from './Text.vue'
-import TextList from './TextList.vue'
-import Tr from './TableTr.vue'
-import Td from './TableTd.vue'
-import Table from './Table.vue'
+import Doc from './component_core/Doc.vue'
+import Page from './component_core/Page.vue'
+import Text from './component/Text.vue'
+import TextList from './component/TextList.vue'
+import Tr from './component/TableTr.vue'
+import Td from './component/TableTd.vue'
+import Table from './component/Table.vue'
 import type { PagePadding, PageContext } from './pagination'
 
 const props = withDefaults(defineProps<{

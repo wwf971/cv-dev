@@ -37,12 +37,12 @@
 import { ref } from 'vue'
 import Pagination from '@/pagination/Pagination.vue'
 import PanelTest from './panel_test.vue'
-import Doc from '@/pagination/Doc.vue'
-import Text from '@/pagination/Text.vue'
-import TextList from '@/pagination/TextList.vue'
-import Table from '@/pagination/Table.vue'
-import TableTr from '@/pagination/TableTr.vue'
-import TableTd from '@/pagination/TableTd.vue'
+import Doc from '@/pagination/component_core/Doc.vue'
+import Text from '@/pagination/component/Text.vue'
+import TextList from '@/pagination/component/TextList.vue'
+import Table from '@/pagination/component/Table.vue'
+import TableTr from '@/pagination/component/TableTr.vue'
+import TableTd from '@/pagination/component/TableTd.vue'
 
 // Component mapping
 const getComponent = (type) => {

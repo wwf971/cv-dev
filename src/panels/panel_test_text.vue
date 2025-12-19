@@ -106,8 +106,8 @@ import TabsOnTop from '@wwf971/vue-comp-misc/src/layout/tabs/TabsOnTop.vue'
 import { TabOnTop } from '@wwf971/vue-comp-misc/src/layout/tabs/TabsOnTopSlots'
 import PageInfo from '@/pagination/PageInfo.vue'
 import LogView from '@/pagination/LogView.vue'
-import Doc from '@/pagination/Doc.vue'
-import Text from '@/pagination/Text.vue'
+import Doc from '@/pagination/component_core/Doc.vue'
+import Text from '@/pagination/component/Text.vue'
 
 // Component mapping
 const getComponent = (type) => {

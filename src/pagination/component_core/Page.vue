@@ -36,7 +36,7 @@
 import { computed, provide, ref, onMounted, inject } from 'vue'
 import PageLine from './PageLine.vue'
 import PagePaddingTop from './PagePaddingTop.vue'
-import type { PageContext, PagePadding } from './pagination'
+import type { PageContext, PagePadding } from '../pagination'
 
 const props = withDefaults(defineProps<{
   pageIndex: number

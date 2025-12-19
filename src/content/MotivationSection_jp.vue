@@ -25,8 +25,8 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import TrCrossPage from '@/pagination/TrCrossPage.vue'
-import TdCrossPage from '@/pagination/TdCrossPage.vue'
+import TrCrossPage from '@/pagination/component_old/TrCrossPage.vue'
+import TdCrossPage from '@/pagination/component_old/TdCrossPage.vue'
 
 // Import private data from config.js (which loads from config.0.js if available)
 import { interest, url_motivation_text } from '../config.js'
