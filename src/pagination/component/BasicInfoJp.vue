@@ -1,5 +1,5 @@
 <template>
-<div class="section-basic-info-jp font-cv">
+<div ref="basicInfoRef" class="section-basic-info-jp font-cv">
     <!-- Header section with title and current date -->
     <div class="header-top" style="display:flex; flex-direction: column;">
         <div class="cv-title">履 歴 書</div>
@@ -7,24 +7,22 @@
 
             <div class="form-section" style="position: relative; flex: 1; margin-right: 10px;">
                 <div class="current-date">
-                    <span class="date-label">2025年07月20日現在</span>
+                    <span class="date-label">{{ displayData.currentDate }}</span>
                 </div>
                 <!-- Name section -->
                 <table class="form-table">
                   <tbody>
                     <tr style="height: 15px !important;">
                         <td class="form-cell key-cell">ふりがな</td>
-                        <td class="form-cell value-cell name-furigana align-center no-right-border">やまだ</td>
-                        <td class="form-cell value-cell name-furigana align-center no-hori-border">たろう</td>
+                        <td class="form-cell value-cell name-furigana align-center no-right-border">{{ displayData.nameFuriganaLast }}</td>
+                        <td class="form-cell value-cell name-furigana align-center no-hori-border">{{ displayData.nameFuriganaFirst }}</td>
                         <td class="form-cell no-left-border"></td>
                     </tr>
                     <tr>
-                        <!-- <td class="form-cell key-cell" tracking-extra-wide>氏名</td> -->
                         <td class="form-cell key-cell" style="word-spacing: 1.2em;">氏 名</td>
-                        <td class="form-cell value-cell name-kanji align-center no-right-border">{{ info("name/last/en/upper") }}</td>
-                        <td class="form-cell value-cell name-kanji align-center no-hori-border">{{ info("name/first/en/upper") }}</td>
+                        <td class="form-cell value-cell name-kanji align-center no-right-border">{{ displayData.nameKanjiLast }}</td>
+                        <td class="form-cell value-cell name-kanji align-center no-hori-border">{{ displayData.nameKanjiFirst }}</td>
                         <td class="form-cell no-left-border" style="width: 300px !important;"></td>
-                            <!-- 必须关闭table-layout: fixed; 否则width: xxx px;无效 -->
                     </tr>
                   </tbody>
                 </table>
@@ -34,15 +32,17 @@
                         <td class="form-cell key-cell">生年月日</td>
                         <td colspan="2" class="form-cell value-cell align-left">
                             <div style="display: flex; flex-direction: row; align-items: flex-end; padding-left: 4px;">
-                                <span class="main-date"><div class="year-jp">平成7</div>1995年</span>
-                                <span class="main-date">01月01日</span>
-                                <span class="main-date" style="margin-left: auto;">（満30歳）</span>
+                                <span class="main-date"><div class="year-jp">{{ displayData.birthYearEra }}</div>{{ displayData.birthYear }}年</span>
+                                <span class="main-date">{{ displayData.birthMonthDay }}</span>
+                                <span class="main-date" style="margin-left: auto;">（満{{ displayData.age }}歳）</span>
                             </div>
                         </td>
                         <td class="form-cell no-left-border align-center">
                             <div style="display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
                                 <div style="justify-self: flex-start;">※</div>
-                                <div><span class="gender-option selected">男</span>·<span class="gender-option">女</span></div>
+                                <div>
+                                  <span class="gender-option" :class="{ selected: displayData.gender === 'male' }">男</span>·<span class="gender-option" :class="{ selected: displayData.gender === 'female' }">女</span>
+                                </div>
                                 <div></div>
                             </div>
                         </td>
@@ -52,23 +52,23 @@
                         <td class="form-cell key-cell">住所</td>
                         <td colspan="3" class="form-cell value-cell align-left">
                             <div style="padding-left: 4px;">
-                                <div class="address-text">〒100-0001</div>
-                                <div>東京都千代田区千代田1-1-1サンプルビル101</div>
+                                <div class="address-text">{{ displayData.postalCode }}</div>
+                                <div>{{ displayData.address }}</div>
                             </div>
                         </td>
                     </tr>
                     <tr>
                         <td class="form-cell key-cell">メール<br>アドレス</td>
-                        <td class="form-cell value-cell">{{info("email/example")}}</td>
+                        <td class="form-cell value-cell">{{ displayData.email }}</td>
                         <td class="form-cell key-cell">電話番号</td>
-                        <td class="form-cell value-cell">090-1234-5678</td>
+                        <td class="form-cell value-cell">{{ displayData.phone }}</td>
                     </tr>
                   </tbody>
                 </table>
             </div>
 
             <div class="photo-section">
-                <div v-if="!photoData" class="photo-placeholder">
+                <div v-if="!displayData.photoData" class="photo-placeholder">
                     <div class="photo-text">写真をはる位置</div>
                     <div class="photo-instructions">
                         <div>写真をはる必要がある場合</div>
@@ -77,13 +77,11 @@
                         <span>3.裏面のりづけ</span>
                     </div>
                 </div>
-                <div v-if="photoData" class="photo-base64">
+                <div v-if="displayData.photoData" class="photo-base64">
                     <img 
-                        :src="photoData" 
+                        :src="displayData.photoData" 
                         alt="Profile Photo"
                         class="photo-image"
-                        @load="onImageLoad"
-                        @error="onImageError"
                     />
                 </div>
             </div>
@@ -92,86 +90,122 @@
 </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
+<script setup lang="ts">
+import { ref, computed, inject } from 'vue'
 
-// Define component name
-defineOptions({
-name: 'BasicInfoJP'
+const props = defineProps<{
+  data?: {
+    currentDate?: string
+    nameFuriganaLast?: string
+    nameFuriganaFirst?: string
+    nameKanjiLast?: string
+    nameKanjiFirst?: string
+    birthYearEra?: string
+    birthYear?: string
+    birthMonthDay?: string
+    age?: number
+    gender?: 'male' | 'female'
+    postalCode?: string
+    address?: string
+    email?: string
+    phone?: string
+    photoData?: string | null
+  } | null
+}>()
+
+const basicInfoRef = ref<HTMLElement | null>(null)
+const logger = inject('paginationLogger', null) as any
+
+// Example data defined internally
+const exampleData = {
+  currentDate: '2025年07月20日現在',
+  nameFuriganaLast: 'やまだ',
+  nameFuriganaFirst: 'たろう',
+  nameKanjiLast: '山田',
+  nameKanjiFirst: '太郎',
+  birthYearEra: '平成7',
+  birthYear: '1995',
+  birthMonthDay: '01月01日',
+  age: 30,
+  gender: 'male' as const,
+  postalCode: '〒100-0001',
+  address: '東京都千代田区千代田1-1-1サンプルビル101',
+  email: 'example@example.com',
+  phone: '090-1234-5678',
+  photoData: null
+}
+
+// Use props data if provided, otherwise use example data
+const displayData = computed(() => {
+  if (props.data) {
+    return {
+      ...exampleData,
+      ...props.data
+    }
+  }
+  return exampleData
 })
 
-const props = defineProps({})
-
-import { useInfoStore } from '@/content/info.js'
-const infoStore = useInfoStore()
-import { storeToRefs } from 'pinia'
-const { infoCache, infoCacheState, infoCacheMessage} = storeToRefs(infoStore)
-
-// Reactive data for photo
-const photoData = ref(null)
-const imageLoaded = ref(false)
-const imageError = ref(false)
-
-
-
-// Watch for changes in photo data
-const loadPhotoData = () => {
-    const photo = infoCache.value[photo_query]
-    if (photo && typeof photo === 'string' && photo.trim() !== '') {
-        // Ensure the base64 string has proper format
-        if (photo.startsWith('data:image/') || photo.startsWith('/9j/') || photo.startsWith('iVBORw0KGgo')) {
-            photoData.value = photo.startsWith('data:image/') ? photo : `data:image/jpeg;base64,${photo}`
-            imageError.value = false
-        } else {
-            console.warn('Invalid photo data format')
-            imageError.value = true
-        }
-    } else {
-        photoData.value = null
+// trySplit implementation - returns code 2 (not splittable)
+const trySplit = (pageContext: any, docContext: any) => {
+  if (!basicInfoRef.value || !docContext || !pageContext) {
+    if (logger) {
+      const reason = !basicInfoRef.value ? 'basicInfoRef is null' : !docContext ? 'docContext param is null' : 'pageContext param is null'
+      logger.addLog(`Error: Cannot split - ${reason}`, 'BasicInfoJp.trySplit', 1)
     }
-}
-
-// Image event handlers
-const onImageLoad = () => {
-    imageLoaded.value = true
-    imageError.value = false
-}
-
-const onImageError = () => {
-    imageLoaded.value = false
-    imageError.value = true
-    photoData.value = null
-}
-
-const info = infoStore.info;
-
-// Load photo data on mount and watch for changes
-onMounted(() => {
-    try {
-        infoStore.info(
-            "photo/example",
-            false // false
-        )
-    } catch (error) {
-        console.error('BasicInfoJP: infoStore.info error:', error)
+    return {
+      code: -1,
+      data: null
     }
+  }
+
+  const componentBottom = docContext.measureVerticalPosEnd(basicInfoRef.value)
+  const pageBottomY = pageContext.pageBottomY
+  
+  if (logger) {
+    logger.addLog(`BasicInfoJp bottom: ${componentBottom.toFixed(2)}, Page bottom: ${pageBottomY.toFixed(2)}`, 'BasicInfoJp.trySplit')
+  }
+  
+  // If it fits, return code 0
+  if (componentBottom <= pageBottomY) {
+    if (logger) {
+      logger.addLog(`BasicInfoJp fits in page`, 'BasicInfoJp.trySplit')
+    }
+    return {
+      code: 0,
+      data: null
+    }
+  }
+  
+  // If it doesn't fit, return code 2 (not splittable)
+  if (logger) {
+    logger.addLog(`BasicInfoJp doesn't fit and is not splittable (code: 2)`, 'BasicInfoJp.trySplit', 1)
+  }
+  
+  // If data was null (using example data), return component with example data filled in
+  if (!props.data) {
+    return {
+      code: 2,
+      data: {
+        type: 'BasicInfoJp',
+        data: exampleData
+      }
+    }
+  }
+  
+  return {
+    code: 2,
+    data: null
+  }
+}
+
+defineExpose({
+  trySplit
 })
-
-const photo_query = "photo/example"
-
-// Watch for changes in the info function result
-import { watch } from 'vue'
-watch(() => infoCacheState.value[photo_query], (newVal) => {
-    if (newVal === "ready") {
-        loadPhotoData()
-    } else {
-        photoData.value = null
-    }
-}, { immediate: true })
 </script>
 
 <style scoped>
-@import '../styles-shared.css';
+@import '../../styles-shared.css';
 
 .cv-header-jp {
 background: white;
@@ -257,8 +291,6 @@ flex-direction: column;
 
 .main-date {}
 
-
-
 .furigana {
 font-size: 12px;
 color: #666;
@@ -280,28 +312,21 @@ margin-bottom: -3px;
 margin-top: 2px;
 }
 
-
 .name-furigana {
 font-size: 12px;
-/* color: #666; */
 }
 
 .family-name {
-/* width: 80px; */
 }
 
 .first-name {
-/* Takes remaining space */
 }
 
-/* Date container styles */
 .date-container {
 position: relative;
 display: inline-block;
 }
 
-
-/* Gender option styles */
 .gender-option {
 display: inline-block;
 padding: 2px 6px;
@@ -313,4 +338,4 @@ transition: all 0.2s ease;
 .gender-option.selected {
 border-color: #000;
 }
-</style> 
+</style>

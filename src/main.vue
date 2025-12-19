@@ -9,6 +9,11 @@
     </Tab>
 
     <Tab label="Test">
+      <SubTab label="BasicInfoJp">
+        <Panel>
+          <PanelTestBasicInfoJp />
+        </Panel>
+      </SubTab>
       <SubTab label="Table Cross-Page">
         <Panel>
           <PanelTestTable />
@@ -58,6 +63,7 @@ import PanelTestTable from '@/panels/panel_test_table.vue'
 import PanelTestText from '@/panels/panel_test_text.vue'
 import PanelTestTextList from '@/panels/panel_test_text_list.vue'
 import PanelTestTableTrTd from '@/panels/panel_test_table_tr_td.vue'
+import PanelTestBasicInfoJp from '@/panels/panel_test_basic_info_jp.vue'
 import { useInfoStore } from '@/content/info.js'
 
 // Use the Pinia store

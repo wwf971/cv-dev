@@ -41,6 +41,7 @@ import TextList from './component/TextList.vue'
 import Tr from './component/TableTr.vue'
 import Td from './component/TableTd.vue'
 import Table from './component/Table.vue'
+import BasicInfoJp from './component/BasicInfoJp.vue'
 import type { PagePadding, PageContext } from './pagination'
 
 const props = withDefaults(defineProps<{
@@ -145,6 +146,8 @@ const getComponent = (type: string) => {
       return Td
     case 'Table':
       return Table
+    case 'BasicInfoJp':
+      return BasicInfoJp
     default:
       return null
   }
@@ -297,6 +300,7 @@ const trySplit = async (compData: ComponentData, pageIndex: number, compIndex: n
   // code < 0: error
   // code === 0: no split needed
   // code === 1: split needed, data contains array of ComponentData
+  // code === 2: not splittable (entire component must move to next page)
   if (typeof result === 'object' && 'code' in result) {
     if (result.code < 0) {
       addLog(`trySplit: Component returned error (code: ${result.code})`, `${compData.type}.trySplit`, LogType.Error)
@@ -312,6 +316,10 @@ const trySplit = async (compData: ComponentData, pageIndex: number, compIndex: n
         addLog(`trySplit: Component returned code 1 but invalid data`, `${compData.type}.trySplit`, LogType.Error)
         return [compData]
       }
+    } else if (result.code === 2) {
+      addLog(`trySplit: Component is not splittable, must move entirely to next page (code: 2)`, `${compData.type}.trySplit`, LogType.Warning)
+      // Return empty array to signal "doesn't fit, move to next page"
+      return []
     }
   }
   
@@ -348,13 +356,13 @@ const runPagination = async () => {
   addLog(`docContext available after ${waitAttempts} attempts`, 'runPagination')
   
   const pageData: PageData[] = []
-  const docDataCopy: ComponentData[] = [...docData.value]
+  const docDataPaginated: ComponentData[] = [...docData.value]
   
   let compIndexCurrent = 0
   let pageCreationCount = 0
   const MAX_PAGES = 100 // Safety limit
   
-  while (docDataCopy.length > 0) {
+  while (docDataPaginated.length > 0) {
     pageCreationCount++
     if (pageCreationCount > MAX_PAGES) {
       addLog(`ERROR: Safety break triggered after ${MAX_PAGES} pages`, 'runPagination', LogType.Error)
@@ -400,7 +408,7 @@ const runPagination = async () => {
     }
     
     while (true) {
-      const compDataCurrent = docDataCopy.shift()
+      const compDataCurrent = docDataPaginated.shift()
       if (!compDataCurrent) {
         break
       }
@@ -429,16 +437,19 @@ const runPagination = async () => {
         addLog(`Component ${compIndexCurrent} split into ${compDataAfterSplitTrialList.length} parts`, 'runPagination')
         pageDataCurrent.components.pop()
         pageDataCurrent.components.push(compDataAfterSplitTrialList[0])
-        docDataCopy.unshift(...compDataAfterSplitTrialList.slice(1))
+        docDataPaginated.unshift(...compDataAfterSplitTrialList.slice(1))
         break
       } else {
-        // Error: trySplit returned empty array
-        addLog(`ERROR: trySplit returned empty array for component ${compIndexCurrent}`, 'runPagination')
+        // Empty array: component doesn't fit and cannot be split (code 2)
+        // Remove from current page and push back to queue for next page
+        addLog(`Component ${compIndexCurrent} doesn't fit and is not splittable, moving to next page`, 'runPagination', LogType.Warning)
+        pageDataCurrent.components.pop()
+        docDataPaginated.unshift(compDataCurrent)
         break
       }
     }
     
-    if (docDataCopy.length === 0) break
+    if (docDataPaginated.length === 0) break
   }
   
   pages.value = pageData
