@@ -13,6 +13,10 @@
         {{ useExampleData ? 'Use Custom Data' : 'Use Example Data' }}
       </button>
       
+      <button @click="fetchRemoteData" class="control-button" :disabled="isFetching">
+        {{ isFetching ? 'Fetching...' : 'Fetch Remote Data' }}
+      </button>
+      
       <TabsOnTop defaultTab="Info" style="margin-top: 16px; height: 400px;">
         <TabOnTop label="Info">
           <div class="info-panel">
@@ -33,6 +37,10 @@
               <span>Data Mode:</span>
               <span>{{ useExampleData ? 'Example (null prop)' : 'Custom' }}</span>
             </div>
+            <div class="info-row">
+              <span>Fetch Status:</span>
+              <span>{{ isFetching ? 'Fetching...' : 'Ready' }}</span>
+            </div>
             
             <div class="description" style="margin-top: 20px;">
               <strong>How it works:</strong><br/>
@@ -41,6 +49,16 @@
                 <li>If fits: stays on current page (code: 0)</li>
                 <li>If doesn't fit: moves entirely to next page (code: 2)</li>
                 <li>When data prop is null, uses internal example data</li>
+              </ul>
+              
+              <strong style="margin-top: 12px; display: block;">Remote Data Fetching:</strong>
+              <ul style="margin: 8px 0; padding-left: 20px;">
+                <li>Click "Use Custom Data" then "Fetch Remote Data" button</li>
+                <li>Pattern: <code v-pre>{{remote:path/to/resource}}</code></li>
+                <li>Fetches from: <code>serverOrigin/path/to/resource</code></li>
+                <li>Supports inline: <code v-pre>Born in {{remote:birth/year}}</code></li>
+                <li>Replaces with fetched value or error message</li>
+                <li>Original template preserved, replacements in working copy</li>
               </ul>
             </div>
           </div>
@@ -92,9 +110,8 @@
             <PaginationWrapper 
               ref="paginationRef"
               docId="test-basic-info-jp"
-              :pageHeight="1122.24"
-              :pagePadding="{ top: 40, bottom: 40, left: 40, right: 40 }"
-              :docDataInit="docData"
+              :pageHeight="PAGE_SIZES.pageHeight"
+              :pagePadding="{ top: PAGE_SIZES.paddingTop, bottom: PAGE_SIZES.paddingBottom, left: PAGE_SIZES.paddingLeft, right: PAGE_SIZES.paddingRight }"
             />
           </div>
         </TabOnTop>
@@ -104,14 +121,16 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import PaginationWrapper from '../pagination/Pagination.vue'
 import TabsOnTop from '@wwf971/vue-comp-misc/src/layout/tabs/TabsOnTop.vue'
 import { TabOnTop } from '@wwf971/vue-comp-misc/src/layout/tabs/TabsOnTopSlots'
 import PageInfo from '@/pagination/PageInfo.vue'
 import LogView from '@/pagination/LogView.vue'
 import Doc from '@/pagination/component_core/Doc.vue'
-import BasicInfoJp from '@/pagination/component/BasicInfoJp.vue'
+import BasicInfoJp from '@/content/CvJp/BasicInfoJp.vue'
+import { fetchRemoteData as _fetchRemoteData } from '@/remote/remoteDataFetcher.js'
+import { SERVER_INFO, PAGE_SIZES } from '@/config.js'
 
 // Component mapping
 const getComponent = (type) => {
@@ -125,7 +144,8 @@ const paginationRef = ref(null)
 const logs = ref([])
 const selectedPageIndex = ref(0)
 const contentTabsRef = ref(null)
-const useExampleData = ref(true)
+const useExampleData = ref(false)
+const isFetching = ref(false)
 
 // Reactive page count
 const pageCount = computed(() => {
@@ -138,7 +158,7 @@ const currentPageInfo = computed(() => {
   return paginationRef.value.getPageInfo(selectedPageIndex.value)
 })
 
-// Custom data for testing
+// Original custom data template (with remote patterns - never modified)
 const customData = {
   currentDate: '2025年12月19日現在',
   nameFuriganaLast: 'さとう',
@@ -146,7 +166,7 @@ const customData = {
   nameKanjiLast: '佐藤',
   nameKanjiFirst: '花子',
   birthYearEra: '平成5',
-  birthYear: '1993',
+  birthYear: '{{remote:birth/year}}',
   birthMonthDay: '05月15日',
   age: 32,
   gender: 'female',
@@ -156,6 +176,9 @@ const customData = {
   phone: '090-9876-5432',
   photoData: null
 }
+
+// Reactive custom data (will be populated with fetched values - this is a working copy)
+const customDataReplaced = ref(customData)
 
 // Doc data - with null data to test example data usage
 const docData = ref([
@@ -167,14 +190,13 @@ const docData = ref([
 
 const runPagination = () => {
   if (paginationRef.value) {
-    // Switch to Paginated tab using the exposed method
     if (contentTabsRef.value) {
       contentTabsRef.value.switchTab('Paginated')
     }
     
     paginationRef.value.setDocData(docData.value)
     paginationRef.value.runPagination()
-    // Update logs after pagination
+    
     setTimeout(() => {
       const newLogs = paginationRef.value.getLogs()
       logs.value = [...newLogs]
@@ -182,18 +204,37 @@ const runPagination = () => {
   }
 }
 
+const fetchRemoteData = async () => {
+  useExampleData.value = false
+  isFetching.value = true
+  
+  try {
+    const serverOrigin = SERVER_INFO.origin.match(/^https?:\/\//) ? SERVER_INFO.origin : `http://${SERVER_INFO.origin}`
+    
+    customDataReplaced.value = await _fetchRemoteData(customData, serverOrigin, SERVER_INFO.get_token)
+    
+    docData.value = [
+      {
+        type: 'BasicInfoJp',
+        data: customDataReplaced.value
+      }
+    ]
+  } catch (error) {
+    console.error('[fetchRemoteData] Error:', error)
+  } finally {
+    isFetching.value = false
+  }
+}
+
 const toggleDataMode = () => {
   useExampleData.value = !useExampleData.value
   
-  // Update docData based on mode
   docData.value = [
     {
       type: 'BasicInfoJp',
-      data: useExampleData.value ? null : customData
+      data: useExampleData.value ? null : customDataReplaced.value
     }
   ]
-  
-  console.log('Data mode toggled:', useExampleData.value ? 'Example (null)' : 'Custom')
 }
 
 const clearLogs = () => {
@@ -207,14 +248,10 @@ const updateLogs = () => {
   }
 }
 
-// Debug: watch logs
-watch(logs, (newLogs) => {
-  console.log('Logs updated:', newLogs.length, 'entries')
-}, { deep: true })
 </script>
 
 <style scoped>
-@import './panelStyles.css';
+@import './panel_styles.css';
 
 .pages-panel {
   display: flex;

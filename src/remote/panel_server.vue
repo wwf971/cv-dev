@@ -1,0 +1,198 @@
+<template>
+  <div class="panel-layout">
+    <div class="server-config-panel">
+      <h3>Server Config</h3>
+      
+      <div class="config-section">
+        <label class="field-label">Server Origin</label>
+        <input 
+          v-model="serverOrigin" 
+          type="text" 
+          class="input-field"
+          placeholder="https://example.com:8080"
+        />
+      </div>
+      
+      <div class="config-section">
+        <label class="field-label">GET Token</label>
+        <input 
+          v-model="getToken" 
+          type="text" 
+          class="input-field"
+          placeholder="your_token_here"
+        />
+      </div>
+      
+      <button @click="testConnection" class="control-button" :disabled="isTestingConnection">
+        {{ isTestingConnection ? 'Testing...' : 'Test Connection' }}
+      </button>
+      
+      <div v-if="testResult" class="test-result" :class="testResult.success ? 'success' : 'error'">
+        <div class="result-status">
+          <strong>{{ testResult.success ? '✓' : '✗' }}</strong>
+          {{ testResult.message }}
+        </div>
+        <div v-if="testResult.details" class="result-details">
+          <div v-for="(value, key) in testResult.details" :key="key">
+            <span class="detail-key">{{ key }}:</span>
+            <span class="detail-value">{{ value }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+
+const serverOrigin = ref('')
+const getToken = ref('')
+const isTestingConnection = ref(false)
+const testResult = ref(null)
+
+onMounted(async () => {
+  // Load from config, ensuring we get the merged config
+  try {
+    const config = await import('@/config.js')
+    let origin = config.SERVER_INFO.origin || ''
+    
+    // Auto-prepend http:// if no scheme is present
+    if (origin && !origin.match(/^https?:\/\//)) {
+      origin = 'http://' + origin
+    }
+    
+    serverOrigin.value = origin
+    getToken.value = config.SERVER_INFO.get_token || ''
+  } catch (error) {
+    console.error('Failed to load config:', error)
+  }
+})
+
+const testConnection = async () => {
+  if (!serverOrigin.value) {
+    testResult.value = {
+      success: false,
+      message: 'Server origin is required'
+    }
+    return
+  }
+  
+  isTestingConnection.value = true
+  testResult.value = null
+  
+  try {
+    const url = `${serverOrigin.value}/ping?token=${encodeURIComponent(getToken.value)}`
+    const response = await fetch(url)
+    const data = await response.json()
+    
+    if (data.code === 0) {
+      // Everything is normal
+      testResult.value = {
+        success: true,
+        message: data.message,
+        details: data.data || {}
+      }
+    } else if (data.code === 1) {
+      // Connected but token is wrong
+      testResult.value = {
+        success: false,
+        message: data.message,
+        details: { code: data.code }
+      }
+    } else {
+      // Other errors
+      testResult.value = {
+        success: false,
+        message: data.message || 'Unknown error',
+        details: { code: data.code }
+      }
+    }
+  } catch (error) {
+    testResult.value = {
+      success: false,
+      message: `Error: ${error.message}`
+    }
+  } finally {
+    isTestingConnection.value = false
+  }
+}
+</script>
+
+<style scoped>
+@import '../panels/panel_styles.css';
+
+.server-config-panel {
+  padding: 8px;
+  width: 100%;
+}
+
+.config-section {
+  margin-bottom: 6px;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #333;
+}
+
+.input-field {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid #ddd;
+  border-radius: 2px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #0066cc;
+}
+
+.test-result {
+  padding: 4px;
+  border: 1px solid;
+  border-radius: 2px;
+  font-size: 12px;
+}
+
+.test-result.success {
+  background-color: #e8f5e9;
+  border-color: #4caf50;
+  color: #2e7d32;
+}
+
+.test-result.error {
+  background-color: #ffebee;
+  border-color: #f44336;
+  color: #c62828;
+}
+
+.result-status {
+  font-weight: 500;
+}
+
+.result-details {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.result-details > div {
+  margin-bottom: 2px;
+}
+
+.detail-key {
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+.detail-value {
+  color: #666;
+}
+</style>
+

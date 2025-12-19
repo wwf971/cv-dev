@@ -4,7 +4,7 @@ import axios from 'axios'
 import { SERVER_INFO } from '@/config.js'
 
 export const useInfoStore = defineStore('info', () => {
-  const server_url = SERVER_INFO.url
+  const server_url = SERVER_INFO.origin
   // Configure axios to include cookies in all requests
   axios.defaults.withCredentials = false
 

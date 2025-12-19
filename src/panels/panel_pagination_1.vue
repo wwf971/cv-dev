@@ -38,7 +38,7 @@ const rerunPagination = () => {
 </script>
 
 <style scoped>
-@import './panelStyles.css';
+@import './panel_styles.css';
 
 /* Panel-specific styles (if any) */
 </style>

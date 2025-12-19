@@ -189,7 +189,7 @@ const handleChangePageHeight = async (pageIndex, newHeight) => {
 </script>
 
 <style scoped>
-@import './panelStyles.css';
+@import './panel_styles.css';
 
 .pages-panel {
   display: flex;

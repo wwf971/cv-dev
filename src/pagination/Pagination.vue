@@ -1,7 +1,7 @@
 <template>
   <div class="pagination-root print:hidden">
     <div class="print:hidden" style="height: 20px"></div>
-    <div class="pagination-content">
+    <div class="pagination-content" :style="{ maxWidth: `${props.pageWidth}px` }">
       <Doc ref="docRef" :docId="docId">
         <div 
           v-for="(page, pageIndex) in pages" 
@@ -14,12 +14,13 @@
             :pageIndex="page.sizes.pageIndex"
             :pageStartY="page.sizes.pageStartY ?? null"
             :pageEndY="page.sizes.pageEndY ?? null"
+            :pageWidth="props.pageWidth"
             :pageHeight="page.sizes.pageHeight"
             :padding="page.sizes.padding"
           >
             <component
               v-for="(comp, compIndex) in page.components"
-              :key="compIndex"
+              :key="`${pageIndex}-${compIndex}`"
               :ref="(el) => registerComponentRef(`page-${pageIndex}-comp-${compIndex}`, el)"
               :is="getComponent(comp.type)"
               v-bind="comp.data"
@@ -41,17 +42,25 @@ import TextList from './component/TextList.vue'
 import Tr from './component/TableTr.vue'
 import Td from './component/TableTd.vue'
 import Table from './component/Table.vue'
-import BasicInfoJp from './component/BasicInfoJp.vue'
+import BasicInfoJp from '../content/CvJp/BasicInfoJp.vue'
+import { A4_SIZES, PAGE_SIZES } from '../config.js'
 import type { PagePadding, PageContext } from './pagination'
 
 const props = withDefaults(defineProps<{
   docId: string
+  pageWidth?: number
   pageHeight?: number
   pagePadding?: PagePadding
   docDataInit?: any[]
 }>(), {
-  pageHeight: 1122.24,
-  pagePadding: () => ({ top: 40, bottom: 40, left: 40, right: 40 }),
+  pageWidth: () => A4_SIZES.widthInPixels,
+  pageHeight: () => PAGE_SIZES.pageHeight,
+  pagePadding: () => ({ 
+    top: PAGE_SIZES.paddingTop, 
+    bottom: PAGE_SIZES.paddingBottom, 
+    left: PAGE_SIZES.paddingLeft, 
+    right: PAGE_SIZES.paddingRight 
+  }),
   docDataInit: () => []
 })
 
@@ -447,6 +456,12 @@ const runPagination = async () => {
         docDataPaginated.unshift(compDataCurrent)
         break
       }
+    }
+    
+    // If page ended up empty (all components moved to next page), remove it
+    if (pageDataCurrent.components.length === 0) {
+      addLog(`Page ${pageIndexCurrent} is empty, removing it`, 'runPagination', LogType.Warning)
+      pageData.pop()
     }
     
     if (docDataPaginated.length === 0) break

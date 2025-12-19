@@ -253,7 +253,7 @@ defineExpose({
 </script>
 
 <style scoped>
-@import '../styles-shared.css';
+@import './CvJp/styles-shared.css';
 
 .project-container {
 }

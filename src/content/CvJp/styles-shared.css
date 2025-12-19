@@ -3,14 +3,14 @@
 
 /* Component-specific styles for CVHeader */
 .cv-header {
-    padding: 2px;
-    border-bottom: 2px solid #333;
-    margin-bottom: 20px;
+	padding: 2px;
+	border-bottom: 2px solid #333;
+	margin-bottom: 20px;
 }
 
 .section-basic-info-jp {
-    padding: 2px;
-    margin-bottom: 20px;
+	padding: 2px;
+	margin-bottom: 20px;
 }
 
 .field-container {
@@ -42,15 +42,15 @@ padding-bottom: 8px;
 }
 
 .font-cv {
-    font-family: 'MS Gothic', 'Yu Gothic', 'Hiragino Sans', sans-serif;
+	font-family: 'MS Gothic', 'Yu Gothic', 'Hiragino Sans', sans-serif;
 }
 
 .no-top-border td {
-    border-top: none !important;
+	border-top: none !important;
 }
 .form-table tr{
-    height: 40px;
-    box-sizing: border-box;
+	height: 40px;
+	box-sizing: border-box;
 }
 
 .jp-text {
@@ -117,56 +117,56 @@ margin-top: 0;
 
 /* Shared Japanese CV Table Styles */
 .japanese-cv-table {
-    font-family: 'MS Gothic', 'Yu Gothic', 'Hiragino Sans', sans-serif;
-    width: 100%;
-    border-collapse: collapse;
-    border-spacing: 0;
+	font-family: 'MS Gothic', 'Yu Gothic', 'Hiragino Sans', sans-serif;
+	width: 100%;
+	border-collapse: collapse;
+	border-spacing: 0;
 }
 
 .japanese-cv-table td {
-    border: 1px solid #000;
-    vertical-align: middle;
-    box-sizing: border-box;
+	border: 1px solid #000;
+	vertical-align: middle;
+	box-sizing: border-box;
 }
 
 .japanese-cv-table .header-cell {
-    background-color: #f8f8f8;
-    font-weight: bold;
-    text-align: center;
-    padding: 8px 4px;
-    font-size: 14px;
+	background-color: #f8f8f8;
+	font-weight: bold;
+	text-align: center;
+	padding: 8px 4px;
+	font-size: 14px;
 }
 
 .japanese-cv-table .form-cell {
-    display: flex;
-    align-items: center;
-    font-size: 14px;
+	display: flex;
+	align-items: center;
+	font-size: 14px;
 }
 
 .key-cell {
-    width: 115px;
-    min-width: 115px;
-    max-width: 115px;
-    box-sizing: border-box;
-    background-color: #f8f8f8;
-    font-weight: bold;
-    text-align: center;
+	width: 115px;
+	min-width: 115px;
+	max-width: 115px;
+	box-sizing: border-box;
+	background-color: #f8f8f8;
+	font-weight: bold;
+	text-align: center;
 }
 
 .japanese-cv-table .key-cell {
-    width: 115px;
-    min-width: 115px;
-    max-width: 115px;
-    box-sizing: border-box;
-    background-color: #f8f8f8;
-    font-weight: bold;
-    text-align: center;
+	width: 115px;
+	min-width: 115px;
+	max-width: 115px;
+	box-sizing: border-box;
+	background-color: #f8f8f8;
+	font-weight: bold;
+	text-align: center;
 }
 
 .japanese-cv-table .value-cell {
-    padding: 0;
-    text-align: center;
-    font-size: 16px;
+	padding: 0;
+	text-align: center;
+	font-size: 16px;
 }
 
 /* Border utilities */
@@ -201,18 +201,18 @@ border-top: none !important;
 
 
 .project-title {
-    font-weight: bold;
-    font-size: 16px;
+	font-weight: bold;
+	font-size: 16px;
 }
 
 .header-row td {
-    border: 1px solid #000;
-    background-color: #f8f8f8;
-    font-weight: bold;
-    text-align: center;
-    padding: 8px 4px;
-    font-size: 14px;
-    height: 35px;
+	border: 1px solid #000;
+	background-color: #f8f8f8;
+	font-weight: bold;
+	text-align: center;
+	padding: 8px 4px;
+	font-size: 14px;
+	height: 35px;
 }
 
 /* Address text styling */
@@ -237,76 +237,77 @@ border-color: #000;
 
 /* Name form table styles */
 .form-table {
-    /* table-layout: fixed; */
-    width: 100%;
-    border-collapse: collapse;
-    border-spacing: 0;
+	/* table-layout: fixed; */
+	width: 100%;
+	border-collapse: collapse;
+	border-spacing: 0;
 }
 
 .form-table td {
-    border: 1px solid #000;
-    display: table-cell !important;
-    vertical-align: middle;
-    padding: 2px 6px;
-    }
-    /* strange: td {} instead of .form-table td {} will make height not under control of inline style*/
-        
+	border: 1px solid #000;
+	display: table-cell !important;
+	vertical-align: middle;
+	padding: 2px 6px;
+	padding-right: 0px;
+}
+	/* strange: td {} instead of .form-table td {} will make height not under control of inline style*/
+		
 .form-cell {
-    border-right: 1px solid #000;
-    align-items: center;
-    font-size: 14px;
+	border-right: 1px solid #000;
+	align-items: center;
+	font-size: 14px;
 }
 
 .value-cell {
-    flex: 1;
-    padding: 0;
-    text-align: center;
-    font-size: 14px;
+	flex: 1;
+	padding: 0;
+	text-align: center;
+	font-size: 14px;
 }
 
 .description-cell {
-    border: 1px solid #000;
-    padding: 4px 8px;
-    font-size: 14px;
-    text-align: left;
-    vertical-align: middle;
+	border: 1px solid #000;
+	padding: 4px 8px;
+	font-size: 14px;
+	text-align: left;
+	vertical-align: middle;
 }
 
 td.align-left {
-    text-align: left;
+	text-align: left;
 }
 
 td.align-right {
-    text-align: right;
+	text-align: right;
 }
 
 td.align-center {
-    text-align: center;
+	text-align: center;
 }
 
 .word-spacing-0p5 {
-    word-spacing: 0.5em;
+	word-spacing: 0.5em;
 }
 .word-spacing-0p2 {
-    word-spacing: 0.2em;
+	word-spacing: 0.2em;
 }
 
 .time-cell, .place-cell {
-    border: 1px solid #000;
-    text-align: center;
-    padding: 4px;
-    font-size: 14px;
-    /* width: 60px;
-    min-width: 60px; */
+	border: 1px solid #000;
+	text-align: center;
+	padding: 4px;
+	font-size: 14px;
+	/* width: 60px;
+	min-width: 60px; */
 }
 
 .year-jp {
-    position: relative;
-    top: 2px;
-    left: 0;
-    font-size: 11px;
-    font-weight: 500;
-    /* color: #333; */
-    line-height: 1;
+	position: relative;
+	top: 2px;
+	left: 0;
+	font-size: 11px;
+	font-weight: 500;
+	/* color: #333; */
+	line-height: 1;
 }
-    
+	

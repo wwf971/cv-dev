@@ -42,6 +42,7 @@ const props = withDefaults(defineProps<{
   pageIndex: number
   pageStartY: number | null
   pageEndY: number | null
+  pageWidth?: number
   pageHeight: number
   padding?: PagePadding
 }>(), {
@@ -58,6 +59,7 @@ const pageStyle = computed(() => ({
   paddingBottom: `${props.padding.bottom}px`,
   paddingLeft: `${props.padding.left}px`,
   paddingRight: `${props.padding.right}px`,
+  width: props.pageWidth ? `${props.pageWidth}px` : '100%',
   height: `${props.pageHeight}px`,
   boxSizing: 'border-box' as const
 }))

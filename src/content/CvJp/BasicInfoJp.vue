@@ -93,25 +93,23 @@
 <script setup lang="ts">
 import { ref, computed, inject } from 'vue'
 
-const props = defineProps<{
-  data?: {
-    currentDate?: string
-    nameFuriganaLast?: string
-    nameFuriganaFirst?: string
-    nameKanjiLast?: string
-    nameKanjiFirst?: string
-    birthYearEra?: string
-    birthYear?: string
-    birthMonthDay?: string
-    age?: number
-    gender?: 'male' | 'female'
-    postalCode?: string
-    address?: string
-    email?: string
-    phone?: string
-    photoData?: string | null
-  } | null
-}>()
+const props = withDefaults(defineProps<{
+  currentDate?: string
+  nameFuriganaLast?: string
+  nameFuriganaFirst?: string
+  nameKanjiLast?: string
+  nameKanjiFirst?: string
+  birthYearEra?: string
+  birthYear?: string
+  birthMonthDay?: string
+  age?: number
+  gender?: 'male' | 'female'
+  postalCode?: string
+  address?: string
+  email?: string
+  phone?: string
+  photoData?: string | null
+}>(), {})
 
 const basicInfoRef = ref<HTMLElement | null>(null)
 const logger = inject('paginationLogger', null) as any
@@ -123,9 +121,9 @@ const exampleData = {
   nameFuriganaFirst: 'たろう',
   nameKanjiLast: '山田',
   nameKanjiFirst: '太郎',
-  birthYearEra: '平成7',
-  birthYear: '1995',
-  birthMonthDay: '01月01日',
+  birthYearEra: '平成2',
+  birthYear: '1990',
+  birthMonthDay: '12月31日',
   age: 30,
   gender: 'male' as const,
   postalCode: '〒100-0001',
@@ -135,12 +133,15 @@ const exampleData = {
   photoData: null
 }
 
-// Use props data if provided, otherwise use example data
+// Use props if provided, otherwise use example data
 const displayData = computed(() => {
-  if (props.data) {
+  // Check if any props are provided (not undefined)
+  const hasAnyProps = Object.keys(props).some(key => props[key as keyof typeof props] !== undefined)
+  
+  if (hasAnyProps) {
     return {
       ...exampleData,
-      ...props.data
+      ...props
     }
   }
   return exampleData
@@ -182,8 +183,11 @@ const trySplit = (pageContext: any, docContext: any) => {
     logger.addLog(`BasicInfoJp doesn't fit and is not splittable (code: 2)`, 'BasicInfoJp.trySplit', 1)
   }
   
-  // If data was null (using example data), return component with example data filled in
-  if (!props.data) {
+  // Check if any props are provided (not using example data)
+  const hasAnyProps = Object.keys(props).some(key => props[key as keyof typeof props] !== undefined)
+  
+  // If no props provided (using example data), return component with example data filled in
+  if (!hasAnyProps) {
     return {
       code: 2,
       data: {
@@ -205,7 +209,7 @@ defineExpose({
 </script>
 
 <style scoped>
-@import '../../styles-shared.css';
+@import './styles-shared.css';
 
 .cv-header-jp {
 background: white;
@@ -299,6 +303,8 @@ color: #666;
 .name-kanji {
 font-size: 16px;
 font-weight: 500;
+white-space: nowrap;
+width: 1px;
 }
 
 .section-1 {
@@ -314,6 +320,8 @@ margin-top: 2px;
 
 .name-furigana {
 font-size: 12px;
+white-space: nowrap;
+width: 1px;
 }
 
 .family-name {

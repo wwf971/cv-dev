@@ -88,9 +88,8 @@
             <PaginationWrapper 
               ref="paginationRef"
               docId="test-text-cross-page"
-              :pageHeight="1122.24"
-              :pagePadding="{ top: 40, bottom: 40, left: 40, right: 40 }"
-              :docDataInit="docData"
+              :pageHeight="PAGE_SIZES.pageHeight"
+              :pagePadding="{ top: PAGE_SIZES.paddingTop, bottom: PAGE_SIZES.paddingBottom, left: PAGE_SIZES.paddingLeft, right: PAGE_SIZES.paddingRight }"
             />
           </div>
         </TabOnTop>
@@ -108,6 +107,7 @@ import PageInfo from '@/pagination/PageInfo.vue'
 import LogView from '@/pagination/LogView.vue'
 import Doc from '@/pagination/component_core/Doc.vue'
 import Text from '@/pagination/component/Text.vue'
+import { PAGE_SIZES } from '@/config.js'
 
 // Component mapping
 const getComponent = (type) => {
@@ -208,7 +208,7 @@ watch(logs, (newLogs) => {
 </script>
 
 <style scoped>
-@import './panelStyles.css';
+@import './panel_styles.css';
 
 .pages-panel {
   display: flex;

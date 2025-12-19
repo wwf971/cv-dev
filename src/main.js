@@ -4,7 +4,7 @@ import 'virtual:uno.css'
 import '@unocss/reset/tailwind.css'
 import Main from './main.vue'
 import './style.css'
-import './styles-shared.css'
+import './content/CvJp/styles-shared.css'
 
 const app = createApp(Main)
 const pinia = createPinia()

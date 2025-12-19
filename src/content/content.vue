@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import BasicInfoJP from './BasicInfo_jp.vue'
+import BasicInfoJP from './CvJp/BasicInfoJp.vue'
 import EducationAndWorkJP from './EducationAndWork_jp.vue'
 import MotivationSectionJP from './MotivationSection_jp.vue'
 import VSkip from '@/pagination/component_old/VSkip.vue'

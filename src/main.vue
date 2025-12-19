@@ -49,6 +49,14 @@
         </Panel>
       </SubTab>
     </Tab>
+
+    <Tab label="Settings">
+      <SubTab label="Server Config" :isDefault="true">
+        <Panel>
+          <PanelServer />
+        </Panel>
+      </SubTab>
+    </Tab>
   </MasterDetail>
 </template>
 
@@ -64,6 +72,7 @@ import PanelTestText from '@/panels/panel_test_text.vue'
 import PanelTestTextList from '@/panels/panel_test_text_list.vue'
 import PanelTestTableTrTd from '@/panels/panel_test_table_tr_td.vue'
 import PanelTestBasicInfoJp from '@/panels/panel_test_basic_info_jp.vue'
+import PanelServer from '@/remote/panel_server.vue'
 import { useInfoStore } from '@/content/info.js'
 
 // Use the Pinia store

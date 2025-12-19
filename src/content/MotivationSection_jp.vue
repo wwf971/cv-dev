@@ -75,7 +75,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-@import '../styles-shared.css';
+@import './CvJp/styles-shared.css';
 
 .content-row {
     height: auto;

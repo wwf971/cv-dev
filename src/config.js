@@ -23,9 +23,10 @@ export let PAGE_SIZES = {
 }
 
 export let SERVER_INFO = {
-  url: 'example_url',
-  username: 'example_username',
-  password: 'example_password'
+  origin: 'https://example_url:8080',
+  get_token: 'example_get_token',
+  // username: 'example_username',
+  // password: 'example_password'
 }
 
 export let educationEntries = []

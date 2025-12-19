@@ -108,7 +108,7 @@ const totalContentRows = computed(() => {
 </script>
 
 <style scoped>
-@import '../styles-shared.css';
+@import './CvJp/styles-shared.css';
 
 .section-education-work-jp {
     margin-bottom: 20px;

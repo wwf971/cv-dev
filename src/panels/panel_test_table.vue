@@ -80,7 +80,7 @@ const mediumText = computed(() => {
 </script>
 
 <style scoped>
-@import './panelStyles.css';
+@import './panel_styles.css';
 
 /* Test panel specific styles */
 .test-table {

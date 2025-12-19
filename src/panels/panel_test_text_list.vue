@@ -46,9 +46,8 @@
       <PaginationWrapper 
         ref="paginationRef"
         docId="test-textlist-cross-page"
-        :pageHeight="1122.24"
-        :pagePadding="{ top: 40, bottom: 40, left: 40, right: 40 }"
-        :docDataInit="docData"
+        :pageHeight="PAGE_SIZES.pageHeight"
+        :pagePadding="{ top: PAGE_SIZES.paddingTop, bottom: PAGE_SIZES.paddingBottom, left: PAGE_SIZES.paddingLeft, right: PAGE_SIZES.paddingRight }"
       />
     </template>
   </PanelTest>
@@ -60,6 +59,7 @@ import PaginationWrapper from '../pagination/Pagination.vue'
 import PanelTest from './panel_test.vue'
 import Doc from '@/pagination/component_core/Doc.vue'
 import TextList from '@/pagination/component/TextList.vue'
+import { PAGE_SIZES } from '@/config.js'
 
 // Component mapping
 const getComponent = (type) => {
