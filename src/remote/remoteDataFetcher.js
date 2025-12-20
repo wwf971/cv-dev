@@ -83,7 +83,21 @@ async function fetchRemoteValue(serverOrigin, path, getToken) {
       throw new Error(`HTTP ${response.status}`)
     }
     
-    // Get response as text first
+    // Check Content-Type to determine how to handle response
+    const contentType = response.headers.get('Content-Type') || ''
+    
+    // Handle image responses - convert to data URL
+    if (contentType.startsWith('image/')) {
+      const blob = await response.blob()
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result) // returns data:image/png;base64,...
+        reader.onerror = reject
+        reader.readAsDataURL(blob)
+      })
+    }
+    
+    // Handle text/JSON responses
     const text = await response.text()
     
     // Try to parse as JSON to check for error format

@@ -42,6 +42,7 @@ import TextList from './component/TextList.vue'
 import Tr from './component/TableTr.vue'
 import Td from './component/TableTd.vue'
 import Table from './component/Table.vue'
+import VSpace from './component/VSpace.vue'
 import BasicInfoJp from '../content/CvJp/BasicInfoJp.vue'
 import { A4_SIZES, PAGE_SIZES } from '../config.js'
 import type { PagePadding, PageContext } from './pagination'
@@ -155,6 +156,8 @@ const getComponent = (type: string) => {
       return Td
     case 'Table':
       return Table
+    case 'VSpace':
+      return VSpace
     case 'BasicInfoJp':
       return BasicInfoJp
     default:
@@ -530,6 +533,11 @@ defineExpose({
   changePageHeight
 })
 </script>
+
+<style>
+/* Import shared CV styles globally for all paginated components */
+@import '../content/CvJp/styles-shared.css';
+</style>
 
 <style scoped>
 .pagination-root {

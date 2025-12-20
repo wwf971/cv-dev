@@ -9,6 +9,7 @@ const props = defineProps<{
   content: string
   startIndex?: number
   endIndex?: number
+  noSplit?: boolean  // If true, text cannot be split and must move to next page
 }>()
 
 const textRef = ref<HTMLElement | null>(null)
@@ -96,12 +97,23 @@ const trySplit = (pageCtx: any, docCtx: any) => {
     }
   }
   
+  // If noSplit flag is set, return code 2 (not splittable, move to next page)
+  if (props.noSplit) {
+    if (logger) {
+      logger.addLog(`Text doesn't fit and has noSplit flag, moving to next page (code: 2)`, 'Text.trySplit')
+    }
+    return {
+      code: 2,
+      data: null
+    }
+  }
+  
   const startIdx = props.startIndex ?? 0
   const endIdx = props.endIndex ?? props.content.length
   
   if (logger) {
-    logger.addLog(`Text component needs split. Length: ${endIdx - startIdx} chars`, 'Text.trySplit')
-    logger.addLog(`Text bottom: ${textBottom}, Page bottom: ${pageBottomY}`, 'Text.trySplit')
+    logger.addLog(`Text component needs split. Content: "${props.content.substring(startIdx, endIdx)}", Length: ${endIdx - startIdx} chars`, 'Text.trySplit')
+    logger.addLog(`Text bottom: ${textBottom.toFixed(2)}, Page bottom: ${pageBottomY.toFixed(2)}, Overflow: ${(textBottom - pageBottomY).toFixed(2)}px`, 'Text.trySplit')
   }
   
   // Use binary search for better performance

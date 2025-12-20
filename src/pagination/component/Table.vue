@@ -1,5 +1,5 @@
 <template>
-  <table ref="tableRef" class="table-component">
+  <table ref="tableRef" :class="['table-component', props.cssClass]" :style="props.cssStyle">
     <tbody>
       <component
         v-for="(row, index) in displayRows"
@@ -18,6 +18,8 @@ import Tr from './TableTr.vue'
 
 const props = withDefaults(defineProps<{
   rows: any[]
+  cssClass?: string
+  cssStyle?: any
 }>(), {
   rows: () => []
 })
@@ -95,10 +97,17 @@ const trySplit = (pageContext: any, docContext: any) => {
       } else if (result.code === 0) {
         // This row fits
         splitIndex = i + 1
-      } else {
-        // Error
+      } else if (result.code === 2) {
+        // This row doesn't fit and is not splittable - move to next page
+        splitIndex = i
         if (logger) {
-          logger.addLog(`Row ${i} returned error code ${result.code}`, 'Table.trySplit', 1)
+          logger.addLog(`Row ${i} doesn't fit and is not splittable (code: 2), splitting before it`, 'Table.trySplit')
+        }
+        break
+      } else {
+        // Error or unknown code
+        if (logger) {
+          logger.addLog(`Row ${i} returned error/unknown code ${result.code}`, 'Table.trySplit', 1)
         }
         splitIndex = i + 1
       }
@@ -143,13 +152,17 @@ const trySplit = (pageContext: any, docContext: any) => {
       {
         type: 'Table',
         data: {
-          rows: firstPartRows
+          rows: firstPartRows,
+          cssClass: props.cssClass,
+          cssStyle: props.cssStyle
         }
       },
       {
         type: 'Table',
         data: {
-          rows: secondPartRows
+          rows: secondPartRows,
+          cssClass: props.cssClass,
+          cssStyle: props.cssStyle
         }
       }
     ]

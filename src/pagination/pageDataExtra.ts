@@ -3,6 +3,6 @@
 export const pageDataExtra = [
   {
     pageIndex: 0,
-    pageHeight: 400,
+    pageHeight: 600,
   }
 ]

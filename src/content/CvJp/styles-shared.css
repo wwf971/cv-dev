@@ -213,6 +213,7 @@ border-top: none !important;
 	padding: 8px 4px;
 	font-size: 14px;
 	height: 35px;
+	white-space: nowrap;
 }
 
 /* Address text styling */
@@ -309,5 +310,91 @@ td.align-center {
 	font-weight: 500;
 	/* color: #333; */
 	line-height: 1;
+}
+
+/* Year cell, month cell, and content cell alignment styles */
+/* These ensure all columns align with the Gregorian year (bottom line) */
+
+/* Add padding to all table rows */
+.form-table tr {
+  padding-top: 8px;
+  padding-bottom: 6px;
+}
+
+.date-column-header {
+  width: 60px;
+  min-width: 60px;
+}
+
+.section-divider-row {
+  height: 35px;
+}
+
+.section-divider {
+  border: 1px solid #000;
+  background-color: #f0f0f0;
+  text-align: center;
+  font-weight: bold;
+  padding: 8px;
+  font-size: 14px;
+}
+
+.entry-row {
+  height: 35px;
+}
+
+.empty-row {
+  height: 15px !important;
+}
+
+/* Year cell minimum width */
+.year-cell {
+  min-width: 60px;
+}
+
+/* Year cell specific styling - force child text components to display as blocks */
+.year-cell .text-component {
+  display: block !important;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Japanese year (first text component) - smaller and gray */
+.year-cell .text-component:first-child {
+  font-size: 11px;
+  font-weight: 500;
+  color: #666;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+/* Gregorian year (second text component) - normal size */
+.year-cell .text-component:last-child:not(:first-child) {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Month cell and content cell alignment - match year cell structure */
+.month-cell .text-component,
+.content-cell .text-component {
+  display: block !important;
+  line-height: 1.2;
+}
+
+/* Spacer (first text component) in month and content cells - match Japanese year style */
+.month-cell .text-component:first-child,
+.content-cell .text-component:first-child {
+  font-size: 11px;
+  font-weight: 500;
+  color: transparent; /* Invisible but takes up space */
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+/* Actual content (second text component) - normal size */
+.month-cell .text-component:last-child:not(:first-child),
+.content-cell .text-component:last-child:not(:first-child) {
+  font-size: 14px;
+  line-height: 1;
 }
 	

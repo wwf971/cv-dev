@@ -11,7 +11,7 @@
     <Tab label="Test">
       <SubTab label="BasicInfoJp">
         <Panel>
-          <PanelTestBasicInfoJp />
+          <PanelTestCvJp />
         </Panel>
       </SubTab>
       <SubTab label="Table Cross-Page">
@@ -71,7 +71,7 @@ import PanelTestTable from '@/panels/panel_test_table.vue'
 import PanelTestText from '@/panels/panel_test_text.vue'
 import PanelTestTextList from '@/panels/panel_test_text_list.vue'
 import PanelTestTableTrTd from '@/panels/panel_test_table_tr_td.vue'
-import PanelTestBasicInfoJp from '@/panels/panel_test_basic_info_jp.vue'
+import PanelTestCvJp from '@/panels/panel_test_cv_jp.vue'
 import PanelServer from '@/remote/panel_server.vue'
 import { useInfoStore } from '@/content/info.js'
 

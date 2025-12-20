@@ -1,5 +1,10 @@
 <template>
-  <td ref="tdRef" class="td-component" :style="tdStyle" :class="{ 'align-bottom': props.alignBottom }">
+  <td 
+    ref="tdRef" 
+    :class="['td-component', props.cssClass, { 'align-bottom': props.alignBottom }]" 
+    :style="[tdStyle, props.cssStyle]"
+    :colspan="props.colspan"
+  >
     <component
       v-for="(comp, index) in displayItems"
       :key="index"
@@ -20,10 +25,14 @@ const props = withDefaults(defineProps<{
   widthRatio?: number
   isEmpty?: boolean
   alignBottom?: boolean
+  colspan?: number
+  cssClass?: string
+  cssStyle?: any
 }>(), {
   widthRatio: 1,
   isEmpty: false,
-  alignBottom: false
+  alignBottom: false,
+  colspan: 1
 })
 
 const tdRef = ref<HTMLElement | null>(null)
@@ -114,10 +123,19 @@ const trySplit = (pageContext: any, docContext: any) => {
       } else if (result.code === 0) {
         // This component fits, continue
         splitIndex = i + 1
-      } else {
-        // Error
+      } else if (result.code === 2) {
+        // This component doesn't fit and is not splittable
         if (logger) {
-          logger.addLog(`Item ${i} returned error code ${result.code}`, 'Td.trySplit', 1)
+          logger.addLog(`Item ${i} doesn't fit and is not splittable (code: 2), Td returns code 2`, 'Td.trySplit')
+        }
+        return {
+          code: 2,
+          data: null
+        }
+      } else {
+        // Error or unknown code
+        if (logger) {
+          logger.addLog(`Item ${i} returned error/unknown code ${result.code}`, 'Td.trySplit', 1)
         }
         splitIndex = i + 1
       }
@@ -164,14 +182,20 @@ const trySplit = (pageContext: any, docContext: any) => {
         type: 'Td',
         data: {
           items: firstPartItems,
-          widthRatio: props.widthRatio
+          widthRatio: props.widthRatio,
+          colspan: props.colspan,
+          cssClass: props.cssClass,
+          cssStyle: props.cssStyle
         }
       },
       {
         type: 'Td',
         data: {
           items: secondPartItems,
-          widthRatio: props.widthRatio
+          widthRatio: props.widthRatio,
+          colspan: props.colspan,
+          cssClass: props.cssClass,
+          cssStyle: props.cssStyle
         }
       }
     ]
