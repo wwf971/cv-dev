@@ -70,13 +70,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-
-// LogType enum (matching Pagination.vue)
-const LogType = {
-  Normal: 0,
-  Warning: 1,
-  Error: 2
-}
+import { LogType } from './LogTypes'
 
 const props = defineProps({
   logs: {

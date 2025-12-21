@@ -26,7 +26,7 @@ const trySplit = (pageContext: any, docContext: any) => {
   }
 
   const vspaceBottom = docContext.measureVerticalPosEnd(vspaceRef.value)
-  const vspaceTop = docContext.measureVerticalPosStart(vspaceRef.value)
+  const vspaceTop = docContext.measureVerticalPos(vspaceRef.value)
   const pageBottomY = pageContext.pageBottomY
   
   // If entire vspace fits, no split needed

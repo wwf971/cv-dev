@@ -251,6 +251,20 @@ border-color: #000;
 	padding: 2px 6px;
 	padding-right: 0px;
 }
+
+/* CV JP specific cell padding - 8px top, 6px bottom */
+.cv-jp-cell {
+	padding-top: 6px !important;
+	padding-bottom: 6px !important;
+	padding-left: 6px !important;
+	padding-right: 6px !important;
+	vertical-align: top !important;
+}
+
+/* Header cells should be vertically centered */
+.header-cell {
+	vertical-align: middle !important;
+}
 	/* strange: td {} instead of .form-table td {} will make height not under control of inline style*/
 		
 .form-cell {
@@ -316,10 +330,7 @@ td.align-center {
 /* These ensure all columns align with the Gregorian year (bottom line) */
 
 /* Add padding to all table rows */
-.form-table tr {
-  padding-top: 8px;
-  padding-bottom: 6px;
-}
+/* Note: padding on tr doesn't work, use cv-jp-cell class on td instead */
 
 .date-column-header {
   width: 60px;
@@ -391,9 +402,9 @@ td.align-center {
   margin-bottom: 2px;
 }
 
-/* Actual content (second text component) - normal size */
-.month-cell .text-component:last-child:not(:first-child),
-.content-cell .text-component:last-child:not(:first-child) {
+/* Actual content (all text components after the first spacer) - normal size */
+.month-cell .text-component:not(:first-child),
+.content-cell .text-component:not(:first-child) {
   font-size: 14px;
   line-height: 1;
 }

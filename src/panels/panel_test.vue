@@ -52,7 +52,7 @@
         </TabOnTop>
         
         <TabOnTop label="Logs">
-          <LogView :logs="logs" @clear="clearLogs" />
+          <LogView :logs="displayLogs" @clear="clearLogs" />
         </TabOnTop>
       </TabsOnTop>
     </div>
@@ -85,7 +85,7 @@ import { ref, computed, watch } from 'vue'
 import TabsOnTop from '@wwf971/vue-comp-misc/src/layout/tabs/TabsOnTop.vue'
 import { TabOnTop } from '@wwf971/vue-comp-misc/src/layout/tabs/TabsOnTopSlots'
 import PageInfo from '@/pagination/PageInfo.vue'
-import LogView from '@/pagination/LogView.vue'
+import LogView from '../pagination/LogView.vue'
 
 const props = defineProps({
   title: {
@@ -108,12 +108,18 @@ const props = defineProps({
   componentCount: {
     type: Number,
     default: 0
+  },
+  logs: {
+    type: Array,
+    required: false,
+    default: () => null
   }
 })
 
-const emit = defineEmits(['runPagination'])
+const emit = defineEmits(['runPagination', 'clearLogs'])
 
-const logs = ref([])
+const internalLogs = ref([])
+const displayLogs = computed(() => props.logs || internalLogs.value)
 const selectedPageIndex = ref(0)
 const contentTabsRef = ref(null)
 
@@ -163,19 +169,37 @@ const handleRunPagination = async () => {
   setTimeout(() => {
     if (props.paginationRef) {
       const newLogs = props.paginationRef.getLogs()
-      logs.value = [...newLogs]
+      if (props.logs) {
+        // External logs - parent handles pagination logs
+        // Do nothing here
+      } else {
+        // Internal logs - update directly
+        internalLogs.value = [...newLogs]
+      }
     }
   }, 100)
 }
 
 const clearLogs = () => {
-  logs.value = []
+  if (props.logs) {
+    // External logs - emit event
+    emit('clearLogs')
+  } else {
+    // Internal logs - clear directly
+    internalLogs.value = []
+  }
 }
 
 const updateLogs = () => {
   if (props.paginationRef) {
     const newLogs = props.paginationRef.getLogs()
-    logs.value = [...newLogs]
+    if (props.logs) {
+      // External logs - parent manages them
+      // Do nothing here, parent will handle it
+    } else {
+      // Internal logs - update directly
+      internalLogs.value = [...newLogs]
+    }
   }
 }
 

@@ -9,8 +9,9 @@ export async function fetchRemoteData(data, serverOrigin, getToken) {
   // Create a deep copy (plain object, not reactive)
   const workingData = JSON.parse(JSON.stringify(data))
   
-  // Pattern to match {{remote:path}}
+  // Pattern to match {{remote:path}} or {{remote:tree:path}}
   const remotePattern = /\{\{remote:([^}]+)\}\}/g
+  const treePattern = /\{\{remote:tree:([^}]+)\}\}/
   
   // Store all fetch promises
   const fetchPromises = []
@@ -20,12 +21,39 @@ export async function fetchRemoteData(data, serverOrigin, getToken) {
    */
   function traverseAndCollect(obj, path = []) {
     if (typeof obj === 'string') {
+      // Check if it's a tree pattern first
+      const treeMatch = obj.match(treePattern)
+      if (treeMatch) {
+        const identifier = treeMatch[1]
+        
+        // Fetch tree and replace with response object
+        const fetchPromise = fetchTreeData(serverOrigin, identifier, getToken)
+          .then(responseObj => {
+            // Replace entire string with response object
+            setNestedValue(workingData, path, responseObj)
+          })
+          .catch(error => {
+            // Replace with error response object
+            setNestedValue(workingData, path, {
+              code: -1,
+              data: null,
+              message: `Error: ${error.message}`
+            })
+          })
+        
+        fetchPromises.push(fetchPromise)
+        return
+      }
+      
       // Check if string contains remote patterns
       const matches = [...obj.matchAll(remotePattern)]
       if (matches.length > 0) {
         matches.forEach(match => {
           const remotePath = match[1]
           const fullPattern = match[0]
+          
+          // Skip tree patterns (already handled above)
+          if (remotePath.startsWith('tree:')) return
           
           // Create fetch promise
           const fetchPromise = fetchRemoteValue(serverOrigin, remotePath, getToken)
@@ -68,6 +96,41 @@ export async function fetchRemoteData(data, serverOrigin, getToken) {
   await Promise.all(fetchPromises)
   
   return workingData
+}
+
+/**
+ * Fetch tree data from server
+ * @param {String} serverOrigin - Server origin URL
+ * @param {String} identifier - Path (must start with /)
+ * @param {String} getToken - GET token for authentication
+ * @returns {Object} Full response object {code, data, message}
+ */
+async function fetchTreeData(serverOrigin, identifier, getToken) {
+  // Ensure path starts with / and ends with /
+  let path = identifier
+  if (!path.startsWith('/')) {
+    path = '/' + path
+  }
+  if (!path.endsWith('/')) {
+    path = path + '/'
+  }
+  
+  // Remove leading slash for URL construction (serverOrigin already has it)
+  const pathWithoutLeading = path.substring(1)
+  const url = `${serverOrigin}/${pathWithoutLeading}?fetch_type=tree&token=${encodeURIComponent(getToken)}`
+  
+  try {
+    const response = await fetch(url)
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    
+    const data = await response.json()
+    return data // Return full response object {code, data, message}
+  } catch (error) {
+    throw error
+  }
 }
 
 /**

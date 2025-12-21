@@ -46,6 +46,7 @@ import VSpace from './component/VSpace.vue'
 import BasicInfoJp from '../content/CvJp/BasicInfoJp.vue'
 import { A4_SIZES, PAGE_SIZES } from '../config.js'
 import type { PagePadding, PageContext } from './pagination'
+import { LogType } from './LogTypes'
 
 const props = withDefaults(defineProps<{
   docId: string
@@ -94,12 +95,6 @@ const applyForExtraHorizontalSpaceRight = (requesterId: string, width: number) =
 }
 
 // Logging system
-enum LogType {
-  Normal = 0,
-  Warning = 1,
-  Error = 2
-}
-
 type LogEntry = {
   message: string
   from: string

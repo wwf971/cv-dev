@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, inject } from 'vue'
 import Table from '../../pagination/component/Table.vue'
 import VSpace from '../../pagination/component/VSpace.vue'
 import { buildEduAndWorkComponents } from './EduAndWorkBuilder'
@@ -23,12 +23,15 @@ const props = defineProps({
 
 const eduWorkRef = ref<HTMLElement | null>(null)
 
+// Inject logger (optional - may not be available in all contexts)
+const logger = inject('paginationLogger', null) as any
+
 // Display components: use builder function to generate components
 const displayComponents = computed(() => buildEduAndWorkComponents({
   eduEntries: props.eduEntries as any,
   workEntries: props.workEntries as any,
   licenseEntries: props.licenseEntries as any
-}))
+}, logger))
 
 // Component mapping
 const getComponent = (type: string) => {
@@ -49,12 +52,6 @@ const getComponent = (type: string) => {
 
 <style scoped>
 @import './styles-shared.css';
-
-/* Add padding to all table rows */
-:deep(tr) {
-  padding-top: 8px;
-  padding-bottom: 6px;
-}
 
 .date-column-header {
   width: 60px;
