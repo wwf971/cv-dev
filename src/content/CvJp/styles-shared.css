@@ -101,8 +101,6 @@ align-items: center;
 justify-content: center;
 }
 
-.no-render {}
-
 .field-value .en-text:only-child {
 font-size: 22px;
 font-weight: 700;
@@ -238,7 +236,6 @@ border-color: #000;
 
 /* Name form table styles */
 .form-table {
-	/* table-layout: fixed; */
 	width: 100%;
 	border-collapse: collapse;
 	border-spacing: 0;

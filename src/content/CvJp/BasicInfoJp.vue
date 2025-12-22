@@ -13,26 +13,26 @@
 				<table class="form-table">
 				  <tbody>
 					<tr style="height: 15px !important;">
-						<td class="form-cell key-cell">ふりがな</td>
+						<td class="form-cell key-cell" style="width: 115px;">ふりがな</td>
 						<td class="form-cell value-cell name-furigana align-center no-right-border">{{ displayData.nameFuriganaLast }}</td>
 						<td class="form-cell value-cell name-furigana align-center no-hori-border">{{ displayData.nameFuriganaFirst }}</td>
 						<td class="form-cell no-left-border"></td>
 					</tr>
 					<tr>
-						<td class="form-cell key-cell" style="word-spacing: 1.2em;">氏 名</td>
+						<td class="form-cell key-cell" style="width: 115px; word-spacing: 1.2em;">氏 名</td>
 						<td class="form-cell value-cell name-kanji align-center no-right-border">{{ displayData.nameKanjiLast }}</td>
 						<td class="form-cell value-cell name-kanji align-center no-hori-border">{{ displayData.nameKanjiFirst }}</td>
-						<td class="form-cell no-left-border" style="width: 300px !important;"></td>
+						<td class="form-cell no-left-border"></td>
 					</tr>
 				  </tbody>
 				</table>
 				<table class="form-table no-top-border">
 				  <tbody>
 					<tr>
-						<td class="form-cell key-cell">生年月日</td>
+						<td class="form-cell key-cell" style="width: 115px;">生年月日</td>
 						<td colspan="2" class="form-cell value-cell align-left">
 							<div style="display: flex; flex-direction: row; align-items: flex-end; padding-left: 4px;">
-								<span class="main-date"><div class="year-jp">{{ displayData.birthYearEra }}</div>{{ displayData.birthYear }}年</span>
+								<span class="main-date"><div class="year-jp">{{ displayData.birthYearJp }}</div>{{ displayData.birthYear }}年</span>
 								<span class="main-date">{{ displayData.birthMonthDay }}</span>
 								<span class="main-date" style="margin-left: auto;">（満{{ displayData.age }}歳）</span>
 							</div>
@@ -49,7 +49,7 @@
 					</tr>
 
 					<tr>
-						<td class="form-cell key-cell">住所</td>
+						<td class="form-cell key-cell" style="width: 115px;">住所</td>
 						<td colspan="3" class="form-cell value-cell align-left">
 							<div style="padding-left: 4px;">
 								<div class="address-text">{{ displayData.postalCode }}</div>
@@ -58,9 +58,9 @@
 						</td>
 					</tr>
 					<tr>
-						<td class="form-cell key-cell">メール<br>アドレス</td>
+						<td class="form-cell key-cell" style="width: 115px;">メール<br>アドレス</td>
 						<td class="form-cell value-cell">{{ displayData.email }}</td>
-						<td class="form-cell key-cell">電話番号</td>
+						<td class="form-cell key-cell" style="width: 115px;">電話番号</td>
 						<td class="form-cell value-cell">{{ displayData.phone }}</td>
 					</tr>
 				  </tbody>
@@ -99,8 +99,10 @@ const props = defineProps({
   nameFuriganaFirst: String,
   nameKanjiLast: String,
   nameKanjiFirst: String,
-  birthYearEra: String,
+  birthYearJp: String,
   birthYear: String,
+  birthMonth: Number,
+  birthDay: Number,
   birthMonthDay: String,
   age: Number,
   gender: String,
@@ -121,10 +123,12 @@ const exampleData = {
   nameFuriganaFirst: 'たろう',
   nameKanjiLast: '山田',
   nameKanjiFirst: '太郎',
-  birthYearEra: '平成2',
+  birthYearJp: '平成2',
   birthYear: '1990',
+  birthMonth: 12,
+  birthDay: 31,
   birthMonthDay: '12月31日',
-  age: 30,
+  age: 34,
   gender: 'male',
   postalCode: '〒100-0001',
   address: '東京都千代田区千代田1-1-1サンプルビル101',
@@ -301,8 +305,6 @@ display: flex;
 flex-direction: column;
 }
 
-.main-date {}
-
 .furigana {
 font-size: 12px;
 color: #666;
@@ -330,12 +332,6 @@ margin-top: 2px;
 font-size: 12px;
 white-space: nowrap;
 width: 1px;
-}
-
-.family-name {
-}
-
-.first-name {
 }
 
 .date-container {

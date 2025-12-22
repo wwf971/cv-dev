@@ -93,6 +93,11 @@ const testConnection = async () => {
         message: data.message,
         details: data.data || {}
       }
+      
+      // Save the successful settings to config
+      const config = await import('@/config.js')
+      config.SERVER_INFO.origin = serverOrigin.value
+      config.SERVER_INFO.get_token = getToken.value
     } else if (data.code === 1) {
       // Connected but token is wrong
       testResult.value = {
