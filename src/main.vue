@@ -1,5 +1,15 @@
 <template>
-  <MasterDetail title="CV Generator" sidebarWidth="200px" class="print:hidden">
+  <!-- Print Preview Mode (at root level, outside MasterDetail) -->
+  <PrintWrapper 
+    v-if="printPreviewActive && printPreviewData"
+    :pages="printPreviewData.pages"
+    :docData="printPreviewData.docData"
+    :pageWidth="printPreviewData.pageWidth"
+    @back="exitPrintPreview"
+  />
+  
+  <!-- Normal UI Mode -->
+  <MasterDetail v-else title="CV Generator" sidebarWidth="200px">
     <Tab label="CV Content">
       <SubTab label="CV Content" :isDefault="true">
         <Panel>
@@ -61,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, onMounted, provide } from 'vue'
 import MasterDetail from '@wwf971/vue-comp-misc/src/layout/MasterDetail.vue'
 import { Tab, SubTab, Panel } from '@wwf971/vue-comp-misc/src/layout/MasterDetailSlots'
 import Content from '@/content/content.vue'
@@ -73,10 +83,35 @@ import PanelTestTextList from '@/panels/panel_test_text_list.vue'
 import PanelTestTableTrTd from '@/panels/panel_test_table_tr_td.vue'
 import PanelTestCvJp from '@/panels/panel_test_cv_jp.vue'
 import PanelServer from '@/remote/panel_server.vue'
+import PrintWrapper from '@/panels/PrintWrapper.vue'
 import { useInfoStore } from '@/content/info.js'
 
 // Use the Pinia store
 const infoStore = useInfoStore()
+
+// Print preview state
+const printPreviewActive = ref(false)
+const printPreviewData = ref<any>(null)
+
+// Print preview API for descendant components
+const enterPrintPreview = (data: any) => {
+  printPreviewData.value = data
+  printPreviewActive.value = true
+  console.log('[main] Entering print preview mode')
+}
+
+const exitPrintPreview = () => {
+  printPreviewActive.value = false
+  printPreviewData.value = null
+  console.log('[main] Exiting print preview mode')
+}
+
+// Provide print preview API to all descendant components
+provide('printPreview', {
+  enter: enterPrintPreview,
+  exit: exitPrintPreview,
+  isActive: printPreviewActive
+})
 
 // Lifecycle hooks
 onMounted(async () => {

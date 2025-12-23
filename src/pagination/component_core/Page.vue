@@ -1,8 +1,8 @@
 <template>
-  <div ref="pageContainerRef" class="page-container" :style="pageStyle">
+  <div ref="pageContainerRef" class="page-container" :class="{ 'no-page-lines': props.hidePageLines }" :style="pageStyle">
     <!-- Page begin line (if position is determined) -->
     <PageLine 
-      v-if="props.pageStartY !== null"
+      v-if="props.pageStartY !== null && !props.hidePageLines"
       class="print:hidden"
       :line="{
         pageNumber: props.pageIndex + 1,
@@ -20,7 +20,7 @@
     <!-- Page end line (if position is determined) -->
     <!-- Position at the very bottom of the page container -->
     <PageLine 
-      v-if="props.pageEndY !== null"
+      v-if="props.pageEndY !== null && !props.hidePageLines"
       class="print:hidden"
       :line="{
         pageNumber: props.pageIndex + 1,
@@ -45,8 +45,10 @@ const props = withDefaults(defineProps<{
   pageWidth?: number
   pageHeight: number
   padding?: PagePadding
+  hidePageLines?: boolean
 }>(), {
-  padding: () => ({ top: 40, bottom: 40, left: 40, right: 40 })
+  padding: () => ({ top: 40, bottom: 40, left: 40, right: 40 }),
+  hidePageLines: false
 })
 
 const pageContainerRef = ref<HTMLElement | null>(null)
@@ -98,6 +100,20 @@ defineExpose({
   background: white;
   border: 1px solid #ddd;
   overflow: visible; /* Allow page lines to be visible */
+}
+
+/* Remove border when hidePageLines is true (print preview mode) */
+.page-container:has(.no-page-lines) {
+  border: none;
+}
+
+@media print {
+  .page-container {
+    border: none;
+    height: auto !important;
+    min-height: 0 !important;
+    page-break-inside: avoid;
+  }
 }
 </style>
 

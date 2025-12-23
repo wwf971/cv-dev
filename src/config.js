@@ -45,6 +45,8 @@ try {
   if (privateConfig.SERVER_INFO) SERVER_INFO = privateConfig.SERVER_INFO
   if (privateConfig.educationEntries) educationEntries = privateConfig.educationEntries
   if (privateConfig.workEntries) workEntries = privateConfig.workEntries
+  // workEntries_remote takes priority over workEntries for remote data patterns
+  if (privateConfig.workEntries_remote) workEntries = privateConfig.workEntries_remote
   if (privateConfig.licenseEntries) licenseEntries = privateConfig.licenseEntries
   if (privateConfig.interest) interest = privateConfig.interest
   if (privateConfig.url_motivation_text) url_motivation_text = privateConfig.url_motivation_text

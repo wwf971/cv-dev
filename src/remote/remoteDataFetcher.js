@@ -92,7 +92,7 @@ export async function fetchRemoteData(data, serverOrigin, getToken) {
   // Traverse and collect all fetch tasks
   traverseAndCollect(workingData)
   
-  // Execute all fetches
+  // Execute all fetches in parallel - server now handles concurrent requests
   await Promise.all(fetchPromises)
   
   return workingData

@@ -525,7 +525,9 @@ defineExpose({
   pages,
   getPageNum,
   getPageInfo,
-  changePageHeight
+  changePageHeight,
+  getPages: () => JSON.parse(JSON.stringify(pages.value)),
+  getDocData: () => JSON.parse(JSON.stringify(docData.value))
 })
 </script>
 

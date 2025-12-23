@@ -5,8 +5,8 @@ import { LogType } from '../../pagination/LogTypes'
 // Column width ratios
 const COL_YEAR = 0.08
 const COL_MONTH = 0.05
-const COL_CONTENT = 0.72
-const COL_NOTE = 0.15
+const COL_CONTENT = 0.69
+const COL_NOTE = 0.18
 
 const tableStyle = {
   width: '100%',
@@ -57,6 +57,50 @@ const processDescription = (text: string): string[] => {
     .map(line => line.replace(/ /g, '\u00A0')) // Each space becomes 2 non-breaking spaces
 }
 
+// Helper to parse a single entry (start, end, or direct entry)
+const parseEntry = (timeNode: any, descNode: any): EduWorkEntry | null => {
+  if (!timeNode || !descNode) return null
+  
+  const yearId = Object.keys(timeNode.children || {}).find(key => timeNode.children[key].name === 'year')
+  const monthId = Object.keys(timeNode.children || {}).find(key => timeNode.children[key].name === 'month')
+  
+  const year = yearId ? Number(timeNode.children[yearId].content?.value) : undefined
+  const month = monthId ? (timeNode.children[monthId].content?.value) : undefined
+  
+  // Get description value and type/note
+  let rawValue = ''
+  let note = ''
+  
+  if (descNode.type === 'content' && descNode.content?.value) {
+    // Description node is directly a content node
+    rawValue = String(descNode.content.value)
+  } else if (descNode.children) {
+    // Description node is a segment, look for 'jp' and 'type' children
+    const jpId = Object.keys(descNode.children).find(key => descNode.children[key].name === 'jp')
+    const typeId = Object.keys(descNode.children).find(key => descNode.children[key].name === 'type')
+    
+    rawValue = jpId ? String(descNode.children[jpId].content?.value || '') : ''
+    note = typeId ? String(descNode.children[typeId].content?.value || '') : ''
+  }
+  
+  // Process description: split by \n and replace spaces
+  const processedLines = processDescription(rawValue)
+  
+  if (processedLines.length === 0) return null
+  
+  const entry: EduWorkEntry = {
+    year,
+    month,
+    value: processedLines.length === 1 ? processedLines[0] : processedLines
+  }
+  
+  if (note) {
+    entry.note = note
+  }
+  
+  return entry
+}
+
 // Helper to expand tree response into start/end entries
 const expandTreeResponse = (treeResponse: TreeResponse, logger?: Logger | null): EduWorkEntry[] => {
   try {
@@ -70,36 +114,28 @@ const expandTreeResponse = (treeResponse: TreeResponse, logger?: Logger | null):
     const tree = treeResponse.data.tree
     const entries: EduWorkEntry[] = []
     
+    // Check if tree has direct time/description nodes (work entry pattern)
+    const timeId = Object.keys(tree).find(key => tree[key].name === 'time')
+    const descId = Object.keys(tree).find(key => tree[key].name === 'description')
+    
+    if (timeId && descId) {
+      // Direct entry pattern (work entries)
+      const entry = parseEntry(tree[timeId], tree[descId])
+      if (entry) entries.push(entry)
+      return entries
+    }
+    
+    // Otherwise, check for start/end pattern (education entries)
     // Parse start entry
     const startId = Object.keys(tree).find(key => tree[key].name === 'start')
     if (startId) {
       const startNode = tree[startId]
-      const timeId = Object.keys(startNode.children || {}).find(key => startNode.children[key].name === 'time')
-      const descId = Object.keys(startNode.children || {}).find(key => startNode.children[key].name === 'description')
+      const startTimeId = Object.keys(startNode.children || {}).find(key => startNode.children[key].name === 'time')
+      const startDescId = Object.keys(startNode.children || {}).find(key => startNode.children[key].name === 'description')
       
-      if (timeId && descId) {
-        const timeNode = startNode.children[timeId]
-        const descNode = startNode.children[descId]
-        
-        const yearId = Object.keys(timeNode.children || {}).find(key => timeNode.children[key].name === 'year')
-        const monthId = Object.keys(timeNode.children || {}).find(key => timeNode.children[key].name === 'month')
-        const jpId = Object.keys(descNode.children || {}).find(key => descNode.children[key].name === 'jp')
-        
-        const year = yearId ? Number(timeNode.children[yearId].content?.value) : undefined
-        const month = monthId ? Number(timeNode.children[monthId].content?.value) : undefined
-        const rawValue = jpId ? String(descNode.children[jpId].content?.value || '') : ''
-        
-        // Process description: split by \n and replace spaces
-        const processedLines = processDescription(rawValue)
-        
-        // Create ONE entry with array of lines if multiple lines, otherwise single string
-        if (processedLines.length > 0) {
-          entries.push({
-            year,
-            month,
-            value: processedLines.length === 1 ? processedLines[0] : processedLines
-          })
-        }
+      if (startTimeId && startDescId) {
+        const entry = parseEntry(startNode.children[startTimeId], startNode.children[startDescId])
+        if (entry) entries.push(entry)
       }
     }
     
@@ -107,32 +143,12 @@ const expandTreeResponse = (treeResponse: TreeResponse, logger?: Logger | null):
     const endId = Object.keys(tree).find(key => tree[key].name === 'end')
     if (endId) {
       const endNode = tree[endId]
-      const timeId = Object.keys(endNode.children || {}).find(key => endNode.children[key].name === 'time')
-      const descId = Object.keys(endNode.children || {}).find(key => endNode.children[key].name === 'description')
+      const endTimeId = Object.keys(endNode.children || {}).find(key => endNode.children[key].name === 'time')
+      const endDescId = Object.keys(endNode.children || {}).find(key => endNode.children[key].name === 'description')
       
-      if (timeId && descId) {
-        const timeNode = endNode.children[timeId]
-        const descNode = endNode.children[descId]
-        
-        const yearId = Object.keys(timeNode.children || {}).find(key => timeNode.children[key].name === 'year')
-        const monthId = Object.keys(timeNode.children || {}).find(key => timeNode.children[key].name === 'month')
-        const jpId = Object.keys(descNode.children || {}).find(key => descNode.children[key].name === 'jp')
-        
-        const year = yearId ? Number(timeNode.children[yearId].content?.value) : undefined
-        const month = monthId ? Number(timeNode.children[monthId].content?.value) : undefined
-        const rawValue = jpId ? String(descNode.children[jpId].content?.value || '') : ''
-        
-        // Process description: split by \n and replace spaces
-        const processedLines = processDescription(rawValue)
-        
-        // Create ONE entry with array of lines if multiple lines, otherwise single string
-        if (processedLines.length > 0) {
-          entries.push({
-            year,
-            month,
-            value: processedLines.length === 1 ? processedLines[0] : processedLines
-          })
-        }
+      if (endTimeId && endDescId) {
+        const entry = parseEntry(endNode.children[endTimeId], endNode.children[endDescId])
+        if (entry) entries.push(entry)
       }
     }
     
@@ -370,10 +386,14 @@ const buildTable1Rows = (eduEntries: EduWorkEntry[], workEntries: EduWorkEntry[]
         },
         {
           items: [{ type: 'Text', data: { content: '職 歴', noSplit: true } }],
-          widthRatio: COL_CONTENT + COL_NOTE,
-          colspan: 2,
+          widthRatio: COL_CONTENT,
           cssClass: 'cv-jp-cell header-cell word-spacing-0p5 no-left-border',
           cssStyle: { wordSpacing: '0.5em' }
+        },
+        {
+          items: [{ type: 'Text', data: { content: '備考', noSplit: true } }],
+          widthRatio: COL_NOTE,
+          cssClass: 'cv-jp-cell header-cell'
         }
       ],
       cssClass: 'header-row'
@@ -426,12 +446,12 @@ const buildTable2Rows = (licenseEntries: EduWorkEntry[]) => {
         {
           items: [{ type: 'Text', data: { content: '免許・資格', noSplit: true } }],
           widthRatio: COL_CONTENT,
-          cssClass: 'cv-jp-cell section-divider'
+          cssClass: 'cv-jp-cell header-cell'
         },
         {
           items: [{ type: 'Text', data: { content: '備考', noSplit: true } }],
           widthRatio: COL_NOTE,
-          cssClass: 'cv-jp-cell section-divider'
+          cssClass: 'cv-jp-cell header-cell'
         }
       ],
       cssClass: 'header-row'

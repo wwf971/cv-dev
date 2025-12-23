@@ -1,5 +1,15 @@
 <template>
-  <div class="panel-layout">
+  <!-- Print Preview Mode -->
+  <PrintWrapper 
+    v-if="ifPreviewMode && previewData" 
+    :pages="previewData.pages"
+    :docData="previewData.docData"
+    :pageWidth="previewData.pageWidth"
+    @back="exitPreview"
+  />
+  
+  <!-- Normal Mode -->
+  <div v-else class="panel-layout">
     <!-- Control Panel (Left) with Tabs -->
     <div class="control-panel">
       <h3>{{ title }}</h3>
@@ -7,6 +17,14 @@
       
       <button @click="handleRunPagination" class="control-button">
         Run Pagination
+      </button>
+      
+      <button 
+        @click="enterPrintPreview" 
+        class="control-button print-preview-button"
+        :disabled="!props.paginationRef || pageCount === 0"
+      >
+        Print Preview
       </button>
       
       <slot name="extra-buttons"></slot>
@@ -81,11 +99,12 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, inject } from 'vue'
 import TabsOnTop from '@wwf971/vue-comp-misc/src/layout/tabs/TabsOnTop.vue'
 import { TabOnTop } from '@wwf971/vue-comp-misc/src/layout/tabs/TabsOnTopSlots'
 import PageInfo from '@/pagination/PageInfo.vue'
 import LogView from '../pagination/LogView.vue'
+import PrintWrapper from './PrintWrapper.vue'
 
 const props = defineProps({
   title: {
@@ -116,7 +135,13 @@ const props = defineProps({
   }
 })
 
+
+const ifPreviewMode = ref(false)
+const previewData = ref(null)
 const emit = defineEmits(['runPagination', 'clearLogs'])
+
+// Inject print preview API from main.vue
+const printPreview = inject('printPreview', null)
 
 const internalLogs = ref([])
 const displayLogs = computed(() => props.logs || internalLogs.value)
@@ -190,6 +215,43 @@ const clearLogs = () => {
   }
 }
 
+const enterPrintPreview = () => {
+  // Capture page data once (not reactive)
+  if (props.paginationRef) {
+    const pages = props.paginationRef.getPages() // Already cloned in getPages()
+    const docData = props.paginationRef.getDocData() // Already cloned in getDocData()
+    const pageWidth = pages[0]?.sizes?.pageWidth || 793.92
+    
+    previewData.value = {
+      pages,
+      docData,
+      pageWidth
+    }
+    
+    console.log(`[panel_test] Preview data prepared: ${previewData.value.pages.length} pages`)
+    
+    // Use provided print preview API
+    if (printPreview) {
+      printPreview.enter(previewData.value)
+    }
+  } else {
+    console.error('[panel_test] Cannot prepare preview - paginationRef is not available')
+    previewData.value = null
+  }
+  
+  // Switch local preview mode
+  ifPreviewMode.value = true
+}
+
+const exitPreview = () => {
+  ifPreviewMode.value = false
+  
+  // Use provided print preview API
+  if (printPreview) {
+    printPreview.exit()
+  }
+}
+
 const updateLogs = () => {
   if (props.paginationRef) {
     const newLogs = props.paginationRef.getLogs()
@@ -259,6 +321,20 @@ const handleChangePageHeight = async (pageIndex, newHeight) => {
 .paginated-content-wrapper {
   height: 100%;
   overflow: auto;
+}
+
+.print-preview-button {
+  background-color: #28a745;
+}
+
+.print-preview-button:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.print-preview-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 </style>
 

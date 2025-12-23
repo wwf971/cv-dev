@@ -26,8 +26,10 @@ const customData = {
     // ],
     eduEntries: [
       "{{remote:tree:/edu/bachelor/}}",
+      "{{remote:tree:/edu/master/}}",
     ],
-    workEntries: [
+    // workEntries imported from config.js (overridden by config.0.js if present)
+    workEntries: configWorkEntries.length > 0 ? configWorkEntries : [
       { year: 2022, month: 4, value: '株式会社〇〇 入社', note: '現在に至る' }
     ],
     licenseEntries: [
@@ -47,7 +49,7 @@ import Table from '@/pagination/component/Table.vue'
 import VSpace from '@/pagination/component/VSpace.vue'
 import { buildEduAndWorkComponents } from '@/content/CvJp/EduAndWorkBuilder'
 import { fetchRemoteData as _fetchRemoteData } from '@/remote/remoteDataFetcher.js'
-import { SERVER_INFO, PAGE_SIZES } from '@/config.js'
+import { SERVER_INFO, PAGE_SIZES, workEntries as configWorkEntries } from '@/config.js'
 import { LogType } from '@/pagination/LogTypes'
 import { toYearJp, calcAge } from '@/content/CvJp/Utils'
 
