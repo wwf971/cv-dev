@@ -1,5 +1,5 @@
 <template>
-  <span ref="textRef" class="text-component">{{ displayText }}</span>
+  <span v-if="displayText" ref="textRef" :class="['text-component', props.cssClass]">{{ displayText }}</span>
 </template>
 
 <script setup lang="ts">
@@ -10,6 +10,7 @@ const props = defineProps<{
   startIndex?: number
   endIndex?: number
   noSplit?: boolean  // If true, text cannot be split and must move to next page
+  cssClass?: string  // Optional CSS class for the text span
 }>()
 
 const textRef = ref<HTMLElement | null>(null)
@@ -64,6 +65,17 @@ const searchBinary = (startIdx: number, endIdx: number, docCtx: any, pageBottomY
 
 // Split function that takes explicit parameters
 const trySplit = (pageCtx: any, docCtx: any) => {
+  // If text is empty, it takes no space and always fits
+  if (!displayText.value || displayText.value.length === 0) {
+    if (logger) {
+      logger.addLog(`Text is empty, no split needed (code: 0)`, 'Text.trySplit')
+    }
+    return {
+      code: 0,
+      data: null
+    }
+  }
+  
   if (!textRef.value || !docCtx || !pageCtx) {
     if (logger) {
       const reason = !textRef.value ? 'textRef is null' : !docCtx ? 'docContext param is null' : 'pageContext param is null'
@@ -131,9 +143,9 @@ const trySplit = (pageCtx: any, docCtx: any) => {
   textRef.value.textContent = displayText.value
   
   if (splitPoint === startIdx) {
-    // Even single character doesn't fit - force split
+    // Even single character doesn't fit - return empty first part, all content in second part
     if (logger) {
-      logger.addLog(`Warning: Even single character doesn't fit, forcing split`, 'Text.trySplit', 1)
+      logger.addLog(`Warning: Even single character doesn't fit, first part empty (${startIdx}-${startIdx}), second part gets all content (${startIdx}-${endIdx})`, 'Text.trySplit', 1)
     }
     return {
       code: 1,
@@ -143,15 +155,17 @@ const trySplit = (pageCtx: any, docCtx: any) => {
           data: {
             content: props.content, 
             startIndex: startIdx, 
-            endIndex: startIdx + 1 
+            endIndex: startIdx,  // Empty: same start and end
+            cssClass: props.cssClass
           }
         },
         { 
           type: 'Text', 
           data: {
             content: props.content, 
-            startIndex: startIdx + 1, 
-            endIndex: endIdx 
+            startIndex: startIdx, 
+            endIndex: endIdx,  // Full content from startIdx to endIdx
+            cssClass: props.cssClass
           }
         }
       ]
@@ -164,17 +178,19 @@ const trySplit = (pageCtx: any, docCtx: any) => {
       { 
         type: 'Text', 
         data: {
-          content: props.content, 
-          startIndex: startIdx, 
-          endIndex: splitPoint 
+          content: props.content,
+          startIndex: startIdx,
+          endIndex: splitPoint,
+          cssClass: props.cssClass
         }
       },
       { 
         type: 'Text', 
         data: {
-          content: props.content, 
-          startIndex: splitPoint, 
-          endIndex: endIdx 
+          content: props.content,
+          startIndex: splitPoint,
+          endIndex: endIdx,
+          cssClass: props.cssClass
         }
       }
     ]

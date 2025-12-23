@@ -2,11 +2,11 @@ import { toYearJp } from './Utils'
 import type { Logger } from '../../pagination/LogTypes'
 import { LogType } from '../../pagination/LogTypes'
 
-// Column width ratios
+// Column width ratios - must sum to 100% for table-layout: fixed
 const COL_YEAR = 0.08
-const COL_MONTH = 0.05
-const COL_CONTENT = 0.69
-const COL_NOTE = 0.18
+const COL_MONTH = 0.08
+const COL_CONTENT = 0.66  // Only used when there's a note column after it
+const COL_NOTE = 0.18     // Explicitly set to remaining 18%
 
 const tableStyle = {
   width: '100%',
@@ -205,15 +205,15 @@ const createDateCells = (entry: EduWorkEntry) => {
   
   const yearItems: any[] = []
   if (japaneseYear) {
-    yearItems.push({ 
-      type: 'Text', 
-      data: { content: japaneseYear }
+    yearItems.push({
+      type: 'Text',
+      data: { content: japaneseYear, cssClass: 'japanese-year' }
     })
   }
   if (gregorianYear) {
     yearItems.push({ 
       type: 'Text', 
-      data: { content: gregorianYear }
+      data: { content: gregorianYear, cssClass: 'gregorian-year' }
     })
   }
   
@@ -221,7 +221,7 @@ const createDateCells = (entry: EduWorkEntry) => {
   if (japaneseYear) {
     monthItems.push({
       type: 'Text',
-      data: { content: '\u00A0' }
+      data: { content: '\u00A0', cssClass: 'alignment-spacer' }
     })
   }
   monthItems.push({
@@ -244,13 +244,13 @@ const createDateCells = (entry: EduWorkEntry) => {
 }
 
 // Helper to add alignment spacer to content cells
-const createContentCell = (content: string, widthRatio: number, cssClass: string, hasJapaneseYear: boolean = true) => {
+const createContentCell = (content: string, widthRatio: number | undefined, cssClass: string, hasJapaneseYear: boolean = true) => {
   const items: any[] = []
   
   if (hasJapaneseYear) {
     items.push({
       type: 'Text',
-      data: { content: '\u00A0' }
+      data: { content: '\u00A0', cssClass: 'alignment-spacer' }
     })
   }
   
@@ -259,22 +259,28 @@ const createContentCell = (content: string, widthRatio: number, cssClass: string
     data: { content }
   })
   
-  return {
+  const cell: any = {
     items,
-    widthRatio,
     cssClass: `cv-jp-cell ${cssClass}`
   }
+  
+  // Only set widthRatio if defined (last column auto-fills)
+  if (widthRatio !== undefined) {
+    cell.widthRatio = widthRatio
+  }
+  
+  return cell
 }
 
 // Helper to create content cell with multiple lines
-const createMultiLineContentCell = (lines: string[], widthRatio: number, cssClass: string, hasJapaneseYear: boolean = true) => {
+const createMultiLineContentCell = (lines: string[], widthRatio: number | undefined, cssClass: string, hasJapaneseYear: boolean = true) => {
   const items: any[] = []
   
   // Add alignment spacer if Japanese year exists (same as single-line)
   if (hasJapaneseYear) {
     items.push({
       type: 'Text',
-      data: { content: '\u00A0' }
+      data: { content: '\u00A0', cssClass: 'alignment-spacer' }
     })
   }
   
@@ -286,18 +292,24 @@ const createMultiLineContentCell = (lines: string[], widthRatio: number, cssClas
     })
   })
   
-  return {
+  const cell: any = {
     items,
-    widthRatio,
     cssClass: `cv-jp-cell ${cssClass}`
   }
+  
+  // Only set widthRatio if defined (last column auto-fills)
+  if (widthRatio !== undefined) {
+    cell.widthRatio = widthRatio
+  }
+  
+  return cell
 }
 
 // Build table 1 rows (Education and Work sections)
 const buildTable1Rows = (eduEntries: EduWorkEntry[], workEntries: EduWorkEntry[]) => {
   const rows: any[] = []
   
-  // Header row 1
+  // Header row 1 - Define all 4 columns explicitly to match Table 2 structure
   rows.push({
     type: 'Tr',
     data: {
@@ -305,43 +317,57 @@ const buildTable1Rows = (eduEntries: EduWorkEntry[], workEntries: EduWorkEntry[]
         {
           items: [{ type: 'Text', data: { content: '年', noSplit: true } }],
           widthRatio: COL_YEAR,
-          cssClass: 'cv-jp-cell date-column-header'
+          cssClass: 'cv-jp-cell header-cell date-column-header'
         },
         {
           items: [{ type: 'Text', data: { content: '月', noSplit: true } }],
           widthRatio: COL_MONTH,
-          cssClass: 'cv-jp-cell date-column-header'
+          cssClass: 'cv-jp-cell header-cell date-column-header'
         },
         {
           items: [{ type: 'Text', data: { content: '学 歴・職 歴', noSplit: true } }],
-          widthRatio: COL_CONTENT + COL_NOTE,
-          colspan: 2,
+          widthRatio: COL_CONTENT,
           cssClass: 'cv-jp-cell header-cell word-spacing-0p5',
           cssStyle: { wordSpacing: '0.5em' }
+        },
+        {
+          items: [{ type: 'Text', data: { content: '', noSplit: true } }],
+          widthRatio: COL_NOTE,
+          cssClass: 'cv-jp-cell header-cell no-left-border'
         }
       ],
       cssClass: 'header-row'
     }
   })
   
-  // Section header: 学歴
+  // Section header: 学歴 - Define all 4 columns explicitly
   rows.push({
     type: 'Tr',
     data: {
       items: [
         {
           items: [],
-          widthRatio: COL_YEAR + COL_MONTH,
-          colspan: 2,
+          widthRatio: COL_YEAR,
           isEmpty: true,
           cssClass: 'cv-jp-cell section-divider no-right-border'
         },
         {
+          items: [],
+          widthRatio: COL_MONTH,
+          isEmpty: true,
+          cssClass: 'cv-jp-cell section-divider no-left-border no-right-border'
+        },
+        {
           items: [{ type: 'Text', data: { content: '学 歴', noSplit: true } }],
-          widthRatio: COL_CONTENT + COL_NOTE,
-          colspan: 2,
+          widthRatio: COL_CONTENT,
           cssClass: 'cv-jp-cell header-cell word-spacing-0p5 no-left-border',
           cssStyle: { wordSpacing: '0.5em' }
+        },
+        {
+          items: [],
+          widthRatio: COL_NOTE,
+          isEmpty: true,
+          cssClass: 'cv-jp-cell section-divider no-left-border'
         }
       ],
       cssClass: 'header-row'
@@ -360,6 +386,7 @@ const buildTable1Rows = (eduEntries: EduWorkEntry[], workEntries: EduWorkEntry[]
           ...createDateCells(edu),
           {
             // Use createMultiLineContentCell for array values, createContentCell for strings
+            // Colspan=2 spans Content + Note columns
             ...(isMultiLine 
               ? createMultiLineContentCell(edu.value as string[], COL_CONTENT + COL_NOTE, 'form-cell value-cell align-left content-cell', hasJpYear)
               : createContentCell(edu.value as string, COL_CONTENT + COL_NOTE, 'form-cell value-cell align-left content-cell', hasJpYear)
@@ -367,22 +394,28 @@ const buildTable1Rows = (eduEntries: EduWorkEntry[], workEntries: EduWorkEntry[]
             colspan: 2
           }
         ],
-        cssClass: 'entry-row'
+        cssClass: 'entry-row',
+        fillToPageBottom: true
       }
     })
   })
   
-  // Section header: 職歴
+  // Section header: 職歴 - Define all 4 columns explicitly
   rows.push({
     type: 'Tr',
     data: {
       items: [
         {
           items: [],
-          widthRatio: COL_YEAR + COL_MONTH,
-          colspan: 2,
+          widthRatio: COL_YEAR,
           isEmpty: true,
           cssClass: 'cv-jp-cell section-divider no-right-border'
+        },
+        {
+          items: [],
+          widthRatio: COL_MONTH,
+          isEmpty: true,
+          cssClass: 'cv-jp-cell section-divider no-left-border no-right-border'
         },
         {
           items: [{ type: 'Text', data: { content: '職 歴', noSplit: true } }],
@@ -416,7 +449,8 @@ const buildTable1Rows = (eduEntries: EduWorkEntry[], workEntries: EduWorkEntry[]
             : createContentCell(work.value as string, COL_CONTENT, 'form-cell value-cell align-left content-cell', hasJpYear),
           createContentCell(work.note || '', COL_NOTE, 'form-cell value-cell no-left-border align-center content-cell', hasJpYear)
         ],
-        cssClass: 'entry-row'
+        cssClass: 'entry-row',
+        fillToPageBottom: true
       }
     })
   })
@@ -428,7 +462,7 @@ const buildTable1Rows = (eduEntries: EduWorkEntry[], workEntries: EduWorkEntry[]
 const buildTable2Rows = (licenseEntries: EduWorkEntry[]) => {
   const rows: any[] = []
   
-  // Header row 2
+  // First header row (matches Table 1 structure with Year, Month, Content, Note columns)
   rows.push({
     type: 'Tr',
     data: {
@@ -436,12 +470,12 @@ const buildTable2Rows = (licenseEntries: EduWorkEntry[]) => {
         {
           items: [{ type: 'Text', data: { content: '年', noSplit: true } }],
           widthRatio: COL_YEAR,
-          cssClass: 'cv-jp-cell date-column-header'
+          cssClass: 'cv-jp-cell header-cell date-column-header'
         },
         {
           items: [{ type: 'Text', data: { content: '月', noSplit: true } }],
           widthRatio: COL_MONTH,
-          cssClass: 'cv-jp-cell date-column-header'
+          cssClass: 'cv-jp-cell header-cell date-column-header'
         },
         {
           items: [{ type: 'Text', data: { content: '免許・資格', noSplit: true } }],
@@ -474,7 +508,8 @@ const buildTable2Rows = (licenseEntries: EduWorkEntry[]) => {
             : createContentCell(license.value as string, COL_CONTENT, 'form-cell value-cell align-left content-cell', hasJpYear),
           createContentCell(license.note || '', COL_NOTE, 'form-cell value-cell no-left-border align-center content-cell', hasJpYear)
         ],
-        cssClass: 'entry-row'
+        cssClass: 'entry-row',
+        fillToPageBottom: true
       }
     })
   })

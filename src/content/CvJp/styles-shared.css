@@ -239,6 +239,7 @@ border-color: #000;
 	width: 100%;
 	border-collapse: collapse;
 	border-spacing: 0;
+
 }
 
 .form-table td {
@@ -367,8 +368,8 @@ td.align-center {
   white-space: nowrap;
 }
 
-/* Japanese year (first text component) - smaller and gray */
-.year-cell .text-component:first-child {
+/* Japanese year - smaller and gray */
+.year-cell .japanese-year {
   font-size: 11px;
   font-weight: 500;
   color: #666;
@@ -376,8 +377,8 @@ td.align-center {
   margin-bottom: 2px;
 }
 
-/* Gregorian year (second text component) - normal size */
-.year-cell .text-component:last-child:not(:first-child) {
+/* Gregorian year - normal size */
+.year-cell .gregorian-year {
   font-size: 14px;
   line-height: 1;
 }
@@ -389,9 +390,9 @@ td.align-center {
   line-height: 1.2;
 }
 
-/* Spacer (first text component) in month and content cells - match Japanese year style */
-.month-cell .text-component:first-child,
-.content-cell .text-component:first-child {
+/* Spacer (alignment spacer class) in month and content cells - match Japanese year style */
+.month-cell .alignment-spacer,
+.content-cell .alignment-spacer {
   font-size: 11px;
   font-weight: 500;
   color: transparent; /* Invisible but takes up space */
@@ -399,9 +400,9 @@ td.align-center {
   margin-bottom: 2px;
 }
 
-/* Actual content (all text components after the first spacer) - normal size */
-.month-cell .text-component:not(:first-child),
-.content-cell .text-component:not(:first-child) {
+/* Actual content (all text components except alignment spacer) - normal size */
+.month-cell .text-component:not(.alignment-spacer),
+.content-cell .text-component:not(.alignment-spacer) {
   font-size: 14px;
   line-height: 1;
 }

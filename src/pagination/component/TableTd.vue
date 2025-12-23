@@ -43,9 +43,15 @@ onBeforeUpdate(() => {
   componentRefs.value = []
 })
 
-const tdStyle = computed(() => ({
-  width: `${props.widthRatio * 100}%`
-}))
+const tdStyle = computed(() => {
+  // If widthRatio is undefined, let the cell auto-fill remaining space
+  if (props.widthRatio === undefined) {
+    return {}
+  }
+  return {
+    width: `${props.widthRatio * 100}%`
+  }
+})
 
 const displayItems = computed(() => props.isEmpty ? [] : props.items)
 
@@ -173,6 +179,22 @@ const trySplit = (pageContext: any, docContext: any) => {
 
   if (logger) {
     logger.addLog(`Split Td: first part has ${firstPartItems.length} items, second part has ${secondPartItems.length} items`, 'Td.trySplit')
+    firstPartItems.forEach((item, i) => {
+      if (item.type === 'Text') {
+        const start = item.data.startIndex ?? 0
+        const end = item.data.endIndex ?? item.data.content.length
+        const text = item.data.content.substring(start, end)
+        logger.addLog(`  First part item ${i}: Text "${text}" (${start}-${end})`, 'Td.trySplit')
+      }
+    })
+    secondPartItems.forEach((item, i) => {
+      if (item.type === 'Text') {
+        const start = item.data.startIndex ?? 0
+        const end = item.data.endIndex ?? item.data.content.length
+        const text = item.data.content.substring(start, end)
+        logger.addLog(`  Second part item ${i}: Text "${text}" (${start}-${end})`, 'Td.trySplit')
+      }
+    })
   }
 
   return {
@@ -212,10 +234,16 @@ defineExpose({
   border: 1px solid #000;
   padding: 8px;
   vertical-align: top;
+  box-sizing: border-box;
 }
 
 .td-component.align-bottom {
   vertical-align: bottom;
+}
+
+/* Ensure TD respects parent TR height when specified */
+tr[style*="height"] .td-component {
+  height: inherit;
 }
 </style>
 

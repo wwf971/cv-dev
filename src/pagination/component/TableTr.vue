@@ -31,7 +31,10 @@ const props = withDefaults(defineProps<{
   }>
   cssClass?: string
   cssStyle?: any
-}>(), {})
+  fillToPageBottom?: boolean  // If true, stretch split row to fill remaining space to pageBottomY
+}>(), {
+  fillToPageBottom: false
+})
 
 const trRef = ref<HTMLElement | null>(null)
 const tdRefs = ref<any[]>([])
@@ -57,10 +60,18 @@ const trySplit = (pageContext: any, docContext: any) => {
   }
 
   const trBottom = docContext.measureVerticalPosEnd(trRef.value)
+  const trTop = docContext.measureVerticalPos(trRef.value)
   const pageBottomY = pageContext.pageBottomY
+  
+  if (logger) {
+    logger.addLog(`Tr position: top=${trTop.toFixed(2)}, bottom=${trBottom.toFixed(2)}, height=${(trBottom-trTop).toFixed(2)}, pageBottomY=${pageBottomY?.toFixed(2)}`, 'Tr.trySplit')
+  }
   
   // If entire tr fits, no split needed
   if (trBottom <= pageBottomY) {
+    if (logger) {
+      logger.addLog(`Tr fits in page`, 'Tr.trySplit')
+    }
     return {
       code: 0,
       data: null
@@ -113,13 +124,31 @@ const trySplit = (pageContext: any, docContext: any) => {
 
   if (!needsSplit) {
     // None of the Tds need splitting, but we're here because Tr overflows
-    // This shouldn't happen normally, but return no split needed
-    if (logger) {
-      logger.addLog(`Tr overflows but no Td needs split - this is unexpected`, 'Tr.trySplit', 1)
-    }
-    return {
-      code: 0,
-      data: null
+    // If fillToPageBottom is true, create an empty first part and put all content in second part
+    if (props.fillToPageBottom) {
+      if (logger) {
+        logger.addLog(`Tr overflows but no Td needs split - fillToPageBottom is true, creating empty first part`, 'Tr.trySplit')
+      }
+      // Force all TDs to be empty in first part, full content in second part
+      needsSplit = true
+      for (let i = 0; i < props.items.length; i++) {
+        tdSplitResults[i] = {
+          code: 1,
+          data: [
+            { type: 'Td', data: { items: [], widthRatio: props.items[i].widthRatio, isEmpty: true } },
+            { type: 'Td', data: { items: props.items[i].items, widthRatio: props.items[i].widthRatio } }
+          ]
+        }
+      }
+    } else {
+      // Move entire row to next page
+      if (logger) {
+        logger.addLog(`Tr overflows but no Td needs split - returning code 2 (move entire row to next page)`, 'Tr.trySplit', 1)
+      }
+      return {
+        code: 2,
+        data: null
+      }
     }
   }
 
@@ -179,6 +208,28 @@ const trySplit = (pageContext: any, docContext: any) => {
     logger.addLog(`Split Tr: first part has ${firstTrTds.length} tds, second part has ${secondTrTds.length} tds`, 'Tr.trySplit')
   }
 
+  // Calculate height for first part if fillToPageBottom is enabled
+  let firstPartStyle = props.cssStyle
+  
+  if (props.fillToPageBottom && firstTrTds.length > 0) {
+    const remainingHeight = pageBottomY - trTop
+    if (remainingHeight > 0) {
+      if (logger) {
+        logger.addLog(`fillToPageBottom enabled: trTop=${trTop.toFixed(2)}, pageBottomY=${pageBottomY.toFixed(2)}, remainingHeight=${remainingHeight.toFixed(2)}px, firstTrTds.length=${firstTrTds.length}`, 'Tr.trySplit')
+        logger.addLog(`firstTrTds content: ${JSON.stringify(firstTrTds.map((td, i) => `[${i}] items=${td.items?.length || 0}, isEmpty=${td.isEmpty}`)).slice(0, 200)}`, 'Tr.trySplit')
+      }
+      
+      // Set both height and min-height on TR to fill to page bottom
+      firstPartStyle = {
+        ...(props.cssStyle || {}),
+        height: `${remainingHeight}px`,
+        minHeight: `${remainingHeight}px`
+      }
+    } else if (logger) {
+      logger.addLog(`fillToPageBottom skipped: remainingHeight=${remainingHeight.toFixed(2)}px is not positive`, 'Tr.trySplit', 1)
+    }
+  }
+
   return {
     code: 1,
     data: [
@@ -187,7 +238,8 @@ const trySplit = (pageContext: any, docContext: any) => {
         data: {
           items: firstTrTds,
           cssClass: props.cssClass,
-          cssStyle: props.cssStyle
+          cssStyle: firstPartStyle,
+          fillToPageBottom: props.fillToPageBottom
         }
       },
       {
@@ -195,7 +247,8 @@ const trySplit = (pageContext: any, docContext: any) => {
         data: {
           items: secondTrTds,
           cssClass: props.cssClass,
-          cssStyle: props.cssStyle
+          cssStyle: props.cssStyle,
+          fillToPageBottom: props.fillToPageBottom
         }
       }
     ]

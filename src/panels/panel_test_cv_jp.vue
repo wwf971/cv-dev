@@ -155,6 +155,10 @@ const processBasicInfo = (basicInfo) => {
   const month = typeof processed.birthMonth === 'string' ? parseInt(processed.birthMonth) : processed.birthMonth
   const day = typeof processed.birthDay === 'string' ? parseInt(processed.birthDay) : processed.birthDay
   
+  // Store parsed numeric values for birthMonth and birthDay (birthYear stays as string for display)
+  if (month && !isNaN(month)) processed.birthMonth = month
+  if (day && !isNaN(day)) processed.birthDay = day
+  
   // Auto-calculate birthYearJp if not present and we have a valid year
   if (!processed.birthYearJp && year && !isNaN(year)) {
     processed.birthYearJp = toYearJp(year)

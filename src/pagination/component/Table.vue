@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, onBeforeUpdate } from 'vue'
+import { ref, computed, inject, onBeforeUpdate, onMounted, nextTick } from 'vue'
 import Tr from './TableTr.vue'
 
 const props = withDefaults(defineProps<{
@@ -31,6 +31,8 @@ const logger = inject('paginationLogger', null) as any
 onBeforeUpdate(() => {
   rowRefs.value = []
 })
+
+// No width fixing in onMounted - rely on table-layout: fixed and widthRatio percentages
 
 const displayRows = computed(() => props.rows)
 
@@ -58,6 +60,12 @@ const trySplit = (pageContext: any, docContext: any) => {
 
   const tableBottom = docContext.measureVerticalPosEnd(tableRef.value)
   const pageBottomY = pageContext.pageBottomY
+  const pageEndY = pageContext.pageEndY
+  const paddingBottom = pageContext.padding?.bottom || 0
+  
+  if (logger) {
+    logger.addLog(`Table split check: tableBottom=${tableBottom.toFixed(2)}, pageBottomY=${pageBottomY?.toFixed(2)}, pageEndY=${pageEndY?.toFixed(2)}, paddingBottom=${paddingBottom}`, 'Table.trySplit')
+  }
   
   // If entire table fits, no split needed
   if (tableBottom <= pageBottomY) {
@@ -179,6 +187,7 @@ defineExpose({
   border-collapse: collapse;
   width: 100%;
   border: 1px solid #000;
+  table-layout: fixed;
 }
 </style>
 

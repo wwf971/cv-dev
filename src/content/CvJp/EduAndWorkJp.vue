@@ -90,22 +90,6 @@ const getComponent = (type: string) => {
   min-width: 60px;
 }
 
-/* Year cell specific styling - force child text components to display as blocks */
-:deep(.year-cell .text-component) {
-  display: block !important;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-
-/* Japanese year (first text component) - smaller and gray */
-:deep(.year-cell .text-component:first-child) {
-  font-size: 11px;
-  font-weight: 500;
-  color: #666;
-  line-height: 1;
-  margin-bottom: 2px;
-}
-
 /* Gregorian year (second text component) - normal size */
 :deep(.year-cell .text-component:last-child:not(:first-child)) {
   font-size: 14px;
@@ -119,9 +103,9 @@ const getComponent = (type: string) => {
   line-height: 1.2;
 }
 
-/* Spacer (first text component) in month and content cells - match Japanese year style */
-:deep(.month-cell .text-component:first-child),
-:deep(.content-cell .text-component:first-child) {
+/* Spacer (alignment spacer class) in month and content cells - match Japanese year style */
+:deep(.month-cell .alignment-spacer),
+:deep(.content-cell .alignment-spacer) {
   font-size: 11px;
   font-weight: 500;
   color: transparent; /* Invisible but takes up space */

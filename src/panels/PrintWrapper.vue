@@ -1,4 +1,14 @@
 <template>
+  <!-- Dynamic @page rule based on max dimensions -->
+  <component :is="'style'">
+    @media print {
+      @page {
+        size: {{ maxPageDimensions.widthMm }}mm {{ maxPageDimensions.heightMm }}mm;
+        margin: 0;
+      }
+    }
+  </component>
+
   <div class="print-wrapper print-mode-active">
     <!-- Control buttons (hidden in print) -->
     <div class="print-controls no-print">
@@ -22,11 +32,6 @@
           v-for="(page, pageIndex) in pages" 
           :key="pageIndex"
           class="print-page"
-          :style="{ 
-            height: page.sizes.pageHeight + 'px',
-            width: pageWidth + 'px'
-          }"
-          :data-page-break="pageIndex < pages.length - 1 ? 'always' : 'auto'"
         >
           <Page 
             :pageIndex="page.sizes.pageIndex"
@@ -34,7 +39,7 @@
             :pageEndY="page.sizes.pageEndY ?? null"
             :pageWidth="pageWidth"
             :pageHeight="page.sizes.pageHeight"
-            :padding="{ top: 0, bottom: 0, left: 0, right: 0 }"
+            :padding="page.sizes.padding"
             :hidePageLines="true"
           >
             <component
@@ -51,7 +56,7 @@
 </template>
 
 <script setup>
-import { h } from 'vue'
+import { computed } from 'vue'
 import Doc from '@/pagination/component_core/Doc.vue'
 import Page from '@/pagination/component_core/Page.vue'
 import Text from '@/pagination/component/Text.vue'
@@ -81,9 +86,26 @@ const props = defineProps({
 
 const emit = defineEmits(['back'])
 
+// Calculate max dimensions for @page size
+const maxPageDimensions = computed(() => {
+  if (!props.pages || props.pages.length === 0) {
+    return { width: 794, height: 1123, widthMm: 210, heightMm: 297 } // Default A4
+  }
+  
+  const maxWidth = Math.max(...props.pages.map(p => props.pageWidth || 794))
+  const maxHeight = Math.max(...props.pages.map(p => p.sizes.pageHeight))
+  
+  // Convert px to mm (96 DPI standard: 1px = 0.264583mm)
+  const widthMm = Math.ceil(maxWidth * 0.264583)
+  const heightMm = Math.ceil(maxHeight * 0.264583)
+  
+  return { width: maxWidth, height: maxHeight, widthMm, heightMm }
+})
+
 console.log(`[PrintWrapper] Received ${props.pages.length} pages (data-driven)`)
 console.log('[PrintWrapper] First page:', props.pages[0])
 console.log('[PrintWrapper] DocData length:', props.docData.length)
+console.log('[PrintWrapper] Max page dimensions:', maxPageDimensions.value)
 
 // Component mapping (same as Pagination.vue)
 const getComponent = (type) => {
@@ -106,23 +128,22 @@ const goBack = () => {
 const handlePrint = () => {
   console.log('[PrintWrapper] Printing...')
   console.log(`[PrintWrapper] Number of pages: ${props.pages.length}`)
+  console.log(`[PrintWrapper] PDF page size: ${maxPageDimensions.value.widthMm}mm × ${maxPageDimensions.value.heightMm}mm`)
   
   const printPages = document.querySelectorAll('.print-page')
   console.log(`[PrintWrapper] Number of .print-page elements: ${printPages.length}`)
   
   printPages.forEach((page, i) => {
     const pageContainer = page.querySelector('.page-container')
-    const pageStyles = window.getComputedStyle(page)
-    const containerStyles = window.getComputedStyle(pageContainer)
-    const pageBreakAttr = page.getAttribute('data-page-break')
+    const isLast = i === printPages.length - 1
+    const tables = pageContainer?.querySelectorAll('.form-table')
     
-    console.log(`  Page ${i} (data-page-break="${pageBreakAttr}"):`)
+    console.log(`  Page ${i} (${isLast ? 'LAST' : 'not-last'}):`)
     console.log(`    .print-page: ${page.offsetWidth}×${page.offsetHeight}`)
-    console.log(`      inline styles: width=${page.style.width}, height=${page.style.height}`)
-    console.log(`      screen padding: ${pageStyles.padding}`)
-    console.log(`      screen margin: ${pageStyles.margin}`)
     console.log(`    .page-container: ${pageContainer?.offsetWidth}×${pageContainer?.offsetHeight}`)
-    console.log(`      screen padding: ${containerStyles.paddingTop} ${containerStyles.paddingRight} ${containerStyles.paddingBottom} ${containerStyles.paddingLeft}`)
+    if (tables && tables.length > 0) {
+      console.log(`    First table: ${tables[0].offsetWidth}px`)
+    }
   })
   
   window.print()
@@ -133,14 +154,16 @@ const handlePrint = () => {
 /* Import shared CV styles globally for all paginated components */
 @import '@/content/CvJp/styles-shared.css';
 
-/* Page setup for print */
-@page {
-  margin: 0;
-}
+/* Note: @page size is set dynamically in template based on max page dimensions */
 
 /* UNSCOPED print styles - Override all screen styles */
 @media print {
-  /* Remove @page rule - let content determine page sizes */
+  html, body {
+    width: 100%;
+    height: auto;
+    margin: 0;
+    padding: 0;
+  }
   
   /* Critical: Force exact colors */
   * {
@@ -153,7 +176,7 @@ const handlePrint = () => {
     display: none !important;
   }
   
-  /* Print wrapper fills page */
+  /* Print wrapper fills width, flows vertically */
   .print-wrapper {
     display: block !important;
     width: 100% !important;
@@ -162,40 +185,50 @@ const handlePrint = () => {
     background: white !important;
   }
   
-  /* Override scoped screen styles */
+  /* Pages container - vertical flow */
   .pages-container {
     padding: 0 !important;
     margin: 0 !important;
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0 !important;
     width: 100% !important;
   }
   
+  /* Each print-page is a separate page with page break */
   .print-page {
     display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     background-color: white !important;
     box-shadow: none !important;
     border-radius: 0 !important;
     page-break-inside: avoid !important;
+    page-break-after: always !important;
     overflow: visible !important;
   }
   
-  .print-page[data-page-break="always"] {
-    page-break-after: always !important;
-  }
-  
-  .print-page[data-page-break="auto"] {
+  /* Last page should not force a break */
+  .print-page:last-child {
     page-break-after: auto !important;
   }
   
+  /* Page container should fill width */
   .print-page .page-container {
     border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
     display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
+  }
+  
+  /* Force tables to use full width */
+  .print-page {
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }
 </style>
