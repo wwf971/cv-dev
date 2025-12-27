@@ -6,14 +6,18 @@
 import { ref, inject } from 'vue'
 
 const props = defineProps({
-  height: Number
+  height: Number,
+  hiddenIfAtPageTop: {
+    type: Boolean,
+    default: false
+  }
 })
 
 const vspaceRef = ref<HTMLElement | null>(null)
 const logger = inject('paginationLogger', null) as any
 
 // trySplit implementation
-const trySplit = (pageContext: any, docContext: any) => {
+const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
   if (!vspaceRef.value || !docContext || !pageContext) {
     if (logger) {
       const reason = !vspaceRef.value ? 'vspaceRef is null' : !docContext ? 'docContext is null' : 'pageContext is null'
@@ -25,10 +29,21 @@ const trySplit = (pageContext: any, docContext: any) => {
     }
   }
 
+  // Check if VSpace is the first component on the page and should be hidden
+  if (props.hiddenIfAtPageTop && compIndex === 0) {
+    if (logger) {
+      logger.addLog('VSpace is first component on page and hiddenIfAtPageTop=true, moving to next page', 'VSpace.trySplit')
+    }
+    return {
+      code: 2,
+      data: null
+    }
+  }
+
   const vspaceBottom = docContext.measureVerticalPosEnd(vspaceRef.value)
   const vspaceTop = docContext.measureVerticalPos(vspaceRef.value)
   const pageBottomY = pageContext.pageBottomY
-  
+
   // If entire vspace fits, no split needed
   if (vspaceBottom <= pageBottomY) {
     return {

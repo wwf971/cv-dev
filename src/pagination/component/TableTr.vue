@@ -47,7 +47,7 @@ onBeforeUpdate(() => {
 const displayTds = computed(() => props.items)
 
 // Split function
-const trySplit = (pageContext: any, docContext: any) => {
+const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
   if (!trRef.value || !docContext || !pageContext) {
     if (logger) {
       const reason = !trRef.value ? 'trRef is null' : !docContext ? 'docContext param is null' : 'pageContext param is null'

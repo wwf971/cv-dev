@@ -31,7 +31,8 @@ export let SERVER_INFO = {
 
 export let educationEntries = []
 export let workEntries = []
-export let licenseEntries = []
+export let certEntries = []
+export let motivation = ''
 export let interest = ''
 export let url_motivation_text = ''
 
@@ -47,7 +48,8 @@ try {
   if (privateConfig.workEntries) workEntries = privateConfig.workEntries
   // workEntries_remote takes priority over workEntries for remote data patterns
   if (privateConfig.workEntries_remote) workEntries = privateConfig.workEntries_remote
-  if (privateConfig.licenseEntries) licenseEntries = privateConfig.licenseEntries
+  if (privateConfig.certEntries) certEntries = privateConfig.certEntries
+  if (privateConfig.motivation) motivation = privateConfig.motivation
   if (privateConfig.interest) interest = privateConfig.interest
   if (privateConfig.url_motivation_text) url_motivation_text = privateConfig.url_motivation_text
 } catch (error) {

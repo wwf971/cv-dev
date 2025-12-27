@@ -1,4 +1,4 @@
-import { toYearJp } from './Utils'
+import { toYearJp, processDescription } from './Utils'
 import type { Logger } from '../../pagination/LogTypes'
 import { LogType } from '../../pagination/LogTypes'
 
@@ -33,7 +33,7 @@ interface TreeResponse {
 interface EduAndWorkData {
   eduEntries?: (EduWorkEntry | TreeResponse | string)[]
   workEntries?: (EduWorkEntry | TreeResponse | string)[]
-  licenseEntries?: (EduWorkEntry | TreeResponse | string)[]
+  certEntries?: (EduWorkEntry | TreeResponse | string)[]
 }
 
 // Helper to check if entry is a tree response
@@ -43,22 +43,9 @@ const isTreeResponse = (entry: any): entry is TreeResponse => {
          entry.data && 'tree' in entry.data
 }
 
-// Helper to process description text: replace spaces with 2×&nbsp; and split by \n
-const processDescription = (text: string): string[] => {
-  if (!text) return []
-  
-  // Split by \n first
-  const lines = text.split('\n')
-  
-  // For each line, replace each space with 2 non-breaking spaces
-  // DON'T trim - preserve leading spaces
-  return lines
-    .filter(line => line.length > 0)
-    .map(line => line.replace(/ /g, '\u00A0')) // Each space becomes 2 non-breaking spaces
-}
 
 // Helper to parse a single entry (start, end, or direct entry)
-const parseEntry = (timeNode: any, descNode: any): EduWorkEntry | null => {
+const parseEntry = (timeNode: any, descNode: any, noteNode?: any): EduWorkEntry | null => {
   if (!timeNode || !descNode) return null
   
   const yearId = Object.keys(timeNode.children || {}).find(key => timeNode.children[key].name === 'year')
@@ -70,7 +57,7 @@ const parseEntry = (timeNode: any, descNode: any): EduWorkEntry | null => {
   // Get description value and type/note
   let rawValue = ''
   let note = ''
-  
+
   if (descNode.type === 'content' && descNode.content?.value) {
     // Description node is directly a content node
     rawValue = String(descNode.content.value)
@@ -78,9 +65,14 @@ const parseEntry = (timeNode: any, descNode: any): EduWorkEntry | null => {
     // Description node is a segment, look for 'jp' and 'type' children
     const jpId = Object.keys(descNode.children).find(key => descNode.children[key].name === 'jp')
     const typeId = Object.keys(descNode.children).find(key => descNode.children[key].name === 'type')
-    
+
     rawValue = jpId ? String(descNode.children[jpId].content?.value || '') : ''
     note = typeId ? String(descNode.children[typeId].content?.value || '') : ''
+  }
+
+  // If noteNode is provided separately (cert entries), use it
+  if (noteNode && noteNode.type === 'content' && noteNode.content?.value) {
+    note = String(noteNode.content.value)
   }
   
   // Process description: split by \n and replace spaces
@@ -117,10 +109,11 @@ const expandTreeResponse = (treeResponse: TreeResponse, logger?: Logger | null):
     // Check if tree has direct time/description nodes (work entry pattern)
     const timeId = Object.keys(tree).find(key => tree[key].name === 'time')
     const descId = Object.keys(tree).find(key => tree[key].name === 'description')
-    
+    const noteId = Object.keys(tree).find(key => tree[key].name === 'note')
+
     if (timeId && descId) {
-      // Direct entry pattern (work entries)
-      const entry = parseEntry(tree[timeId], tree[descId])
+      // Direct entry pattern (work/cert entries)
+      const entry = parseEntry(tree[timeId], tree[descId], noteId ? tree[noteId] : undefined)
       if (entry) entries.push(entry)
       return entries
     }
@@ -199,7 +192,7 @@ const expandEntries = (entries?: (EduWorkEntry | TreeResponse | string)[], logge
 }
 
 // Helper to create year/month cells with year_jp support
-const createDateCells = (entry: EduWorkEntry) => {
+const createDateCells = (entry: EduWorkEntry, isLastEntry: boolean = false, borderClass: string = '') => {
   const japaneseYear = entry.year_jp || (entry.year ? toYearJp(entry.year) : '')
   const gregorianYear = entry.year ? String(entry.year) : ''
   
@@ -233,12 +226,12 @@ const createDateCells = (entry: EduWorkEntry) => {
     {
       items: yearItems,
       widthRatio: COL_YEAR,
-      cssClass: 'cv-jp-cell time-cell year-cell'
+      cssClass: `cv-jp-cell time-cell year-cell${borderClass ? ` ${borderClass}` : ''}${isLastEntry ? ' last-row-cell' : ''}`
     },
     {
       items: monthItems,
       widthRatio: COL_MONTH,
-      cssClass: 'cv-jp-cell time-cell month-cell'
+      cssClass: `cv-jp-cell time-cell month-cell${borderClass ? ` ${borderClass}` : ''}${isLastEntry ? ' last-row-cell' : ''}`
     }
   ]
 }
@@ -305,11 +298,69 @@ const createMultiLineContentCell = (lines: string[], widthRatio: number | undefi
   return cell
 }
 
-// Build table 1 rows (Education and Work sections)
-const buildTable1Rows = (eduEntries: EduWorkEntry[], workEntries: EduWorkEntry[]) => {
+// Build education table rows (Year, Month, Content columns)
+const buildEducationTableRows = (eduEntries: EduWorkEntry[]) => {
   const rows: any[] = []
-  
-  // Header row 1 - Define all 4 columns explicitly to match Table 2 structure
+
+  // Education section header (Year, Month, Content columns only)
+  rows.push({
+    type: 'Tr',
+    data: {
+      items: [
+        {
+          items: [{ type: 'Text', data: { content: '年', noSplit: true } }],
+          widthRatio: COL_YEAR,
+          cssClass: 'cv-jp-cell header-cell date-column-header td-no-bottom-border'
+        },
+        {
+          items: [{ type: 'Text', data: { content: '月', noSplit: true } }],
+          widthRatio: COL_MONTH,
+          cssClass: 'cv-jp-cell header-cell date-column-header td-no-bottom-border'
+        },
+        {
+          items: [{ type: 'Text', data: { content: '学 歴', noSplit: true } }],
+          widthRatio: 1.0 - COL_YEAR - COL_MONTH,
+          cssClass: 'cv-jp-cell header-cell word-spacing-0p5 td-no-bottom-border',
+          cssStyle: { wordSpacing: '0.5em' }
+        },
+      ],
+      cssClass: 'header-row'
+    }
+  })
+
+  // Education entries
+  eduEntries.forEach((edu: EduWorkEntry, index: number) => {
+    const hasJpYear = !!(edu.year_jp || (edu.year && toYearJp(edu.year)))
+    const isMultiLine = Array.isArray(edu.value)
+    const isLastEntry = index === eduEntries.length - 1
+
+    rows.push({
+      type: 'Tr',
+      data: {
+        items: [
+          ...createDateCells(edu, isLastEntry, 'td-no-bottom-border'),
+          {
+            // Use createMultiLineContentCell for array values, createContentCell for strings
+            ...(isMultiLine
+              ? createMultiLineContentCell(edu.value as string[], 1.0 - COL_YEAR - COL_MONTH, `form-cell value-cell align-left content-cell td-no-bottom-border${isLastEntry ? ' last-row-cell' : ''}`, hasJpYear)
+              : createContentCell(edu.value as string, 1.0 - COL_YEAR - COL_MONTH, `form-cell value-cell align-left content-cell td-no-bottom-border${isLastEntry ? ' last-row-cell' : ''}`, hasJpYear)
+            )
+          }
+        ],
+        cssClass: `entry-row${isLastEntry ? ' last-entry-row' : ''}`,
+        fillToPageBottom: !isLastEntry  // Only fill to page bottom for non-last rows
+      }
+    })
+  })
+
+  return rows
+}
+
+// Build work table rows (Year, Month, Content, Note columns)
+const buildWorkTableRows = (workEntries: EduWorkEntry[]) => {
+  const rows: any[] = []
+
+  // Work section header (Year, Month, Content, Note columns)
   rows.push({
     type: 'Tr',
     data: {
@@ -325,102 +376,9 @@ const buildTable1Rows = (eduEntries: EduWorkEntry[], workEntries: EduWorkEntry[]
           cssClass: 'cv-jp-cell header-cell date-column-header'
         },
         {
-          items: [{ type: 'Text', data: { content: '学 歴・職 歴', noSplit: true } }],
-          widthRatio: COL_CONTENT,
-          cssClass: 'cv-jp-cell header-cell word-spacing-0p5',
-          cssStyle: { wordSpacing: '0.5em' }
-        },
-        {
-          items: [{ type: 'Text', data: { content: '', noSplit: true } }],
-          widthRatio: COL_NOTE,
-          cssClass: 'cv-jp-cell header-cell no-left-border'
-        }
-      ],
-      cssClass: 'header-row'
-    }
-  })
-  
-  // Section header: 学歴 - Define all 4 columns explicitly
-  rows.push({
-    type: 'Tr',
-    data: {
-      items: [
-        {
-          items: [],
-          widthRatio: COL_YEAR,
-          isEmpty: true,
-          cssClass: 'cv-jp-cell section-divider no-right-border'
-        },
-        {
-          items: [],
-          widthRatio: COL_MONTH,
-          isEmpty: true,
-          cssClass: 'cv-jp-cell section-divider no-left-border no-right-border'
-        },
-        {
-          items: [{ type: 'Text', data: { content: '学 歴', noSplit: true } }],
-          widthRatio: COL_CONTENT,
-          cssClass: 'cv-jp-cell header-cell word-spacing-0p5 no-left-border',
-          cssStyle: { wordSpacing: '0.5em' }
-        },
-        {
-          items: [],
-          widthRatio: COL_NOTE,
-          isEmpty: true,
-          cssClass: 'cv-jp-cell section-divider no-left-border'
-        }
-      ],
-      cssClass: 'header-row'
-    }
-  })
-  
-  // Education entries
-  eduEntries.forEach((edu: EduWorkEntry) => {
-    const hasJpYear = !!(edu.year_jp || (edu.year && toYearJp(edu.year)))
-    const isMultiLine = Array.isArray(edu.value)
-    
-    rows.push({
-      type: 'Tr',
-      data: {
-        items: [
-          ...createDateCells(edu),
-          {
-            // Use createMultiLineContentCell for array values, createContentCell for strings
-            // Colspan=2 spans Content + Note columns
-            ...(isMultiLine 
-              ? createMultiLineContentCell(edu.value as string[], COL_CONTENT + COL_NOTE, 'form-cell value-cell align-left content-cell', hasJpYear)
-              : createContentCell(edu.value as string, COL_CONTENT + COL_NOTE, 'form-cell value-cell align-left content-cell', hasJpYear)
-            ),
-            colspan: 2
-          }
-        ],
-        cssClass: 'entry-row',
-        fillToPageBottom: true
-      }
-    })
-  })
-  
-  // Section header: 職歴 - Define all 4 columns explicitly
-  rows.push({
-    type: 'Tr',
-    data: {
-      items: [
-        {
-          items: [],
-          widthRatio: COL_YEAR,
-          isEmpty: true,
-          cssClass: 'cv-jp-cell section-divider no-right-border'
-        },
-        {
-          items: [],
-          widthRatio: COL_MONTH,
-          isEmpty: true,
-          cssClass: 'cv-jp-cell section-divider no-left-border no-right-border'
-        },
-        {
           items: [{ type: 'Text', data: { content: '職 歴', noSplit: true } }],
           widthRatio: COL_CONTENT,
-          cssClass: 'cv-jp-cell header-cell word-spacing-0p5 no-left-border',
+          cssClass: 'cv-jp-cell header-cell word-spacing-0p5',
           cssStyle: { wordSpacing: '0.5em' }
         },
         {
@@ -432,34 +390,35 @@ const buildTable1Rows = (eduEntries: EduWorkEntry[], workEntries: EduWorkEntry[]
       cssClass: 'header-row'
     }
   })
-  
+
   // Work entries
-  workEntries.forEach((work: EduWorkEntry) => {
+  workEntries.forEach((work: EduWorkEntry, index: number) => {
     const hasJpYear = !!(work.year_jp || (work.year && toYearJp(work.year)))
     const isMultiLine = Array.isArray(work.value)
-    
+    const isLastEntry = index === workEntries.length - 1
+
     rows.push({
       type: 'Tr',
       data: {
         items: [
-          ...createDateCells(work),
+          ...createDateCells(work, isLastEntry, 'td-no-top-border'),
           // Use createMultiLineContentCell for array values, createContentCell for strings
-          isMultiLine 
-            ? createMultiLineContentCell(work.value as string[], COL_CONTENT, 'form-cell value-cell align-left content-cell', hasJpYear)
-            : createContentCell(work.value as string, COL_CONTENT, 'form-cell value-cell align-left content-cell', hasJpYear),
-          createContentCell(work.note || '', COL_NOTE, 'form-cell value-cell no-left-border align-center content-cell', hasJpYear)
+          isMultiLine
+            ? createMultiLineContentCell(work.value as string[], COL_CONTENT, `form-cell value-cell align-left content-cell td-no-top-border${isLastEntry ? ' last-row-cell' : ''}`, hasJpYear)
+            : createContentCell(work.value as string, COL_CONTENT, `form-cell value-cell align-left content-cell td-no-top-border${isLastEntry ? ' last-row-cell' : ''}`, hasJpYear),
+          createContentCell(work.note || '', COL_NOTE, `form-cell value-cell no-left-border align-center content-cell td-no-top-border${isLastEntry ? ' last-row-cell' : ''}`, hasJpYear)
         ],
-        cssClass: 'entry-row',
-        fillToPageBottom: true
+        cssClass: `entry-row${isLastEntry ? ' last-entry-row' : ''}`,
+        fillToPageBottom: !isLastEntry  // Only fill to page bottom for non-last rows
       }
     })
   })
-  
+
   return rows
 }
 
-// Build table 2 rows (License section)
-const buildTable2Rows = (licenseEntries: EduWorkEntry[]) => {
+// Build table 2 rows (Certificate section)
+const buildTable2Rows = (certEntries: EduWorkEntry[]) => {
   const rows: any[] = []
   
   // First header row (matches Table 1 structure with Year, Month, Content, Note columns)
@@ -492,24 +451,25 @@ const buildTable2Rows = (licenseEntries: EduWorkEntry[]) => {
     }
   })
   
-  // License entries
-  licenseEntries.forEach((license: EduWorkEntry) => {
-    const hasJpYear = !!(license.year_jp || (license.year && toYearJp(license.year)))
-    const isMultiLine = Array.isArray(license.value)
-    
+  // Certificate entries
+  certEntries.forEach((cert: EduWorkEntry, index: number) => {
+    const hasJpYear = !!(cert.year_jp || (cert.year && toYearJp(cert.year)))
+    const isMultiLine = Array.isArray(cert.value)
+    const isLastEntry = index === certEntries.length - 1
+
     rows.push({
       type: 'Tr',
       data: {
         items: [
-          ...createDateCells(license),
+          ...createDateCells(cert, isLastEntry, ''),
           // Use createMultiLineContentCell for array values, createContentCell for strings
-          isMultiLine 
-            ? createMultiLineContentCell(license.value as string[], COL_CONTENT, 'form-cell value-cell align-left content-cell', hasJpYear)
-            : createContentCell(license.value as string, COL_CONTENT, 'form-cell value-cell align-left content-cell', hasJpYear),
-          createContentCell(license.note || '', COL_NOTE, 'form-cell value-cell no-left-border align-center content-cell', hasJpYear)
+          isMultiLine
+            ? createMultiLineContentCell(cert.value as string[], COL_CONTENT, `form-cell value-cell align-left content-cell${isLastEntry ? ' last-row-cell' : ''}`, hasJpYear)
+            : createContentCell(cert.value as string, COL_CONTENT, `form-cell value-cell align-left content-cell${isLastEntry ? ' last-row-cell' : ''}`, hasJpYear),
+          createContentCell(cert.note || '', COL_NOTE, `form-cell value-cell no-left-border align-center content-cell${isLastEntry ? ' last-row-cell' : ''}`, hasJpYear)
         ],
-        cssClass: 'entry-row',
-        fillToPageBottom: true
+        cssClass: `entry-row${isLastEntry ? ' last-entry-row' : ''}`,
+        fillToPageBottom: !isLastEntry  // Only fill to page bottom for non-last rows
       }
     })
   })
@@ -528,14 +488,22 @@ export function buildEduAndWorkComponents(data: EduAndWorkData, logger?: Logger 
   // Expand all entries (handle tree responses)
   const eduEntries = expandEntries(data.eduEntries, logger)
   const workEntries = expandEntries(data.workEntries, logger)
-  const licenseEntries = expandEntries(data.licenseEntries, logger)
-  
+  const certEntries = expandEntries(data.certEntries, logger)
+
   return [
     {
       type: 'Table',
       data: {
-        rows: buildTable1Rows(eduEntries, workEntries),
-        cssClass: 'form-table font-cv',
+        rows: buildEducationTableRows(eduEntries),
+        cssClass: 'form-table font-cv table-no-bottom-border',
+        cssStyle: tableStyle
+      }
+    },
+    {
+      type: 'Table',
+      data: {
+        rows: buildWorkTableRows(workEntries),
+        cssClass: 'form-table font-cv table-no-top-border',
         cssStyle: tableStyle
       }
     },
@@ -548,7 +516,7 @@ export function buildEduAndWorkComponents(data: EduAndWorkData, logger?: Logger 
     {
       type: 'Table',
       data: {
-        rows: buildTable2Rows(licenseEntries),
+        rows: buildTable2Rows(certEntries),
         cssClass: 'form-table font-cv',
         cssStyle: tableStyle
       }

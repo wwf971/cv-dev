@@ -40,13 +40,76 @@ export function calcAge(birthYear: number, birthMonth: number, birthDay: number,
   const currentYear = today.getFullYear()
   const currentMonth = today.getMonth() + 1 // getMonth() returns 0-11
   const currentDay = today.getDate()
-  
+
   let age = currentYear - birthYear
-  
+
   // If birthday hasn't occurred yet this year, subtract 1 from age
   if (currentMonth < birthMonth || (currentMonth === birthMonth && currentDay < birthDay)) {
     age--
   }
-  
+
   return age
+}
+
+/**
+ * Process description text: replace spaces with non-breaking spaces and split by \n only
+ * Preserves existing line breaks in the text without trying to parse HTML
+ * Used for proper text formatting in CV content
+ * @param text - Raw text to process
+ * @returns Array of processed lines with spaces converted to non-breaking spaces
+ */
+export function processDescription(text: string): string[] {
+  if (!text) return []
+
+  // Split by \n only - preserve whatever line breaks exist in the server data
+  const lines = text.split('\n')
+
+  // For each line, replace each space with non-breaking space
+  // DON'T trim - preserve leading spaces
+  return lines
+    .filter(line => line.length > 0)
+    .map(line => line.replace(/ /g, '\u00A0')) // Each space becomes non-breaking space
+}
+
+/**
+ * Create a content cell with single line of text
+ * @param content - Text content
+ * @param cssClass - CSS class for the cell
+ * @returns Cell configuration object
+ */
+export function createContentCell(content: string, cssClass: string) {
+  return {
+    items: [{ type: 'Text', data: { content } }],
+    cssClass: `cv-jp-cell ${cssClass}`,
+    fillToPageBottom: true
+  }
+}
+
+/**
+ * Create a content cell with multiple lines of text
+ * Each line becomes a separate Text component (span) for proper pagination
+ * CSS should make spans display as blocks for visual line breaks
+ * @param lines - Array of text lines
+ * @param cssClass - CSS class for the cell
+ * @returns Cell configuration object
+ */
+export function createMultiLineContentCell(lines: string[], cssClass: string) {
+  const items: any[] = []
+
+  // Add each line as a separate Text item for pagination control
+  lines.forEach(line => {
+    items.push({
+      type: 'Text',
+      data: {
+        content: line,
+        display: 'block'  // Make multi-line text display as blocks
+      }
+    })
+  })
+
+  return {
+    items,
+    cssClass: `cv-jp-cell ${cssClass}`,
+    fillToPageBottom: true
+  }
 }

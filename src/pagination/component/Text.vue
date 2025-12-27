@@ -1,5 +1,5 @@
 <template>
-  <span v-if="displayText" ref="textRef" :class="['text-component', props.cssClass]">{{ displayText }}</span>
+  <span v-if="displayText" ref="textRef" :class="['text-component', props.cssClass]" :style="{ display: props.display }">{{ displayText }}</span>
 </template>
 
 <script setup lang="ts">
@@ -11,6 +11,7 @@ const props = defineProps<{
   endIndex?: number
   noSplit?: boolean  // If true, text cannot be split and must move to next page
   cssClass?: string  // Optional CSS class for the text span
+  display?: string   // Optional display style (defaults to 'inline' from CSS)
 }>()
 
 const textRef = ref<HTMLElement | null>(null)

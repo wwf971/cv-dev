@@ -46,7 +46,7 @@ const getComponent = (type: string) => {
 }
 
 // Split function - tables split by splitting rows
-const trySplit = (pageContext: any, docContext: any) => {
+const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
   if (!tableRef.value || !docContext || !pageContext) {
     if (logger) {
       const reason = !tableRef.value ? 'tableRef is null' : !docContext ? 'docContext param is null' : 'pageContext param is null'

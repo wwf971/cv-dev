@@ -160,7 +160,7 @@ const displayData = computed(() => {
 })
 
 // trySplit implementation - returns code 2 (not splittable)
-const trySplit = (pageContext: any, docContext: any) => {
+const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
   if (!basicInfoRef.value || !docContext || !pageContext) {
 	if (logger) {
 	  const reason = !basicInfoRef.value ? 'basicInfoRef is null' : !docContext ? 'docContext param is null' : 'pageContext param is null'

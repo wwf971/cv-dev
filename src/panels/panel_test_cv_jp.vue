@@ -1,8 +1,17 @@
 <script setup>
+// Generate current date in Japanese format (YYYY年MM月DD日現在)
+const generateCurrentDate = () => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0') // Month is 0-indexed, pad to 2 digits
+  const day = String(now.getDate()).padStart(2, '0') // Pad day to 2 digits
+  return `${year}年${month}月${day}日現在`
+}
+
 // Original custom data template (with remote patterns - never modified)
 const customData = {
   basicInfo: {
-    currentDate: '2025年12月19日現在',
+    currentDate: generateCurrentDate(),
     nameFuriganaLast: '{{remote:name/jp/furigana/last}}',
     nameFuriganaFirst: '{{remote:name/jp/furigana/first}}',
     nameKanjiLast: '{{remote:name/en/last/upper}}',
@@ -32,11 +41,37 @@ const customData = {
     workEntries: configWorkEntries.length > 0 ? configWorkEntries : [
       { year: 2022, month: 4, value: '株式会社〇〇 入社', note: '現在に至る' }
     ],
-    licenseEntries: [
+    certEntries: configCertEntries.length > 0 ? configCertEntries : [
       { year: 2020, month: 6, value: '普通自動車第一種運転免許 取得', note: '' },
-      { year: 2021, month: 3, value: 'TOEIC 850点', note: '' }
+      // { year: 2021, month: 3, value: 'TOEIC 850点', note: '' }
     ]
-  }
+  },
+  motivation: configMotivation || '{{remote:tree:/cv/2025-mamol/motivation/}}',
+  interest: configInterest || '{{remote:tree:/cv/2025-mamol/interest/}}'
+}
+
+// Example data for EduAndWork
+const exampleEduAndWorkData = {
+  eduEntries: [
+    { year: 2015, month: 4, value: '〇〇高等学校 入学' },
+    { year: 2018, month: 3, value: '〇〇高等学校 卒業' },
+    { year: 2018, month: 4, value: '〇〇大学 〇〇学部 〇〇学科 入学' },
+    { year: 2022, month: 3, value: '〇〇大学 〇〇学部 〇〇学科 卒業' }
+  ],
+  workEntries: [
+    { year: 2022, month: 4, value: '株式会社〇〇〇〇 入社', note: '〇〇部' },
+    { year: 2024, month: 6, value: '同社 退職', note: '' }
+  ],
+  certEntries: [
+    { year: 2020, month: 3, value: '普通自動車第一種運転免許 取得', note: '' },
+    { year: 2021, month: 6, value: 'TOEIC 850点 取得', note: '' }
+  ]
+}
+
+// Example motivation and interest data
+const exampleMotivationData = {
+  motivation: 'システム開発に興味を持ち、プログラミングを独学で学び始めました。大学では情報理工学を専攻し、アルゴリズムやデータ構造、ソフトウェア工学について学びました。卒業研究では、機械学習を活用した画像認識システムを開発し、優れた成果を上げることができました。',
+  interest: '登山(今年の計画：燧ヶ岳、筑波山、日光白根山)・スキー<br>j-pop・サウンドトラック音楽<br>可視化・オフィスオートメーションのツール開発'
 }
 
 
@@ -48,8 +83,9 @@ import BasicInfoJp from '@/content/CvJp/BasicInfoJp.vue'
 import Table from '@/pagination/component/Table.vue'
 import VSpace from '@/pagination/component/VSpace.vue'
 import { buildEduAndWorkComponents } from '@/content/CvJp/EduAndWorkBuilder'
+import { buildMotivationComponents } from '@/content/CvJp/MotivationBuilder'
 import { fetchRemoteData as _fetchRemoteData } from '@/remote/remoteDataFetcher.js'
-import { SERVER_INFO, PAGE_SIZES, workEntries as configWorkEntries } from '@/config.js'
+import { SERVER_INFO, PAGE_SIZES, workEntries as configWorkEntries, certEntries as configCertEntries, motivation as configMotivation, interest as configInterest } from '@/config.js'
 import { LogType } from '@/pagination/LogTypes'
 import { toYearJp, calcAge } from '@/content/CvJp/Utils'
 
@@ -99,23 +135,7 @@ const logger = {
 // Reactive custom data (will be populated with fetched values - this is a working copy)
 const customDataReplaced = ref(customData)
 
-// Example data for EduAndWork
-const exampleEduAndWorkData = {
-  eduEntries: [
-    { year: 2015, month: 4, value: '〇〇高等学校 入学' },
-    { year: 2018, month: 3, value: '〇〇高等学校 卒業' },
-    { year: 2018, month: 4, value: '〇〇大学 〇〇学部 〇〇学科 入学' },
-    { year: 2022, month: 3, value: '〇〇大学 〇〇学部 〇〇学科 卒業' }
-  ],
-  workEntries: [
-    { year: 2022, month: 4, value: '株式会社〇〇〇〇 入社', note: '〇〇部' },
-    { year: 2024, month: 6, value: '同社 退職', note: '' }
-  ],
-  licenseEntries: [
-    { year: 2020, month: 3, value: '普通自動車第一種運転免許 取得', note: '' },
-    { year: 2021, month: 6, value: 'TOEIC 850点 取得', note: '' }
-  ]
-}
+
 
 // Doc data - with null data to test example data usage
 const docData = ref([
@@ -135,7 +155,8 @@ onMounted(() => {
       type: 'BasicInfoJp',
       data: null
     },
-    ...buildEduAndWorkComponents(exampleEduAndWorkData, logger)
+    ...buildEduAndWorkComponents(exampleEduAndWorkData, logger),
+    ...buildMotivationComponents(exampleMotivationData, logger)
   ]
 })
 
@@ -219,7 +240,11 @@ const fetchRemoteData = async () => {
         type: 'BasicInfoJp',
         data: processBasicInfo(customDataReplaced.value.basicInfo)
       },
-      ...buildEduAndWorkComponents(customDataReplaced.value.eduAndWork || {}, logger)
+      ...buildEduAndWorkComponents(customDataReplaced.value.eduAndWork || {}, logger),
+      ...buildMotivationComponents({
+        motivation: customDataReplaced.value.motivation,
+        interest: customDataReplaced.value.interest
+      }, logger)
     ]
   } catch (error) {
     console.error('[fetchRemoteData] Error:', error)
@@ -249,6 +274,13 @@ const toggleDataMode = () => {
     },
     ...buildEduAndWorkComponents(
       useExampleData.value ? exampleEduAndWorkData : (customDataReplaced.value.eduAndWork || {}),
+      logger
+    ),
+    ...buildMotivationComponents(
+      useExampleData.value ? exampleMotivationData : {
+        motivation: customDataReplaced.value.motivation,
+        interest: customDataReplaced.value.interest
+      },
       logger
     )
   ]

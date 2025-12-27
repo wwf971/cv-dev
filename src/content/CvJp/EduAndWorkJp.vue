@@ -18,7 +18,7 @@ import { buildEduAndWorkComponents } from './EduAndWorkBuilder'
 const props = defineProps({
   eduEntries: Array,
   workEntries: Array,
-  licenseEntries: Array
+  certEntries: Array
 })
 
 const eduWorkRef = ref<HTMLElement | null>(null)
@@ -30,7 +30,7 @@ const logger = inject('paginationLogger', null) as any
 const displayComponents = computed(() => buildEduAndWorkComponents({
   eduEntries: props.eduEntries as any,
   workEntries: props.workEntries as any,
-  licenseEntries: props.licenseEntries as any
+  certEntries: props.certEntries as any
 }, logger))
 
 // Component mapping
@@ -52,6 +52,7 @@ const getComponent = (type: string) => {
 
 <style scoped>
 @import './styles-shared.css';
+
 
 .date-column-header {
   width: 60px;

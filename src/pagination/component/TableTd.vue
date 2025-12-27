@@ -67,7 +67,7 @@ const getComponent = (type: string) => {
 }
 
 // Split function
-const trySplit = (pageContext: any, docContext: any) => {
+const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
   if (props.isEmpty) {
     // Empty cells don't need splitting
     return {

@@ -71,7 +71,7 @@ const getBullet = (index: number) => {
 }
 
 // Pure function for splitting
-const trySplit = (pageContext: any, docContext: any) => {
+const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
   if (!textListRef.value || !docContext || !pageContext) {
     if (logger) {
       const reason = !textListRef.value ? 'textListRef is null' : !docContext ? 'docContext param is null' : 'pageContext param is null'

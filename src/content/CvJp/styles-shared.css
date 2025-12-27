@@ -193,9 +193,6 @@ padding-right: 0 !important;
 border-top: none !important;
 }
 
-.table-no-top-border td {
-border-top: none !important;
-}
 
 
 .project-title {
@@ -406,4 +403,28 @@ td.align-center {
   font-size: 14px;
   line-height: 1;
 }
+
+/* Border removal for stacked tables */
+.table-no-top-border {
+  border-top: none !important;
+}
+
+.table-no-bottom-border {
+  border-bottom: none !important;
+}
+
+/* Direct classes for td border control */
+.td-no-top-border {
+  border-top: none !important;
+}
+
+.td-no-bottom-border {
+  border-bottom: none !important;
+}
+
+/* Hide bottom border for last row cells in tables */
+.last-row-cell {
+  border-bottom: none !important;
+}
+	
 	

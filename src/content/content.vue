@@ -6,7 +6,7 @@
     <BasicInfoJP :info="info" />
     <!-- Education and Work Section -->
     <EducationAndWorkJP :info="info" />
-    <MotivationSectionJP :info="info" />
+    <MotivationSectionJP :motivation="motivation" :interest="interest" />
     
     <AlignToNextPageBegin :showDebugInfo="true" />
     <div class="font-cv" style="font-size: 20px; font-weight: bold; text-align: center; margin-top: 25px;">プロジェクト経験</div>
@@ -34,12 +34,13 @@
 <script setup lang="ts">
 import BasicInfoJP from './CvJp/BasicInfoJp.vue'
 import EducationAndWorkJP from './CvJp/EduAndWorkJp.vue'
-import MotivationSectionJP from './MotivationSection_jp.vue'
+import MotivationSectionJP from './CvJp/MotivationJp.vue'
 import VSkip from '@/pagination/component_old/VSkip.vue'
 import AlignToPageBegin from '@/pagination/component_old/AlignToPageBegin.vue'
 import AlignToNextPageBegin from '@/pagination/component_old/AlignToNextPageBegin.vue'
 import ProjectJP from './Project_jp.vue'
 import { useInfoStore } from '@/content/info.js'
+import { motivation, interest } from '@/config.js'
 
 // Props
 const props = defineProps<{
