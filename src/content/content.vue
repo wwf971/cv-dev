@@ -38,7 +38,7 @@ import MotivationSectionJP from './CvJp/MotivationJp.vue'
 import VSkip from '@/pagination/component_old/VSkip.vue'
 import AlignToPageBegin from '@/pagination/component_old/AlignToPageBegin.vue'
 import AlignToNextPageBegin from '@/pagination/component_old/AlignToNextPageBegin.vue'
-import ProjectJP from './Project_jp.vue'
+import ProjectJP from './CvJp/ProjectJp.vue'
 import { useInfoStore } from '@/content/info.js'
 import { motivation, interest } from '@/config.js'
 

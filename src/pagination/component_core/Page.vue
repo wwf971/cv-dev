@@ -1,13 +1,13 @@
 <template>
   <div ref="pageContainerRef" class="page-container" :class="{ 'no-page-lines': props.hidePageLines }" :style="pageStyle">
-    <!-- Page begin line (if position is determined) -->
-    <PageLine 
+    <!-- Page begin line (content start boundary) -->
+    <PageLine
       v-if="props.pageStartY !== null && !props.hidePageLines"
       class="print:hidden"
       :line="{
         pageNumber: props.pageIndex + 1,
         type: 'begin',
-        y: 0,
+        y: props.padding.top,
         exceedsContainer: false
       }"
     />
@@ -17,15 +17,15 @@
     
     <slot></slot>
     
-    <!-- Page end line (if position is determined) -->
-    <!-- Position at the very bottom of the page container -->
-    <PageLine 
+    <!-- Page end line (content end boundary) -->
+    <!-- Position at the content bottom (page height minus bottom padding) -->
+    <PageLine
       v-if="props.pageEndY !== null && !props.hidePageLines"
       class="print:hidden"
       :line="{
         pageNumber: props.pageIndex + 1,
         type: 'end',
-        y: props.pageHeight,
+        y: props.pageHeight - props.padding.bottom,
         exceedsContainer: false
       }"
     />

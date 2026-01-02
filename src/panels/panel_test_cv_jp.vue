@@ -71,7 +71,7 @@ const exampleEduAndWorkData = {
 // Example motivation and interest data
 const exampleMotivationData = {
   motivation: 'システム開発に興味を持ち、プログラミングを独学で学び始めました。大学では情報理工学を専攻し、アルゴリズムやデータ構造、ソフトウェア工学について学びました。卒業研究では、機械学習を活用した画像認識システムを開発し、優れた成果を上げることができました。',
-  interest: '登山(今年の計画：燧ヶ岳、筑波山、日光白根山)・スキー<br>j-pop・サウンドトラック音楽<br>可視化・オフィスオートメーションのツール開発'
+  interest: '登山・スキー・アウトドアスポーツ<br>音楽鑑賞'
 }
 
 
@@ -85,9 +85,10 @@ import VSpace from '@/pagination/component/VSpace.vue'
 import { buildEduAndWorkComponents } from '@/content/CvJp/EduAndWorkBuilder'
 import { buildMotivationComponents } from '@/content/CvJp/MotivationBuilder'
 import { fetchRemoteData as _fetchRemoteData } from '@/remote/remoteDataFetcher.js'
-import { SERVER_INFO, PAGE_SIZES, workEntries as configWorkEntries, certEntries as configCertEntries, motivation as configMotivation, interest as configInterest } from '@/config.js'
+import { SERVER_INFO, SERVER_MONGO_INFO, PAGE_SIZES, workEntries as configWorkEntries, certEntries as configCertEntries, motivation as configMotivation, interest as configInterest } from '@/config.js'
 import { LogType } from '@/pagination/LogTypes'
 import { toYearJp, calcAge } from '@/content/CvJp/Utils'
+import { createLogger } from './logger'
 
 // Component mapping
 const getComponent = (type) => {
@@ -106,30 +107,7 @@ const isFetching = ref(false)
 const fetchError = ref('')
 
 // Single logger that writes to logs array
-const logger = {
-  addLog: (message, from, type = LogType.Normal) => {
-    // Match the timestamp format from Pagination.vue
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = String(now.getMonth() + 1).padStart(2, '0')
-    const day = String(now.getDate()).padStart(2, '0')
-    const hours = String(now.getHours()).padStart(2, '0')
-    const minutes = String(now.getMinutes()).padStart(2, '0')
-    const seconds = String(now.getSeconds()).padStart(2, '0')
-    const ms = String(now.getMilliseconds()).padStart(2, '0')
-    const tzOffset = -now.getTimezoneOffset()
-    const tzHours = String(Math.floor(Math.abs(tzOffset) / 60)).padStart(2, '0')
-    const tzSign = tzOffset >= 0 ? '+' : '-'
-    const timestamp = `${year}${month}${day}_${hours}${minutes}${seconds}${ms}${tzSign}${tzHours}`
-    
-    logs.value.push({
-      message,
-      from,
-      type,
-      timestamp
-    })
-  }
-}
+const logger = createLogger(logs.value, 'panel_test_cv_jp')
 
 
 // Reactive custom data (will be populated with fetched values - this is a working copy)
@@ -221,6 +199,7 @@ const fetchRemoteData = async () => {
   
   try {
     const serverOrigin = SERVER_INFO.origin.match(/^https?:\/\//) ? SERVER_INFO.origin : `http://${SERVER_INFO.origin}`
+    const mongoOrigin = SERVER_MONGO_INFO.origin.match(/^https?:\/\//) ? SERVER_MONGO_INFO.origin : `http://${SERVER_MONGO_INFO.origin}`
     
     // Create timeout promise (10 seconds)
     const timeoutPromise = new Promise((_, reject) => {
@@ -229,7 +208,7 @@ const fetchRemoteData = async () => {
     
     // Race between fetch and timeout
     customDataReplaced.value = await Promise.race([
-      _fetchRemoteData(customData, serverOrigin, SERVER_INFO.get_token),
+      _fetchRemoteData(customData, serverOrigin, SERVER_INFO.get_token, mongoOrigin, SERVER_MONGO_INFO.username, SERVER_MONGO_INFO.password),
       timeoutPromise
     ])
     

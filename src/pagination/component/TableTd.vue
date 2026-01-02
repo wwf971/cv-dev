@@ -243,7 +243,8 @@ defineExpose({
 
 /* Ensure TD respects parent TR height when specified */
 tr[style*="height"] .td-component {
-  height: inherit;
+  height: 100%;
+  min-height: inherit;
 }
 </style>
 

@@ -1,5 +1,5 @@
 <template>
-  <span v-if="displayText" ref="textRef" :class="['text-component', props.cssClass]" :style="{ display: props.display }">{{ displayText }}</span>
+  <span v-if="displayText" ref="textRef" :class="['text-component', props.cssClass, { 'text-no-wrap': props.noSplit }]" :style="{ display: props.display }">{{ displayText }}</span>
 </template>
 
 <script setup lang="ts">
@@ -9,7 +9,8 @@ const props = defineProps<{
   content: string
   startIndex?: number
   endIndex?: number
-  noSplit?: boolean  // If true, text cannot be split and must move to next page
+  noSplit?: boolean
+  // If true, text cannot be split and must move to next page if there's not enough space on the current page
   cssClass?: string  // Optional CSS class for the text span
   display?: string   // Optional display style (defaults to 'inline' from CSS)
 }>()
@@ -66,6 +67,8 @@ const searchBinary = (startIdx: number, endIdx: number, docCtx: any, pageBottomY
 
 // Split function that takes explicit parameters
 const trySplit = (pageCtx: any, docCtx: any) => {
+  console.log('Text.trySplit called for:', displayText.value?.substring(0, 50) + '...')
+
   // If text is empty, it takes no space and always fits
   if (!displayText.value || displayText.value.length === 0) {
     if (logger) {
@@ -198,14 +201,59 @@ const trySplit = (pageCtx: any, docCtx: any) => {
   }
 }
 
+// Get the first line's vertical center position relative to page-container
+const getFirstLineYPos = () => {
+  if (!textRef.value || !textRef.value.firstChild) {
+    return null
+  }
+
+  // Find the page-container element
+  let pageContainer = textRef.value.closest('.page-container')
+  if (!pageContainer) {
+    return null
+  }
+
+  const pageRect = pageContainer.getBoundingClientRect()
+  
+  // Use Range API to get the first line's bounding rect
+  const range = document.createRange()
+  const textNode = textRef.value.firstChild
+  
+  if (textNode.nodeType !== Node.TEXT_NODE) {
+    // Fallback to element rect if not a text node
+    const textRect = textRef.value.getBoundingClientRect()
+    const computedStyle = window.getComputedStyle(textRef.value)
+    const lineHeight = parseFloat(computedStyle.lineHeight)
+    const textTopRelativeToPage = textRect.top - pageRect.top
+    return textTopRelativeToPage + (lineHeight / 2)
+  }
+  
+  // Get the position of just the first character/line
+  range.setStart(textNode, 0)
+  range.setEnd(textNode, Math.min(1, textNode.textContent?.length || 0))
+  
+  const firstCharRect = range.getBoundingClientRect()
+  
+  // Calculate first line's vertical center
+  const firstLineTop = firstCharRect.top - pageRect.top
+  const firstLineCenter = firstLineTop + (firstCharRect.height / 2)
+  
+  return firstLineCenter
+}
+
 defineExpose({
-  trySplit
+  trySplit,
+  getFirstLineYPos
 })
 </script>
 
 <style scoped>
 .text-component {
   display: inline;
+}
+
+.text-no-wrap {
+  white-space: nowrap;
 }
 </style>
 

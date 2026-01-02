@@ -10,20 +10,7 @@
   
   <!-- Normal UI Mode -->
   <MasterDetail v-else title="CV Generator" sidebarWidth="200px">
-    <Tab label="CV Content">
-      <SubTab label="CV Content" :isDefault="true">
-        <Panel>
-          <Content :paginationMode="0" />
-        </Panel>
-      </SubTab>
-    </Tab>
-
-    <Tab label="Test">
-      <SubTab label="BasicInfoJp">
-        <Panel>
-          <PanelTestCvJp />
-        </Panel>
-      </SubTab>
+    <Tab label="Basic Components">
       <SubTab label="Table Cross-Page">
         <Panel>
           <PanelTestTable />
@@ -34,26 +21,45 @@
           <PanelTestText />
         </Panel>
       </SubTab>
-      <SubTab label="TextList Cross-Page">
+      <SubTab label="TextList,vue Paignation Test">
         <Panel>
           <PanelTestTextList />
         </Panel>
       </SubTab>
-      <SubTab label="Table Tr/Td Cross-Page">
+      <SubTab label="TextRow.vue Pagination Test">
+        <Panel>
+          <PanelTestTextRow />
+        </Panel>
+      </SubTab>
+      <SubTab label="Table/Tr/Td Pagination Test">
         <Panel>
           <PanelTestTableTrTd />
         </Panel>
       </SubTab>
     </Tab>
 
-    <Tab label="Export">
-      <SubTab label="Pagination 1">
+    <Tab label="CV-Japanese style">
+      <SubTab label="CV-JP">
+        <Panel>
+          <PanelTestCvJp />
+        </Panel>
+      </SubTab>
+      <SubTab label="CV-JP-Experience">
+        <Panel>
+          <PanelTestExperience />
+        </Panel>
+      </SubTab>
+
+    </Tab>
+
+    <Tab label="Old Pagination System">
+      <SubTab label="Pagination-old">
         <Panel>
           <PanelPagination1 />
         </Panel>
       </SubTab>
       
-      <SubTab label="Pagination 2">
+      <SubTab label="Pagination-new">
         <Panel>
           <PanelPagination2 />
         </Panel>
@@ -82,6 +88,8 @@ import PanelTestText from '@/panels/panel_test_text.vue'
 import PanelTestTextList from '@/panels/panel_test_text_list.vue'
 import PanelTestTableTrTd from '@/panels/panel_test_table_tr_td.vue'
 import PanelTestCvJp from '@/panels/panel_test_cv_jp.vue'
+import PanelTestExperience from '@/panels/panel_test_experience.vue'
+import PanelTestTextRow from '@/panels/panel_test_text_row.vue'
 import PanelServer from '@/remote/panel_server.vue'
 import PrintWrapper from '@/panels/PrintWrapper.vue'
 import { useInfoStore } from '@/content/info.js'

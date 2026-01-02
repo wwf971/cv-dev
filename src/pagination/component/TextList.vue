@@ -1,15 +1,16 @@
 <template>
   <div ref="textListRef" class="text-list-component">
-    <div v-for="(item, index) in displayItems" :key="index" class="list-item">
+    <div v-for="(item, index) in props.items" :key="index" class="list-item">
       <span 
-        v-if="shouldShowBullet(index)" 
         class="bullet" 
-        :class="{ invisible: isInvisibleBullet(index) }"
+        :class="{ invisible: isInvisibleBullet(index) }" 
+        :style="{ marginTop: bulletMarginTops[index] !== undefined ? `${bulletMarginTops[index]}px` : undefined }"
+        v-if="shouldShowBullet(index)"
       >
         {{ getBullet(index) }}
       </span>
-      <Text 
-        v-bind="item" 
+      <Text
+        v-bind="item"
         :ref="(el: any) => { if (el) textComponentRefs[index] = el }"
       />
     </div>
@@ -17,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, onBeforeUpdate } from 'vue'
+import { ref, inject, onBeforeUpdate } from 'vue'
 import Text from './Text.vue'
 
 const props = withDefaults(defineProps<{
@@ -27,35 +28,51 @@ const props = withDefaults(defineProps<{
   isSplit?: boolean
   isFirstSplit?: boolean
   isFirstChildSplit?: boolean
+  isFirstChildEmpty?: boolean // Whether the first child is empty (has no content)
 }>(), {
   mode: 'unordered',
   startBulletNumber: 1,
   isSplit: false,
   isFirstSplit: false,
-  isFirstChildSplit: false
+  isFirstChildSplit: false,
+  isFirstChildEmpty: false
 })
 
 const textListRef = ref<HTMLElement | null>(null)
 const textComponentRefs = ref<any[]>([])
+const bulletMarginTops = ref<{ [key: number]: number }>({})
 const logger = inject('paginationLogger', null) as any
 
 onBeforeUpdate(() => {
   textComponentRefs.value = []
 })
 
-const displayItems = computed(() => props.items)
 
 const shouldShowBullet = (index: number) => {
-  // Don't show bullet for first item if it's a split continuation and first child is also split
-  if (index === 0 && props.isSplit && !props.isFirstSplit && props.isFirstChildSplit) {
-    return true // Show invisible bullet as placeholder
+  // Show bullets for all items in list modes (ordered, unordered, paragraph)
+  // But skip empty items (when Text component has startIndex === endIndex)
+  if (props.mode === 'ordered' || props.mode === 'unordered' || props.mode === 'paragraph') {
+    const item = props.items[index]
+    // Check if item is empty (Text component with startIndex === endIndex means no content)
+    if (item && item.startIndex !== undefined && item.endIndex !== undefined && item.startIndex === item.endIndex) {
+      return false
+    }
+    return true
   }
-  return true
+  return false
 }
 
 const isInvisibleBullet = (index: number) => {
   // First item's bullet is invisible if it's continuation of split child
-  return index === 0 && props.isSplit && !props.isFirstSplit && props.isFirstChildSplit
+  // BUT not if the first child on the previous page was empty (had no content)
+  if (index === 0 && props.isSplit && !props.isFirstSplit && props.isFirstChildSplit) {
+    // If first child was empty, this is effectively the start, so bullet should be visible
+    if (props.isFirstChildEmpty) {
+      return false
+    }
+    return true
+  }
+  return false
 }
 
 const getBullet = (index: number) => {
@@ -70,8 +87,50 @@ const getBullet = (index: number) => {
   }
 }
 
+// Calculate bullet alignment to match first line's vertical center of each Text component
+const calcBulletYOffset = () => {
+  if (!textListRef.value) {
+    return
+  }
+
+  // Find the page-container element
+  const pageContainer = textListRef.value.closest('.page-container')
+  if (!pageContainer) {
+    return
+  }
+
+  const pageRect = pageContainer.getBoundingClientRect()
+  const listItems = textListRef.value.querySelectorAll('.list-item')
+
+  listItems.forEach((listItem, index) => {
+    const bulletElement = listItem.querySelector('.bullet')
+    const textComponent = textComponentRefs.value[index]
+
+    if (!bulletElement || !textComponent || typeof textComponent.getFirstLineYPos !== 'function') {
+      return
+    }
+
+    // Get the first line's vertical center from Text component
+    const textFirstLineCenter = textComponent.getFirstLineYPos()
+    if (textFirstLineCenter === null) {
+      return
+    }
+
+    // Get bullet's current vertical center position relative to page
+    const bulletRect = bulletElement.getBoundingClientRect()
+    const bulletTopRelativeToPage = bulletRect.top - pageRect.top
+    const bulletCurrentCenter = bulletTopRelativeToPage + (bulletRect.height / 2)
+
+    // Calculate the offset needed to align bullet center with text first line center
+    const offset = textFirstLineCenter - bulletCurrentCenter
+
+    // Store the offset
+    bulletMarginTops.value[index] = offset
+  })
+}
+
 // Pure function for splitting
-const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
+const trySplit = (pageContext: any, docContext: any) => {
   if (!textListRef.value || !docContext || !pageContext) {
     if (logger) {
       const reason = !textListRef.value ? 'textListRef is null' : !docContext ? 'docContext param is null' : 'pageContext param is null'
@@ -99,6 +158,9 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
   
   // If entire list fits, no split needed
   if (listBottom <= pageBottomY) {
+    // Calculate bullet alignment before returning
+    calcBulletYOffset()
+    
     return {
       code: 0,
       data: null
@@ -122,35 +184,35 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
 
   for (let i = 0; i < listItems.length; i++) {
     const itemBottom = docContext.measureVerticalPosEnd(listItems[i])
-    
+
     if (logger) {
       logger.addLog(`Item ${i} bottom: ${itemBottom.toFixed(2)}, pageBottomY: ${pageBottomY.toFixed(2)}`, 'TextList.trySplit')
     }
-    
+
     if (itemBottom > pageBottomY) {
       // This item overflows - try to split it
       splitIndex = i
-      
+
       if (logger) {
         logger.addLog(`Item ${i} overflows, attempting to split the Text component`, 'TextList.trySplit')
       }
-      
+
       // Get the Text component instance for this item
       const textComponent = textComponentRefs.value[i]
       if (textComponent && typeof textComponent.trySplit === 'function') {
         if (logger) {
           logger.addLog(`Calling trySplit on Text component at index ${i}`, 'TextList.trySplit')
         }
-        
+
         const textSplitResult = textComponent.trySplit(pageContext, docContext)
-        
+
         if (textSplitResult.code === 1 && textSplitResult.data) {
           childNeedsSplit = true
           childSplitData = {
             splitAtIndex: i,
             parts: textSplitResult.data.map((part: any) => part.data)
           }
-          
+
           if (logger) {
             logger.addLog(`Text split successful at item ${i}: ${childSplitData.parts[0].endIndex} chars in first part`, 'TextList.trySplit')
           }
@@ -164,7 +226,7 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
           logger.addLog(`Warning: Text component ref not found or trySplit not available at index ${i}`, 'TextList.trySplit', 1)
         }
       }
-      
+
       break
     } else {
       // This item fits, continue to next
@@ -186,30 +248,39 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
   let secondPartStartBullet = props.startBulletNumber + splitIndex
   let isFirstChildSplit = false
   let isSecondChildSplit = false
-  
+  let isFirstChildEmpty = false
+
   if (childNeedsSplit && childSplitData) {
     // A child Text component was split
     const splitAtIndex = childSplitData.splitAtIndex
     const parts = childSplitData.parts
-    
+
     // Items before the split item
     const itemsBefore = props.items.slice(0, splitAtIndex)
     // Items after the split item
     const itemsAfter = props.items.slice(splitAtIndex + 1)
-    
+
     // First part: items before + first part of split item
     firstPartItems = [...itemsBefore, parts[0]]
     // Second part: second part of split item + items after
     secondPartItems = [parts[1], ...itemsAfter]
-    
+
     // Bullet number for second part starts from the split item's bullet
     secondPartStartBullet = props.startBulletNumber + splitAtIndex
-    
+
     // Track if first item in each part is a split
     // Inherit existing isFirstChildSplit, or set it if we're splitting at index 0
     isFirstChildSplit = props.isFirstChildSplit || (splitAtIndex === 0)
     isSecondChildSplit = true // First item of second part is always split (it's the second half)
     
+    // Check if the first part's last item (the split item's first part) is empty
+    const firstPartLastItem = parts[0]
+    if (firstPartLastItem && firstPartLastItem.startIndex !== undefined && 
+        firstPartLastItem.endIndex !== undefined && 
+        firstPartLastItem.startIndex === firstPartLastItem.endIndex) {
+      isFirstChildEmpty = true
+    }
+
     if (logger) {
       logger.addLog(`Split at item ${splitAtIndex}: first part has ${firstPartItems.length} items, second part has ${secondPartItems.length} items`, 'TextList.trySplit')
     }
@@ -227,7 +298,7 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
       items: firstPartItems,
       startBulletNumber: props.startBulletNumber,
       isSplit: true,
-      isFirstSplit: props.isFirstSplit ?? true, // Inherit from parent, default to true if not set
+      isFirstSplit: !props.isSplit || props.isFirstSplit, // True if first split OR inheriting true from parent
       isFirstChildSplit: isFirstChildSplit
     }
   }
@@ -240,7 +311,8 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
       startBulletNumber: secondPartStartBullet,
       isSplit: true,
       isFirstSplit: false,
-      isFirstChildSplit: isSecondChildSplit
+      isFirstChildSplit: isSecondChildSplit,
+      isFirstChildEmpty: isFirstChildEmpty
     }
   }
 
@@ -274,11 +346,16 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
     logger.addLog(`Split TextList: first part has ${firstPartItems.length} items, second part has ${secondPartItems.length} items`, 'TextList.trySplit')
   }
 
+  // Calculate bullet alignment before returning split data
+  calcBulletYOffset()
+
   return {
     code: 1,
     data: [firstPart, secondPart]
   }
 }
+
+
 
 defineExpose({
   trySplit
@@ -297,9 +374,11 @@ defineExpose({
 }
 
 .bullet {
-  margin-right: 0px;
+  margin-right: -2px;
   flex-shrink: 0;
   min-width: 18px;
+  text-align: left;
+  line-height: 1.2;
 }
 
 .bullet.invisible {

@@ -49,7 +49,7 @@ padding-bottom: 8px;
 	border-top: none !important;
 }
 .form-table tr{
-	height: 40px;
+	/* height: 40px; */
 	box-sizing: border-box;
 }
 
@@ -380,15 +380,28 @@ td.align-center {
   line-height: 1;
 }
 
-/* Month cell and content cell alignment - match year cell structure */
-.month-cell .text-component,
+/* Month cell alignment - match year cell structure */
+.month-cell .text-component {
+  display: block !important;
+  line-height: 1.2;
+}
+
+/* Content cell alignment - separate from month cell */
 .content-cell .text-component {
   display: block !important;
   line-height: 1.2;
 }
 
-/* Spacer (alignment spacer class) in month and content cells - match Japanese year style */
-.month-cell .alignment-spacer,
+/* Spacer (alignment spacer class) in month cells - match Japanese year style */
+.month-cell .alignment-spacer {
+  font-size: 11px;
+  font-weight: 500;
+  color: transparent; /* Invisible but takes up space */
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+/* Spacer (alignment spacer class) in content cells */
 .content-cell .alignment-spacer {
   font-size: 11px;
   font-weight: 500;
@@ -397,8 +410,13 @@ td.align-center {
   margin-bottom: 2px;
 }
 
-/* Actual content (all text components except alignment spacer) - normal size */
-.month-cell .text-component:not(.alignment-spacer),
+/* Actual content in month cells (all text components except alignment spacer) */
+.month-cell .text-component:not(.alignment-spacer) {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Actual content in content cells (all text components except alignment spacer) */
 .content-cell .text-component:not(.alignment-spacer) {
   font-size: 14px;
   line-height: 1;

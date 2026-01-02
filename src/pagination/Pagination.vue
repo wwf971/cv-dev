@@ -43,7 +43,9 @@ import Tr from './component/TableTr.vue'
 import Td from './component/TableTd.vue'
 import Table from './component/Table.vue'
 import VSpace from './component/VSpace.vue'
+import TextRow from './component/TextRow.vue'
 import BasicInfoJp from '../content/CvJp/BasicInfoJp.vue'
+import ProjectJp from '../content/CvJp/ProjectJp.vue'
 import { A4_SIZES, PAGE_SIZES } from '../config.js'
 import type { PagePadding, PageContext } from './pagination'
 import { LogType } from './LogTypes'
@@ -145,6 +147,8 @@ const getComponent = (type: string) => {
       return Text
     case 'TextList':
       return TextList
+    case 'TextRow':
+      return TextRow
     case 'Tr':
       return Tr
     case 'Td':
@@ -155,6 +159,8 @@ const getComponent = (type: string) => {
       return VSpace
     case 'BasicInfoJp':
       return BasicInfoJp
+    case 'ProjectJp':
+      return ProjectJp
     default:
       return null
   }
@@ -467,7 +473,7 @@ const runPagination = async () => {
   
   pages.value = pageData
   addLog(`Pagination complete: ${pages.value.length} pages created`, 'runPagination')
-  
+
   // Measure actual page positions from DOM
   await measurePagePos()
 }

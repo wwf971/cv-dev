@@ -32,7 +32,7 @@
       whiteSpace: 'nowrap',
       fontWeight: 'bold'
     }">
-      Page {{ line.pageNumber }} {{ line.type }} ({{ line.y.toFixed(0) }}px)
+      Page {{ line.pageNumber }} {{ line.type === 'begin' ? 'top' : 'bottom' }} ({{ line.y.toFixed(0) }}px)
     </div>
   </div>
 </template>
@@ -48,6 +48,7 @@ const props = defineProps<{
     exceedsContainer?: boolean
   }
 }>()
+
 
 // Request extra horizontal space for the label
 const spaceManager = inject('paginationSpaceManager', null) as any

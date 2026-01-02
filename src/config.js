@@ -29,6 +29,12 @@ export let SERVER_INFO = {
   // password: 'example_password'
 }
 
+export let SERVER_MONGO_INFO = {
+  origin: 'http://localhost:8080',
+  username: 'example_username',
+  password: 'example_password'
+}
+
 export let educationEntries = []
 export let workEntries = []
 export let certEntries = []
@@ -44,6 +50,7 @@ try {
   if (privateConfig.A4_SIZES) A4_SIZES = privateConfig.A4_SIZES
   if (privateConfig.PAGE_SIZES) PAGE_SIZES = privateConfig.PAGE_SIZES
   if (privateConfig.SERVER_INFO) SERVER_INFO = privateConfig.SERVER_INFO
+  if (privateConfig.SERVER_MONGO_INFO) SERVER_MONGO_INFO = privateConfig.SERVER_MONGO_INFO
   if (privateConfig.educationEntries) educationEntries = privateConfig.educationEntries
   if (privateConfig.workEntries) workEntries = privateConfig.workEntries
   // workEntries_remote takes priority over workEntries for remote data patterns

@@ -1,17 +1,21 @@
 /**
- * Fetches data from remote server for patterns like {{remote:path/to/resource}}
+ * Fetches data from remote server for patterns like {{remote:path/to/resource}} or {{mongo:db/coll/docId/field}}
  * @param {Object|Array} data - The data object to process
  * @param {String} serverOrigin - Server origin URL
  * @param {String} getToken - GET token for authentication
+ * @param {String} mongoOrigin - MongoDB server origin URL
+ * @param {String} mongoUsername - MongoDB username
+ * @param {String} mongoPassword - MongoDB password
  * @returns {Object} Plain data object with remote values fetched
  */
-export async function fetchRemoteData(data, serverOrigin, getToken) {
+export async function fetchRemoteData(data, serverOrigin, getToken, mongoOrigin = null, mongoUsername = null, mongoPassword = null) {
   // Create a deep copy (plain object, not reactive)
   const workingData = JSON.parse(JSON.stringify(data))
   
-  // Pattern to match {{remote:path}} or {{remote:tree:path}}
+  // Pattern to match {{remote:path}}, {{remote:tree:path}}, or {{mongo:db/coll/docId/field}}
   const remotePattern = /\{\{remote:([^}]+)\}\}/g
   const treePattern = /\{\{remote:tree:([^}]+)\}\}/
+  const mongoPattern = /\{\{mongo:([^}]+)\}\}/g
   
   // Store all fetch promises
   const fetchPromises = []
@@ -43,6 +47,37 @@ export async function fetchRemoteData(data, serverOrigin, getToken) {
         
         fetchPromises.push(fetchPromise)
         return
+      }
+      
+      // Check if string contains mongo patterns
+      const mongoMatches = [...obj.matchAll(mongoPattern)]
+      if (mongoMatches.length > 0 && mongoOrigin) {
+        mongoMatches.forEach(match => {
+          const mongoPath = match[1]
+          const fullPattern = match[0]
+          
+          // Create fetch promise for MongoDB
+          const fetchPromise = fetchMongoValue(mongoOrigin, mongoPath, mongoUsername, mongoPassword)
+            .then(value => {
+              // Replace the pattern in the string
+              const current = getNestedValue(workingData, path)
+              if (typeof current === 'string') {
+                const newValue = current.replace(fullPattern, value)
+                setNestedValue(workingData, path, newValue)
+              }
+            })
+            .catch(error => {
+              // Replace with error message
+              const current = getNestedValue(workingData, path)
+              if (typeof current === 'string') {
+                const errorMsg = `[Error: ${error.message}]`
+                const newValue = current.replace(fullPattern, errorMsg)
+                setNestedValue(workingData, path, newValue)
+              }
+            })
+          
+          fetchPromises.push(fetchPromise)
+        })
       }
       
       // Check if string contains remote patterns
@@ -188,6 +223,73 @@ async function fetchRemoteValue(serverOrigin, path, getToken) {
       // Plain text response (success)
       return text
     }
+  } catch (error) {
+    throw error
+  }
+}
+
+/**
+ * Fetch a value from MongoDB server
+ * @param {String} mongoOrigin - MongoDB server origin URL
+ * @param {String} path - Path in format: db/collection/docId or db/collection/docId/field/path
+ * @param {String} username - MongoDB username
+ * @param {String} password - MongoDB password
+ * @returns {String} Fetched value
+ */
+async function fetchMongoValue(mongoOrigin, path, username, password) {
+  // Parse path: db/collection/docId or db/collection/docId/field/path
+  const parts = path.split('/')
+  
+  if (parts.length < 3) {
+    throw new Error(`Invalid MongoDB path: ${path}. Expected format: db/collection/docId or db/collection/docId/field`)
+  }
+  
+  const databaseName = parts[0]
+  const collectionName = parts[1]
+  const docId = parts[2]
+  const fieldPath = parts.slice(3).join('/') // remaining parts as field path
+  
+  // Construct URL for fetching document
+  const url = `${mongoOrigin}/mongo/db/${databaseName}/coll/${collectionName}/docs/${docId}`
+  
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${btoa(`${username}:${password}`)}`
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    
+    const data = await response.json()
+    
+    // Check for error response
+    if (data.code !== 0) {
+      throw new Error(data.message || `Server error (code: ${data.code})`)
+    }
+    
+    // If field path is specified, navigate to that field
+    if (fieldPath) {
+      const fieldParts = fieldPath.split('/')
+      let value = data.data
+      
+      for (const part of fieldParts) {
+        if (value && typeof value === 'object' && part in value) {
+          value = value[part]
+        } else {
+          throw new Error(`Field not found: ${fieldPath}`)
+        }
+      }
+      
+      return String(value)
+    }
+    
+    // Return entire document as JSON string
+    return JSON.stringify(data.data)
   } catch (error) {
     throw error
   }

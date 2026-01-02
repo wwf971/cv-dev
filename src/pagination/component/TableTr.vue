@@ -31,9 +31,9 @@ const props = withDefaults(defineProps<{
   }>
   cssClass?: string
   cssStyle?: any
-  fillToPageBottom?: boolean  // If true, stretch split row to fill remaining space to pageBottomY
+  fillToPageBottom?: boolean  // If true, stretch split row to fill remaining space to pageBottomY. If false, disable auto-fill. Default: auto-fill enabled
 }>(), {
-  fillToPageBottom: false
+  fillToPageBottom: true  // Default: auto-fill enabled
 })
 
 const trRef = ref<HTMLElement | null>(null)
@@ -47,7 +47,7 @@ onBeforeUpdate(() => {
 const displayTds = computed(() => props.items)
 
 // Split function
-const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
+const trySplit = (pageContext: any, docContext: any) => {
   if (!trRef.value || !docContext || !pageContext) {
     if (logger) {
       const reason = !trRef.value ? 'trRef is null' : !docContext ? 'docContext param is null' : 'pageContext param is null'
@@ -208,17 +208,18 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
     logger.addLog(`Split Tr: first part has ${firstTrTds.length} tds, second part has ${secondTrTds.length} tds`, 'Tr.trySplit')
   }
 
-  // Calculate height for first part if fillToPageBottom is enabled
+  // Calculate height for first part to fill to page bottom when row is split
   let firstPartStyle = props.cssStyle
-  
-  if (props.fillToPageBottom && firstTrTds.length > 0) {
+
+  // Automatically fill to page bottom when a row is split (unless explicitly disabled)
+  if (firstTrTds.length > 0 && props.fillToPageBottom !== false) {
     const remainingHeight = pageBottomY - trTop
     if (remainingHeight > 0) {
       if (logger) {
-        logger.addLog(`fillToPageBottom enabled: trTop=${trTop.toFixed(2)}, pageBottomY=${pageBottomY.toFixed(2)}, remainingHeight=${remainingHeight.toFixed(2)}px, firstTrTds.length=${firstTrTds.length}`, 'Tr.trySplit')
+        logger.addLog(`Auto fillToPageBottom: trTop=${trTop.toFixed(2)}, pageBottomY=${pageBottomY.toFixed(2)}, remainingHeight=${remainingHeight.toFixed(2)}px, firstTrTds.length=${firstTrTds.length}`, 'Tr.trySplit')
         logger.addLog(`firstTrTds content: ${JSON.stringify(firstTrTds.map((td, i) => `[${i}] items=${td.items?.length || 0}, isEmpty=${td.isEmpty}`)).slice(0, 200)}`, 'Tr.trySplit')
       }
-      
+
       // Set both height and min-height on TR to fill to page bottom
       firstPartStyle = {
         ...(props.cssStyle || {}),
@@ -226,7 +227,7 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
         minHeight: `${remainingHeight}px`
       }
     } else if (logger) {
-      logger.addLog(`fillToPageBottom skipped: remainingHeight=${remainingHeight.toFixed(2)}px is not positive`, 'Tr.trySplit', 1)
+      logger.addLog(`Auto fillToPageBottom skipped: remainingHeight=${remainingHeight.toFixed(2)}px is not positive`, 'Tr.trySplit', 1)
     }
   }
 
