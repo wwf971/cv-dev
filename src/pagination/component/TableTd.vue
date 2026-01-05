@@ -108,10 +108,26 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
   let childNeedsSplit = false
   let childSplitData: any = null
 
+  // IMPORTANT: Adjust pageBottomY to account for TD's bottom padding
+  // TD has padding: 8px (see styles below), which means:
+  // - TD's bounding box = content + padding + border
+  // - If child content goes up to pageBottomY, TD's box will extend 8px beyond it
+  // - So we subtract padding from pageBottomY before passing to children
+  // This ensures TD's bounding box (including padding) aligns with pageBottomY
+  const tdPaddingBottom = 8  // Must match .td-component padding in <style>
+  const adjustedPageContext = {
+    ...pageContext,
+    pageBottomY: pageContext.pageBottomY - tdPaddingBottom
+  }
+
+  if (logger) {
+    logger.addLog(`Td adjusting pageBottomY for child splits: ${pageContext.pageBottomY.toFixed(2)} -> ${adjustedPageContext.pageBottomY.toFixed(2)} (subtracting ${tdPaddingBottom}px padding)`, 'Td.trySplit')
+  }
+
   for (let i = 0; i < props.items.length; i++) {
     const comp = componentRefs.value[i]
     if (comp && typeof comp.trySplit === 'function') {
-      const result = comp.trySplit(pageContext, docContext)
+      const result = comp.trySplit(adjustedPageContext, docContext)
       
       if (result.code === 1) {
         // This component needs to split
@@ -232,7 +248,7 @@ defineExpose({
 <style scoped>
 .td-component {
   border: 1px solid #000;
-  padding: 8px;
+  padding: 8px;  /* IMPORTANT: If changed, update tdPaddingBottom in trySplit() */
   vertical-align: top;
   box-sizing: border-box;
 }

@@ -37,9 +37,10 @@ export let SERVER_MONGO_INFO = {
     database: 'main', collection: 'config', docKey: 'name', docValue: 'test', docPath: 'a.b.0'
     // find from main database, config collection, a doc that satisfies doc.name == 'test'
     // then fetch the value of doc.a.b.0
-  }
+  },
+  test_fetch_file_url: null
   // Image URL format for MongoDB: {{mongo:accessPointId/filePathOrId}}
-  // Example: {{mongo:kp0i4g/mu/folder/image.jpg}}
+  // Example: {{mongo:aa/bb/image.jpg}}
 }
 
 export let educationEntries = []

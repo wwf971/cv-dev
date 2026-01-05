@@ -61,7 +61,7 @@
 
 
 <script setup>
-import { ref, provide } from 'vue'
+import { ref, provide, computed, onMounted } from 'vue'
 import PanelTest from './panel_test.vue'
 import PaginationWrapper from '../pagination/Pagination.vue'
 import Doc from '@/pagination/component_core/Doc.vue'
@@ -70,9 +70,11 @@ import Image from '@/pagination/component/Image.vue'
 import VSpace from '@/pagination/component/VSpace.vue'
 import TextRow from '@/pagination/component/TextRow.vue'
 import Text from '@/pagination/component/Text.vue'
-import { PAGE_SIZES } from '@/config.js'
+import { PAGE_SIZES, SERVER_MONGO_INFO } from '@/config.js'
 import { LogType } from '@/pagination/LogTypes'
 import { createLogger } from './logger'
+
+const test_fetch_file_url = ref(SERVER_MONGO_INFO.test_fetch_file_url)
 
 const paginationRef = ref(null)
 const logs = ref([])
@@ -82,6 +84,15 @@ const logger = createLogger(logs.value, 'panel_test_image_row')
 
 // Provide the fetch control flag to all Image components
 provide('shouldFetchImages', shouldFetchImages)
+
+// Log test_fetch_file_url status
+onMounted(() => {
+  if (test_fetch_file_url.value) {
+    logger.addLog(`test_fetch_file_url loaded: ${test_fetch_file_url.value}`, 'onMounted', LogType.Normal)
+  } else {
+    logger.addLog('test_fetch_file_url not configured in config.0.js', 'onMounted', LogType.Normal)
+  }
+})
 
 // Component mapping
 const getComponent = (type) => {
@@ -96,7 +107,7 @@ const getComponent = (type) => {
 }
 
 // Test data with various image configurations
-const docData = ref([
+const docData = computed(() => [
   // Title
   {
     type: 'TextRow',
@@ -114,6 +125,43 @@ const docData = ref([
     }
   },
   { type: 'VSpace', data: { height: 10 } },
+
+  // Section 0: File Access Point Test (if available)
+  ...(test_fetch_file_url.value ? [
+    {
+      type: 'TextRow',
+      data: {
+        items: [
+          {
+            type: 'Text',
+            data: {
+              content: '0. File Access Point Test ({{file:...}})',
+              fontWeight: 'bold',
+              fontSize: '14px',
+              color: '#0066cc'
+            }
+          }
+        ]
+      }
+    },
+    { type: 'VSpace', data: { height: 8 } },
+    {
+      type: 'ImageRow',
+      data: {
+        items: [
+          {
+            type: 'Image',
+            data: {
+              src: `{{file:${test_fetch_file_url.value}}}`,
+              width: '200px',
+              caption: `Test image from config.0.js: ${test_fetch_file_url.value}`
+            }
+          }
+        ]
+      }
+    },
+    { type: 'VSpace', data: { height: 15 } }
+  ] : []),
 
   // Section 1: Single Images with Different Dimensions
   {
@@ -512,7 +560,7 @@ const docData = ref([
         {
           type: 'Image',
           data: {
-            src: '{{mongo:invalid-access-point/invalid/path.jpg}}',
+            src: '{{file:invalid-access-point/invalid/path.jpg}}',
             width: '150px',
             caption: 'Error Test 2: Invalid MongoDB path'
           }

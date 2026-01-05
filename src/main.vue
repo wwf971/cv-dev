@@ -72,9 +72,14 @@
     </Tab>
 
     <Tab label="Settings">
-      <SubTab label="Server Config" :isDefault="true">
+      <SubTab label="SQL Server" :isDefault="true">
         <Panel>
           <PanelServer />
+        </Panel>
+      </SubTab>
+      <SubTab label="MongoDB Server">
+        <Panel>
+          <PanelServerMongo />
         </Panel>
       </SubTab>
     </Tab>
@@ -97,6 +102,7 @@ import PanelTestExperience from '@/panels/panel_test_experience.vue'
 import PanelTestTextRow from '@/panels/panel_test_text_row.vue'
 import PanelTestImageRow from '@/panels/panel_test_image_row.vue'
 import PanelServer from '@/remote/panel_server.vue'
+import PanelServerMongo from '@/remote/panel_server_mongo.vue'
 import PrintWrapper from '@/panels/PrintWrapper.vue'
 import { useInfoStore } from '@/content/info.js'
 

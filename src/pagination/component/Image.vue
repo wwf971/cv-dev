@@ -163,6 +163,11 @@ watch(() => imageState.value.state, (newState) => {
     setTimeout(() => {
       actualImageWidth.value = imageRef.value.offsetWidth
     }, 0)
+  } else if (newState === 'error') {
+    const errorMsg = imageState.value.message || 'Unknown error'
+    if (logger) {
+      logger.addLog(`Image fetch failed: ${props.src} - ${errorMsg}`, 'Image.watch', 'Error')
+    }
   }
 })
 
