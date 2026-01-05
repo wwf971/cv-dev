@@ -210,6 +210,8 @@ const trySplit = (pageContext: any, docContext: any) => {
           childNeedsSplit = true
           childSplitData = {
             splitAtIndex: i,
+            // NOTE: TextList items are direct Text props (not {type, data} structures)
+            // so we extract .data to get the props object. This is different from TextRow/ImageRow!
             parts: textSplitResult.data.map((part: any) => part.data)
           }
 

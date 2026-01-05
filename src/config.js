@@ -32,7 +32,14 @@ export let SERVER_INFO = {
 export let SERVER_MONGO_INFO = {
   origin: 'http://localhost:8080',
   username: 'example_username',
-  password: 'example_password'
+  password: 'example_password',
+  test_fetch: {
+    database: 'main', collection: 'config', docKey: 'name', docValue: 'test', docPath: 'a.b.0'
+    // find from main database, config collection, a doc that satisfies doc.name == 'test'
+    // then fetch the value of doc.a.b.0
+  }
+  // Image URL format for MongoDB: {{mongo:accessPointId/filePathOrId}}
+  // Example: {{mongo:kp0i4g/mu/folder/image.jpg}}
 }
 
 export let educationEntries = []

@@ -44,6 +44,8 @@ import Td from './component/TableTd.vue'
 import Table from './component/Table.vue'
 import VSpace from './component/VSpace.vue'
 import TextRow from './component/TextRow.vue'
+import ImageRow from './component/ImageRow.vue'
+import Image from './component/Image.vue'
 import BasicInfoJp from '../content/CvJp/BasicInfoJp.vue'
 import ProjectJp from '../content/CvJp/ProjectJp.vue'
 import { A4_SIZES, PAGE_SIZES } from '../config.js'
@@ -149,6 +151,10 @@ const getComponent = (type: string) => {
       return TextList
     case 'TextRow':
       return TextRow
+    case 'ImageRow':
+      return ImageRow
+    case 'Image':
+      return Image
     case 'Tr':
       return Tr
     case 'Td':
@@ -434,6 +440,33 @@ const runPagination = async () => {
       
       // Update pages to trigger render
       pages.value = [...pageData]
+      
+      // Wait for DOM to fully settle after adding component
+      // Don't assume anything is stable - measure in real-time
+      await nextTick()
+      await nextTick() // Extra tick for safety
+      
+      // For image components, give extra time for images to render and layout to stabilize
+      if (compDataCurrent.type === 'ImageRow' || compDataCurrent.type === 'Image') {
+        await new Promise(resolve => setTimeout(resolve, 50))
+      }
+      
+      // Re-measure page position before trySplit to get accurate current measurements
+      // This is critical because previous components may have loaded/expanded, shifting content
+      const pageRef = pageRefs.value.get(pageIndexCurrent)
+      if (pageRef && pageRef.pageContainerRef && docContext) {
+        try {
+          const startY = docContext.measureVerticalPos(pageRef.pageContainerRef)
+          const endY = docContext.measureVerticalPosEnd(pageRef.pageContainerRef)
+          const bottomY = endY - pageDataCurrent.sizes.padding.bottom
+          pageDataCurrent.sizes.pageStartY = startY
+          pageDataCurrent.sizes.pageEndY = endY
+          pageDataCurrent.sizes.pageBottomY = bottomY
+          addLog(`Re-measured page ${pageIndexCurrent} before trySplit: startY=${startY.toFixed(2)}, endY=${endY.toFixed(2)}, bottomY=${bottomY.toFixed(2)}`, 'runPagination')
+        } catch (error) {
+          addLog(`Error re-measuring page ${pageIndexCurrent}: ${error}`, 'runPagination', LogType.Warning)
+        }
+      }
       
       // Get page context and doc context for pure function call
       const currentPageContext = pageDataCurrent.sizes

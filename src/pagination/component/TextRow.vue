@@ -94,21 +94,62 @@ const trySplit = (pageContext: any, docContext: any) => {
             const itemSplitResult = itemRef.trySplit(pageContext, docContext)
             if (itemSplitResult && itemSplitResult.code === 1 && itemSplitResult.data) {
               if (logger) {
-                logger.addLog(`Item ${i} can be split internally, splitting TextRow at this point`, 'TextRow.trySplit')
+                logger.addLog(`Item ${i} can be split internally (${itemSplitResult.data.length} parts), splitting TextRow at this point`, 'TextRow.trySplit')
               }
               // Split the row at this item, replacing it with the split parts
               const beforeItems = props.items.slice(0, i)
               const afterItems = props.items.slice(i + 1)
-              const splitItems = itemSplitResult.data.map((part: any) => part.data)
+              
+              // CRITICAL: Extract split parts while preserving ALL properties
+              // itemSplitResult.data contains array of component configs like: [{type: 'Text', data: {...}, ...other props}]
+              // We MUST keep the entire object intact, not just extract specific properties
+              // Array indexing and slice() naturally preserve all properties
+              const firstPart = itemSplitResult.data[0]  // Keeps all properties: {type, data, ...}
+              const remainingParts = itemSplitResult.data.slice(1)  // Keeps all properties for each item
 
+              // Check if first part is empty Text (no content fits)
+              const item = props.items[i]
+              if (item.type === 'Text' && 
+                  firstPart.data?.startIndex !== undefined && 
+                  firstPart.data?.endIndex !== undefined && 
+                  firstPart.data.startIndex === firstPart.data.endIndex) {
+                if (logger) {
+                  logger.addLog(`Item ${i} split but first part is empty (startIndex=${firstPart.data.startIndex}, endIndex=${firstPart.data.endIndex}), splitting before this item instead`, 'TextRow.trySplit')
+                }
+                // First part is empty - split before this item if possible
+                if (i === 0) {
+                  // First item and no content fits - move entire row
+                  if (logger) {
+                    logger.addLog('First item, moving entire row to next page', 'TextRow.trySplit')
+                  }
+                  return {
+                    code: 2,
+                    data: null
+                  }
+                }
+                // Split before this item
+                splitData = [
+                  {
+                    type: 'TextRow',
+                    data: { items: beforeItems }
+                  },
+                  {
+                    type: 'TextRow',
+                    data: { items: props.items.slice(i) }
+                  }
+                ]
+                break
+              }
+
+              // Create split result: spread operators preserve all item properties
               splitData = [
                 {
                   type: 'TextRow',
-                  data: { items: [...beforeItems, ...splitItems] }
+                  data: { items: [...beforeItems, firstPart] }  // Spread preserves all properties
                 },
                 {
                   type: 'TextRow',
-                  data: { items: afterItems }
+                  data: { items: [...remainingParts, ...afterItems] }  // Spread preserves all properties
                 }
               ]
               break
@@ -154,58 +195,101 @@ const trySplit = (pageContext: any, docContext: any) => {
     }
   }
 
-  // Row doesn't fit but no individual items exceed - fall back to boundary splitting
+  // Row doesn't fit but no individual items exceed - check with the items themselves
   if (logger) {
-    logger.addLog('TextRow needs splitting but no items exceed individually - using boundary split', 'TextRow.trySplit')
+    logger.addLog('Row bottom exceeds but no items detected exceeding - checking with items directly', 'TextRow.trySplit')
   }
-
-  // Try to find a splittable item for boundary split
-  let splitIndex = -1
+  
+  // Check if any item thinks it needs to split
   for (let i = 0; i < props.items.length; i++) {
     const item = props.items[i]
-    if (item.type === 'Text' && !item.data.noSplit) {
-      splitIndex = i
+    const itemRef = componentRefs.value[i]
+    
+    if (itemRef && typeof itemRef.trySplit === 'function') {
       if (logger) {
-        logger.addLog(`Splitting TextRow at splittable item ${i}: "${item.data.content?.substring(0, 30)}..."`, 'TextRow.trySplit')
+        logger.addLog(`Asking item ${i} (type: ${item.type}) if it needs to split`, 'TextRow.trySplit')
       }
-      break
+      
+      const itemSplitResult = itemRef.trySplit(pageContext, docContext)
+      
+      if (logger) {
+        logger.addLog(`Item ${i} trySplit returned code: ${itemSplitResult?.code}`, 'TextRow.trySplit')
+      }
+      
+      // If item says it needs to split (code 1), handle it
+      if (itemSplitResult && itemSplitResult.code === 1 && itemSplitResult.data) {
+        const beforeItems = props.items.slice(0, i)
+        const afterItems = props.items.slice(i + 1)
+        
+        // CRITICAL: Extract split parts while preserving ALL properties
+        // itemSplitResult.data contains array of component configs like: [{type: 'Text', data: {...}, ...other props}]
+        // We MUST keep the entire object intact, not just extract specific properties
+        // Array indexing and slice() naturally preserve all properties
+        const firstPart = itemSplitResult.data[0]  // Keeps all properties: {type, data, ...}
+        const remainingParts = itemSplitResult.data.slice(1)  // Keeps all properties for each item
+        
+        // Check if first part is empty Text (startIndex === endIndex means no characters)
+        if (item.type === 'Text' && 
+            firstPart.data?.startIndex !== undefined && 
+            firstPart.data?.endIndex !== undefined && 
+            firstPart.data.startIndex === firstPart.data.endIndex) {
+          if (logger) {
+            logger.addLog(`Item ${i} split but first part is empty (startIndex=${firstPart.data.startIndex}, endIndex=${firstPart.data.endIndex}), moving entire TextRow to next page`, 'TextRow.trySplit')
+          }
+          // First part is empty - move entire row to next page
+          return {
+            code: 2,
+            data: null
+          }
+        }
+        
+        if (logger) {
+          logger.addLog(`Item ${i} split into ${1 + remainingParts.length} parts, applying to TextRow`, 'TextRow.trySplit')
+        }
+        
+        // Create split result: spread operators preserve all item properties
+        return {
+          code: 1,
+          data: [
+            {
+              type: 'TextRow',
+              data: { items: [...beforeItems, firstPart] }  // Spread preserves all properties
+            },
+            {
+              type: 'TextRow',
+              data: { items: [...remainingParts, ...afterItems] }  // Spread preserves all properties
+            }
+          ]
+        }
+      }
+      
+      // If item says it fits (code 0), trust it
+      if (itemSplitResult && itemSplitResult.code === 0) {
+        const discrepancy = rowBottom - pageBottomY
+        if (discrepancy > 10) {
+          if (logger) {
+            logger.addLog(`WARNING: Item says it fits but TextRow exceeds by ${discrepancy.toFixed(2)}px - large discrepancy!`, 'TextRow.trySplit', 'Warning')
+          }
+        } else {
+          if (logger) {
+            logger.addLog(`Item says it fits, trusting it (TextRow exceeds by only ${discrepancy.toFixed(2)}px, likely spacing)`, 'TextRow.trySplit')
+          }
+        }
+        return {
+          code: 0,
+          data: null
+        }
+      }
     }
   }
-
-  // If no splittable item, split in middle
-  if (splitIndex === -1 && props.items.length > 1) {
-    splitIndex = Math.ceil(props.items.length / 2)
-    if (logger) {
-      logger.addLog(`No splittable items found, splitting in middle at ${splitIndex}`, 'TextRow.trySplit')
-    }
+  
+  // No items could be checked or all returned code 2 (not splittable)
+  if (logger) {
+    logger.addLog('No items could help with split decision, moving entire row to next page', 'TextRow.trySplit')
   }
-
-  // If still no split point, move entire row
-  if (splitIndex === -1 || splitIndex >= props.items.length) {
-    if (logger) {
-      logger.addLog('Cannot split row - moving entire row to next page', 'TextRow.trySplit')
-    }
-    return {
-      code: 2,
-      data: null
-    }
-  }
-
-  const fittingItems = props.items.slice(0, splitIndex)
-  const remainingItems = props.items.slice(splitIndex)
-
   return {
-    code: 1,
-    data: [
-      {
-        type: 'TextRow',
-        data: { items: fittingItems }
-      },
-      {
-        type: 'TextRow',
-        data: { items: remainingItems }
-      }
-    ]
+    code: 2,
+    data: null
   }
 }
 
@@ -219,7 +303,7 @@ defineExpose({
   display: block;
   width: 100%;
   max-width: 100%;
-  line-height: 1;
+  line-height: 1.2;
   overflow-wrap: break-word;
   word-wrap: break-word;
 }

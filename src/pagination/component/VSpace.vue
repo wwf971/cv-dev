@@ -1,16 +1,27 @@
 <template>
-  <div ref="vspaceRef" class="vspace-component" :style="{ height: props.height + 'px' }"></div>
+  <div ref="vspaceRef" class="vspace-component" :style="{ height: heightInPixels + 'px' }"></div>
 </template>
 
 <script setup lang="ts">
-import { ref, inject } from 'vue'
+import { ref, inject, computed } from 'vue'
 
 const props = defineProps({
-  height: Number,
+  height: [Number, String],
   hiddenIfAtPageTop: {
     type: Boolean,
     default: false
   }
+})
+
+// Convert height to number (handle both number and string like '10px')
+const heightInPixels = computed(() => {
+  if (typeof props.height === 'number') {
+    return props.height
+  } else if (typeof props.height === 'string') {
+    const num = parseFloat(props.height)
+    return isNaN(num) ? 0 : num
+  }
+  return 0
 })
 
 const vspaceRef = ref<HTMLElement | null>(null)
@@ -68,7 +79,7 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
 
   // Split: first part fills remaining space, second part is the rest
   const firstHeight = spaceLeft
-  const secondHeight = (props.height || 0) - spaceLeft
+  const secondHeight = heightInPixels.value - spaceLeft
 
   if (logger) {
     logger.addLog(`Splitting VSpace: first=${firstHeight}px, second=${secondHeight}px`, 'VSpace.trySplit')

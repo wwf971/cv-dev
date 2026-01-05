@@ -36,6 +36,11 @@
           <PanelTestTableTrTd />
         </Panel>
       </SubTab>
+      <SubTab label="Image/ImageRow Pagination Test">
+        <Panel>
+          <PanelTestImageRow />
+        </Panel>
+      </SubTab>
     </Tab>
 
     <Tab label="CV-Japanese style">
@@ -90,6 +95,7 @@ import PanelTestTableTrTd from '@/panels/panel_test_table_tr_td.vue'
 import PanelTestCvJp from '@/panels/panel_test_cv_jp.vue'
 import PanelTestExperience from '@/panels/panel_test_experience.vue'
 import PanelTestTextRow from '@/panels/panel_test_text_row.vue'
+import PanelTestImageRow from '@/panels/panel_test_image_row.vue'
 import PanelServer from '@/remote/panel_server.vue'
 import PrintWrapper from '@/panels/PrintWrapper.vue'
 import { useInfoStore } from '@/content/info.js'

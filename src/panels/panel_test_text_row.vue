@@ -470,7 +470,7 @@ const docData = ref([
   // Moderate VSpace to allow some content at top but test pagination
   {
     type: 'VSpace',
-    data: { height: 820 }  // Moderate space
+    data: { height: 850 }  // Moderate space
   },
   // TextRow test data with lots of content
   ...textRowTestData
