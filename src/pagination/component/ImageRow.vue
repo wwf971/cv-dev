@@ -1,5 +1,5 @@
 <template>
-  <div ref="imageRowRef" class="image-row-component">
+  <div ref="imageRowRef" class="image-row-component" :style="{ textAlign: props.align }">
     <component
       v-for="(item, index) in visibleItems"
       :key="index"
@@ -18,6 +18,11 @@ const props = defineProps({
   items: {
     type: Array,
     required: true
+  },
+  align: {
+    type: String,
+    default: 'center',
+    validator: (value) => ['left', 'center', 'right'].includes(value)
   }
 })
 

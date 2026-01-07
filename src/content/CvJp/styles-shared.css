@@ -431,6 +431,15 @@ td.align-center {
   border-bottom: none !important;
 }
 
+/* Border removal for table cells (when stacking tables) */
+.td-no-top-border {
+  border-top: none !important;
+}
+
+.td-no-bottom-border {
+  border-bottom: none !important;
+}
+
 /* Direct classes for td border control */
 .td-no-top-border {
   border-top: none !important;

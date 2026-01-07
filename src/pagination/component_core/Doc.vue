@@ -45,7 +45,7 @@ provide('docContext', {
 })
 
 onMounted(() => {
-  console.log(`Doc ${props.docId} mounted`)
+  // console.log(`Doc ${props.docId} mounted`)
 })
 
 // Expose methods to parent component

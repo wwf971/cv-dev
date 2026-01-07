@@ -24,7 +24,7 @@ export function buildMotivationComponents(data: MotivationData, logger?: Logger 
       type: 'Table',
       data: {
         rows: buildMotivationTableRows(motivationData),
-        cssClass: 'form-table font-cv',
+        cssClass: 'form-table font-cv table-no-bottom-border',
         cssStyle: tableStyle
       }
     },
@@ -32,7 +32,7 @@ export function buildMotivationComponents(data: MotivationData, logger?: Logger 
       type: 'Table',
       data: {
         rows: buildInterestTableRows(interestData),
-        cssClass: 'form-table font-cv',
+        cssClass: 'form-table font-cv table-no-top-border',
         cssStyle: tableStyle
       }
     }
@@ -167,14 +167,14 @@ const buildMotivationTableRows = (motivationData: string | string[]) => {
 const buildInterestTableRows = (interestData: string | string[]) => {
   const rows: any[] = []
 
-  // Header row
+  // Header row (first row of interest table, remove TD top border to avoid thick edge)
   rows.push({
     type: 'Tr',
     data: {
       items: [
         {
           items: [{ type: 'Text', data: { content: '趣 味', noSplit: true } }],
-          cssClass: 'cv-jp-cell header-cell word-spacing-0p5',
+          cssClass: 'cv-jp-cell header-cell word-spacing-0p5 td-no-top-border',
           cssStyle: { wordSpacing: '0.5em' }
         }
       ],

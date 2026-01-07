@@ -58,54 +58,93 @@
       </div>
       
       <div class="config-section">
-        <label class="field-label">Database</label>
-        <input 
-          v-model="mongoTestDatabase" 
-          type="text" 
-          class="input-field"
-          placeholder="database_name"
-        />
+        <label class="field-label">Input Mode</label>
+        <div style="display: flex; gap: 15px; margin-top: 3px;">
+          <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+            <input 
+              type="radio" 
+              v-model="mongoQueryInputMode" 
+              value="pattern"
+              style="cursor: pointer;"
+            />
+            <span style="font-size: 12px;">Pattern</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+            <input 
+              type="radio" 
+              v-model="mongoQueryInputMode" 
+              value="fields"
+              style="cursor: pointer;"
+            />
+            <span style="font-size: 12px;">Fields</span>
+          </label>
+        </div>
       </div>
       
-      <div class="config-section">
-        <label class="field-label">Collection</label>
+      <div v-if="mongoQueryInputMode === 'pattern'" class="config-section">
+        <label class="field-label">Pattern</label>
         <input 
-          v-model="mongoTestCollection" 
+          v-model="mongoQueryPattern" 
           type="text" 
           class="input-field"
-          placeholder="collection_name"
+          placeholder="{{mongo:databaseName/collectionName?key=value&path=a.0.b}}"
         />
+        <div style="font-size: 11px; color: #888; margin-top: 3px;">
+          Example: <code style="background: #f5f5f5; padding: 1px 3px; border-radius: 2px;">&#123;&#123;mongo:main/cv?name=dimension-robotics&path=.&#125;&#125;</code>
+        </div>
       </div>
       
-      <div class="config-section">
-        <label class="field-label">Doc Key</label>
-        <input 
-          v-model="mongoTestDocKey" 
-          type="text" 
-          class="input-field"
-          placeholder="key_name"
-        />
-      </div>
-      
-      <div class="config-section">
-        <label class="field-label">Doc Value</label>
-        <input 
-          v-model="mongoTestDocValue" 
-          type="text" 
-          class="input-field"
-          placeholder="value"
-        />
-      </div>
-      
-      <div class="config-section">
-        <label class="field-label">Doc Path</label>
-        <input 
-          v-model="mongoTestDocPath" 
-          type="text" 
-          class="input-field"
-          placeholder="a.b.0"
-        />
-      </div>
+      <template v-else>
+        <div class="config-section">
+          <label class="field-label">Database</label>
+          <input 
+            v-model="mongoTestDatabase" 
+            type="text" 
+            class="input-field"
+            placeholder="database_name"
+          />
+        </div>
+        
+        <div class="config-section">
+          <label class="field-label">Collection</label>
+          <input 
+            v-model="mongoTestCollection" 
+            type="text" 
+            class="input-field"
+            placeholder="collection_name"
+          />
+        </div>
+        
+        <div class="config-section">
+          <label class="field-label">Doc Key</label>
+          <input 
+            v-model="mongoTestDocKey" 
+            type="text" 
+            class="input-field"
+            placeholder="key_name"
+          />
+        </div>
+        
+        <div class="config-section">
+          <label class="field-label">Doc Value</label>
+          <input 
+            v-model="mongoTestDocValue" 
+            type="text" 
+            class="input-field"
+            placeholder="value"
+          />
+        </div>
+        
+        <div class="config-section">
+          <label class="field-label">Doc Path</label>
+          <input 
+            v-model="mongoTestDocPath" 
+            type="text" 
+            class="input-field"
+            placeholder="a.b.0"
+          />
+        </div>
+      </template>
       
       <button @click="testMongoFetch" class="control-button" :disabled="isTestingMongoFetch">
         {{ isTestingMongoFetch ? 'Testing...' : 'Test Fetch' }}
@@ -166,6 +205,8 @@ const mongoPassword = ref('')
 const isTestingMongoConnection = ref(false)
 const mongoTestResult = ref(null)
 
+const mongoQueryInputMode = ref('fields')
+const mongoQueryPattern = ref('')
 const mongoTestDatabase = ref('')
 const mongoTestCollection = ref('')
 const mongoTestDocKey = ref('')
@@ -257,6 +298,53 @@ const testMongoConnection = async () => {
   }
 }
 
+const parseMongoPattern = (pattern) => {
+  // Parse pattern like {{mongo:databaseName/collectionName?key=value&path=a.0.b}}
+  const match = pattern.match(/^\{\{mongo:([^?]+)(?:\?(.+))?\}\}$/)
+  
+  if (!match) {
+    return { error: 'Invalid pattern format. Expected: {{mongo:database/collection?key=value&path=...}}' }
+  }
+  
+  const pathPart = match[1]
+  const queryPart = match[2] || ''
+  
+  const pathSegments = pathPart.split('/')
+  if (pathSegments.length !== 2) {
+    return { error: 'Invalid path format. Expected: database/collection' }
+  }
+  
+  const database = pathSegments[0]
+  const collection = pathSegments[1]
+  
+  if (!database || !collection) {
+    return { error: 'Database and collection cannot be empty' }
+  }
+  
+  // Parse query string
+  const queryParams = {}
+  let docPath = ''
+  
+  if (queryPart) {
+    const params = queryPart.split('&')
+    for (const param of params) {
+      const [key, value] = param.split('=')
+      if (key === 'path') {
+        docPath = value || ''
+      } else if (key && value) {
+        queryParams[key] = value
+      }
+    }
+  }
+  
+  // Get the first key-value pair as docKey and docValue
+  const queryKeys = Object.keys(queryParams)
+  const docKey = queryKeys.length > 0 ? queryKeys[0] : ''
+  const docValue = docKey ? queryParams[docKey] : ''
+  
+  return { database, collection, docKey, docValue, docPath }
+}
+
 const testMongoFetch = async () => {
   if (!mongoOrigin.value) {
     mongoFetchResult.value = {
@@ -266,7 +354,42 @@ const testMongoFetch = async () => {
     return
   }
   
-  if (!mongoTestDatabase.value || !mongoTestCollection.value) {
+  let database, collection, docKey, docValue, docPath
+  
+  if (mongoQueryInputMode.value === 'pattern') {
+    // Parse pattern input
+    if (!mongoQueryPattern.value) {
+      mongoFetchResult.value = {
+        success: false,
+        message: 'Pattern is required'
+      }
+      return
+    }
+    
+    const parsed = parseMongoPattern(mongoQueryPattern.value)
+    if (parsed.error) {
+      mongoFetchResult.value = {
+        success: false,
+        message: parsed.error
+      }
+      return
+    }
+    
+    database = parsed.database
+    collection = parsed.collection
+    docKey = parsed.docKey
+    docValue = parsed.docValue
+    docPath = parsed.docPath
+  } else {
+    // Use field inputs
+    database = mongoTestDatabase.value
+    collection = mongoTestCollection.value
+    docKey = mongoTestDocKey.value
+    docValue = mongoTestDocValue.value
+    docPath = mongoTestDocPath.value
+  }
+  
+  if (!database || !collection) {
     mongoFetchResult.value = {
       success: false,
       message: 'Database and collection are required'
@@ -280,15 +403,15 @@ const testMongoFetch = async () => {
   try {
     const params = new URLSearchParams()
     
-    if (mongoTestDocKey.value && mongoTestDocValue.value) {
-      params.append(mongoTestDocKey.value, mongoTestDocValue.value)
+    if (docKey && docValue) {
+      params.append(docKey, docValue)
     }
     
-    if (mongoTestDocPath.value) {
-      params.append('path', mongoTestDocPath.value)
+    if (docPath) {
+      params.append('path', docPath)
     }
     
-    const url = `${mongoOrigin.value}/mongo/db/${mongoTestDatabase.value}/coll/${mongoTestCollection.value}/docs?${params.toString()}`
+    const url = `${mongoOrigin.value}/mongo/db/${database}/coll/${collection}/docs?${params.toString()}`
     const response = await fetch(url, {
       method: 'GET',
       headers: {

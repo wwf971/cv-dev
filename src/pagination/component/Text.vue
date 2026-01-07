@@ -67,8 +67,6 @@ const searchBinary = (startIdx: number, endIdx: number, docCtx: any, pageBottomY
 
 // Split function that takes explicit parameters
 const trySplit = (pageCtx: any, docCtx: any) => {
-  console.log('[Text.trySplit] called for:', displayText.value?.substring(0, 50) + '...')
-  
   if (logger) {
     logger.addLog(`Text.trySplit called for: "${displayText.value?.substring(0, 50)}..."`, 'Text.trySplit')
   }

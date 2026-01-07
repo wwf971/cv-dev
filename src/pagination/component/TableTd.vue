@@ -19,6 +19,11 @@
 import { ref, computed, inject, onBeforeUpdate } from 'vue'
 import TextList from './TextList.vue'
 import Text from './Text.vue'
+// @ts-ignore
+import Image from './Image.vue'
+// @ts-ignore
+import ImageRow from './ImageRow.vue'
+import VSpace from './VSpace.vue'
 
 const props = withDefaults(defineProps<{
   items: any[]
@@ -61,6 +66,12 @@ const getComponent = (type: string) => {
       return Text
     case 'TextList':
       return TextList
+    case 'Image':
+      return Image
+    case 'ImageRow':
+      return ImageRow
+    case 'VSpace':
+      return VSpace
     default:
       return null
   }
@@ -248,7 +259,7 @@ defineExpose({
 <style scoped>
 .td-component {
   border: 1px solid #000;
-  padding: 8px;  /* IMPORTANT: If changed, update tdPaddingBottom in trySplit() */
+  padding: 8px;  /* IMPORTANT: If changed, update tdPaddingBottom in trySplit(). current value is 8px*/
   vertical-align: top;
   box-sizing: border-box;
 }

@@ -10,7 +10,7 @@
  */
 export async function fetchRemoteData(data, serverOrigin, getToken, mongoOrigin = null, mongoUsername = null, mongoPassword = null) {
   // Create a deep copy (plain object, not reactive)
-  const workingData = JSON.parse(JSON.stringify(data))
+  let workingData = JSON.parse(JSON.stringify(data))
   
   // Pattern to match {{remote:path}}, {{remote:tree:path}}, or {{mongo:db/coll/docId/field}}
   const remotePattern = /\{\{remote:([^}]+)\}\}/g
@@ -19,6 +19,9 @@ export async function fetchRemoteData(data, serverOrigin, getToken, mongoOrigin 
   
   // Store all fetch promises
   const fetchPromises = []
+  
+  // Track if we need to replace the root value
+  let rootReplacement = null
   
   /**
    * Recursively traverse and collect fetch tasks
@@ -56,14 +59,34 @@ export async function fetchRemoteData(data, serverOrigin, getToken, mongoOrigin 
           const mongoPath = match[1]
           const fullPattern = match[0]
           
+          // Check if the entire string is just the pattern
+          const isFullPattern = obj.trim() === fullPattern
+          
           // Create fetch promise for MongoDB
           const fetchPromise = fetchMongoValue(mongoOrigin, mongoPath, mongoUsername, mongoPassword)
             .then(value => {
               // Replace the pattern in the string
               const current = getNestedValue(workingData, path)
               if (typeof current === 'string') {
-                const newValue = current.replace(fullPattern, value)
-                setNestedValue(workingData, path, newValue)
+                if (isFullPattern && typeof value === 'object') {
+                  // If entire string is the pattern and value is an object, replace with the object
+                  if (path.length === 0) {
+                    // Root level replacement
+                    rootReplacement = value
+                  } else {
+                    setNestedValue(workingData, path, value)
+                  }
+                } else {
+                  // Otherwise, replace pattern in the string (convert value to string if needed)
+                  const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value)
+                  const newValue = current.replace(fullPattern, stringValue)
+                  if (path.length === 0) {
+                    // Root level replacement
+                    rootReplacement = newValue
+                  } else {
+                    setNestedValue(workingData, path, newValue)
+                  }
+                }
               }
             })
             .catch(error => {
@@ -72,7 +95,12 @@ export async function fetchRemoteData(data, serverOrigin, getToken, mongoOrigin 
               if (typeof current === 'string') {
                 const errorMsg = `[Error: ${error.message}]`
                 const newValue = current.replace(fullPattern, errorMsg)
-                setNestedValue(workingData, path, newValue)
+                if (path.length === 0) {
+                  // Root level replacement
+                  rootReplacement = newValue
+                } else {
+                  setNestedValue(workingData, path, newValue)
+                }
               }
             })
           
@@ -130,7 +158,8 @@ export async function fetchRemoteData(data, serverOrigin, getToken, mongoOrigin 
   // Execute all fetches in parallel - server now handles concurrent requests
   await Promise.all(fetchPromises)
   
-  return workingData
+  // Return root replacement if set, otherwise return workingData
+  return rootReplacement !== null ? rootReplacement : workingData
 }
 
 /**
@@ -231,67 +260,113 @@ async function fetchRemoteValue(serverOrigin, path, getToken) {
 /**
  * Fetch a value from MongoDB server
  * @param {String} mongoOrigin - MongoDB server origin URL
- * @param {String} path - Path in format: db/collection/docId or db/collection/docId/field/path
+ * @param {String} path - Path in format: db/collection/docId or db/collection/docId/field/path or db/collection?key=value&path=a.b.c
  * @param {String} username - MongoDB username
  * @param {String} password - MongoDB password
  * @returns {String} Fetched value
  */
 async function fetchMongoValue(mongoOrigin, path, username, password) {
-  // Parse path: db/collection/docId or db/collection/docId/field/path
-  const parts = path.split('/')
+  // Check if path contains query string (e.g., main/cv?name=dimension-robotics&path=.)
+  const queryIndex = path.indexOf('?')
   
-  if (parts.length < 3) {
-    throw new Error(`Invalid MongoDB path: ${path}. Expected format: db/collection/docId or db/collection/docId/field`)
-  }
-  
-  const databaseName = parts[0]
-  const collectionName = parts[1]
-  const docId = parts[2]
-  const fieldPath = parts.slice(3).join('/') // remaining parts as field path
-  
-  // Construct URL for fetching document
-  const url = `${mongoOrigin}/mongo/db/${databaseName}/coll/${collectionName}/docs/${docId}`
-  
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${btoa(`${username}:${password}`)}`
-      }
-    })
+  if (queryIndex !== -1) {
+    // Query string format: db/collection?key=value&path=a.b.c
+    const pathPart = path.substring(0, queryIndex)
+    const queryPart = path.substring(queryIndex + 1)
     
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`)
+    const parts = pathPart.split('/')
+    if (parts.length < 2) {
+      throw new Error(`Invalid MongoDB path: ${path}. Expected format: db/collection?key=value&path=...`)
     }
     
-    const data = await response.json()
+    const databaseName = parts[0]
+    const collectionName = parts[1]
     
-    // Check for error response
-    if (data.code !== 0) {
-      throw new Error(data.message || `Server error (code: ${data.code})`)
-    }
+    // Construct URL with query parameters
+    const url = `${mongoOrigin}/mongo/db/${databaseName}/coll/${collectionName}/docs?${queryPart}`
     
-    // If field path is specified, navigate to that field
-    if (fieldPath) {
-      const fieldParts = fieldPath.split('/')
-      let value = data.data
-      
-      for (const part of fieldParts) {
-        if (value && typeof value === 'object' && part in value) {
-          value = value[part]
-        } else {
-          throw new Error(`Field not found: ${fieldPath}`)
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${btoa(`${username}:${password}`)}`
         }
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
       }
       
-      return String(value)
+      const data = await response.json()
+      
+      // Check for error response
+      if (data.code !== 0) {
+        throw new Error(data.message || `Server error (code: ${data.code})`)
+      }
+      
+      // Return the fetched data (could be object or value)
+      return data.data
+    } catch (error) {
+      throw error
+    }
+  } else {
+    // Original format: db/collection/docId or db/collection/docId/field/path
+    const parts = path.split('/')
+    
+    if (parts.length < 3) {
+      throw new Error(`Invalid MongoDB path: ${path}. Expected format: db/collection/docId or db/collection/docId/field`)
     }
     
-    // Return entire document as JSON string
-    return JSON.stringify(data.data)
-  } catch (error) {
-    throw error
+    const databaseName = parts[0]
+    const collectionName = parts[1]
+    const docId = parts[2]
+    const fieldPath = parts.slice(3).join('/') // remaining parts as field path
+    
+    // Construct URL for fetching document
+    const url = `${mongoOrigin}/mongo/db/${databaseName}/coll/${collectionName}/docs/${docId}`
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${btoa(`${username}:${password}`)}`
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+      
+      const data = await response.json()
+      
+      // Check for error response
+      if (data.code !== 0) {
+        throw new Error(data.message || `Server error (code: ${data.code})`)
+      }
+      
+      // If field path is specified, navigate to that field
+      if (fieldPath) {
+        const fieldParts = fieldPath.split('/')
+        let value = data.data
+        
+        for (const part of fieldParts) {
+          if (value && typeof value === 'object' && part in value) {
+            value = value[part]
+          } else {
+            throw new Error(`Field not found: ${fieldPath}`)
+          }
+        }
+        
+        return String(value)
+      }
+      
+      // Return entire document as JSON string
+      return JSON.stringify(data.data)
+    } catch (error) {
+      throw error
+    }
   }
 }
 

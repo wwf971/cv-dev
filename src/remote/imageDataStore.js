@@ -143,7 +143,12 @@ export const useImageDataStore = defineStore('imageData', () => {
     if (imageUrl.startsWith('{{local:')) {
       const path = imageUrl.substring(8, imageUrl.length - 2)
       return await fetchImageFromLocal(path)
+    } else if (imageUrl.startsWith('{{file://')) {
+      // Handle {{file://...}} pattern (with double slash)
+      const path = imageUrl.substring(9, imageUrl.length - 2)
+      return await fetchImageFromFile(path)
     } else if (imageUrl.startsWith('{{file:')) {
+      // Handle {{file:...}} pattern (single colon)
       const path = imageUrl.substring(7, imageUrl.length - 2)
       return await fetchImageFromFile(path)
     } else if (imageUrl.startsWith('{{mongo:')) {

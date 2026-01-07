@@ -277,6 +277,29 @@ const handleChangePageHeight = async (pageIndex, newHeight) => {
 <style scoped>
 @import './panel_styles.css';
 
+/* Allow control-button styles to apply to slotted content */
+:deep(.control-button) {
+  padding: 8px 12px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+:deep(.control-button:hover) {
+  background-color: #45a049;
+}
+
+:deep(.control-button:disabled) {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .pages-panel {
   display: flex;
   flex-direction: column;

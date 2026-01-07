@@ -49,6 +49,7 @@ export let certEntries = []
 export let motivation = ''
 export let interest = ''
 export let url_motivation_text = ''
+export let projectEntries = []
 
 // Try to import and override with private config
 try {
@@ -67,6 +68,7 @@ try {
   if (privateConfig.motivation) motivation = privateConfig.motivation
   if (privateConfig.interest) interest = privateConfig.interest
   if (privateConfig.url_motivation_text) url_motivation_text = privateConfig.url_motivation_text
+  if (privateConfig.projectEntries) projectEntries = privateConfig.projectEntries
 } catch (error) {
   console.warn('Failed to load config.0.js, using default values:', error.message)
 }
