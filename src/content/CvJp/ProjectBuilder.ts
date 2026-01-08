@@ -5,6 +5,112 @@ const tableStyle = {
   borderCollapse: 'collapse' as const
 }
 
+/**
+ * Process image data object with src array and caption
+ * Handles format: { src: [url1, url2], caption: "text", height: "200px", ... }
+ * @param imageData - Object with src array and optional caption
+ * @returns ImageRow component data
+ */
+const processImageDataObject = (imageData: any) => {
+  if (!imageData || !imageData.src) {
+    return null
+  }
+
+  const sources = Array.isArray(imageData.src) ? imageData.src : [imageData.src]
+  const caption = imageData.caption
+  const height = imageData.height
+  const width = imageData.width
+  const maxHeight = imageData.maxHeight
+  const maxWidth = imageData.maxWidth
+
+  // Create image items WITHOUT individual captions
+  const items = sources.map((src: string) => ({
+    type: 'Image',
+    data: {
+      src: typeof src === 'string' ? src : src,
+      caption: null,  // Explicitly null - no individual captions
+      height,
+      width,
+      maxHeight,
+      maxWidth
+    }
+  }))
+
+  // Return ImageRow data
+  return {
+    type: 'ImageRow',
+    data: {
+      items,
+      caption: caption || undefined,  // Use shared caption
+      align: 'center'
+    }
+  }
+}
+
+/**
+ * Process images and captions for ImageRow
+ * If multiple images share a single caption, extract it as shared caption
+ * @param images - Array of image data (can be src strings or {src, caption} objects)
+ * @param captions - Caption string or array of captions
+ * @returns Object with items array and optional caption
+ */
+const processImagesWithCaptions = (images: any[], captions?: string | string[]) => {
+  if (!images || images.length === 0) {
+    return { items: [] }
+  }
+
+  // Convert caption to array form
+  let captionArray: string[] = []
+  if (typeof captions === 'string' && captions) {
+    captionArray = [captions]
+  } else if (Array.isArray(captions)) {
+    captionArray = captions.filter((c: any) => c && typeof c === 'string' && c.trim())  // Filter out empty/null values
+  }
+
+  // Check if we should use shared caption:
+  // - Multiple images (>1)
+  // - Caption is string OR array with only one non-empty element
+  const useSharedCaption = images.length > 1 && captionArray.length === 1 && captionArray[0]
+
+  if (useSharedCaption) {
+    // Create images without individual captions - caption will be shown by ImageRow
+    const items = images.map((img: any) => {
+      const imageData: any = {
+        src: typeof img === 'string' ? img : img.src,
+        width: typeof img === 'object' ? img.width : undefined,
+        height: typeof img === 'object' ? img.height : undefined,
+        maxWidth: typeof img === 'object' ? img.maxWidth : undefined,
+        maxHeight: typeof img === 'object' ? img.maxHeight : undefined
+      }
+      // Do NOT include caption property at all for individual images
+      return {
+        type: 'Image',
+        data: imageData
+      }
+    })
+
+    return {
+      items,
+      caption: captionArray[0]
+    }
+  } else {
+    // Create images with individual captions
+    const items = images.map((img: any, index: number) => ({
+      type: 'Image',
+      data: {
+        src: typeof img === 'string' ? img : img.src,
+        caption: captionArray[index] || (typeof img === 'object' ? img.caption : undefined),
+        width: typeof img === 'object' ? img.width : undefined,
+        height: typeof img === 'object' ? img.height : undefined,
+        maxWidth: typeof img === 'object' ? img.maxWidth : undefined,
+        maxHeight: typeof img === 'object' ? img.maxHeight : undefined
+      }
+    }))
+
+    return { items }
+  }
+}
+
 interface ProjectData {
   title?: string
   title_en?: string
@@ -15,6 +121,8 @@ interface ProjectData {
   techTags?: string[]
   content?: any
   learnings?: any
+  images?: any  // Can be: 1) {src: [urls], caption, height} 2) Array of such objects 3) Array of url strings
+  imageCaptions?: string | string[]  // Single caption for all images or array of captions (used with format 3)
 }
 
 // Helper to process project data
@@ -22,15 +130,17 @@ const processProjectData = (data: any): ProjectData => {
   if (!data) return {}
 
   return {
-    title: data.title || '',
+    title: data.title || data.name || '',  // Support both 'title' and 'name' field names
     title_en: data.title_en || null,
     type: data.type || '',
-    people: data.people || '',
+    people: data.people || data['people:'] || '',  // Support both 'people' and 'people:' field names
     time: data.time || '',
     place: data.place || '',
     techTags: Array.isArray(data.techTags) ? data.techTags : [],
     content: data.content || [],
-    learnings: data.learnings || []
+    learnings: data.learnings || [],
+    images: data.images || null,  // Preserve as-is, can be object or array
+    imageCaptions: data.imageCaptions || data.imageCaption || null
   }
 }
 
@@ -284,8 +394,22 @@ const buildContentTableRows = (projectData: ProjectData) => {
 
 /**
  * Build project component array for pagination
- * Returns array of components: [Table (Title), Table (Info), VSpace, Table (Content)]
+ * Returns array of components: [Table (Title), Table (Info), VSpace, Table (Content), ImageRow (if images present)]
  * @param data - Project data
+ * 
+ * Example with images:
+ * {
+ *   title: 'My Project',
+ *   images: ['image1.jpg', 'image2.jpg', 'image3.jpg'],
+ *   imageCaptions: 'Shared caption for all three images'  // Will be shown below all images
+ * }
+ * 
+ * Or with individual captions:
+ * {
+ *   title: 'My Project',
+ *   images: ['image1.jpg', 'image2.jpg'],
+ *   imageCaptions: ['Caption 1', 'Caption 2']  // Each image gets its own caption
+ * }
  */
 export function buildProjectComponents(data: ProjectData) {
   const projectData = processProjectData(data)
@@ -324,5 +448,53 @@ export function buildProjectComponents(data: ProjectData) {
     }
   })
 
+  // Images (if present)
+  if (projectData.images) {
+    // Add spacing before images
+    components.push({
+      type: 'VSpace',
+      data: { height: 10 }
+    })
+
+    // Check if images is an object with src array (single image group)
+    // Format: { src: [url1, url2], caption: "text", height: "200px" }
+    if (typeof projectData.images === 'object' && !Array.isArray(projectData.images) && 
+        projectData.images.src && Array.isArray(projectData.images.src)) {
+      const imageRowComponent = processImageDataObject(projectData.images)
+      if (imageRowComponent) {
+        components.push(imageRowComponent)
+      }
+    }
+    // Check if images is an array
+    else if (Array.isArray(projectData.images) && projectData.images.length > 0) {
+      // Check if first element is an object with src array (array of image groups)
+      const firstItem: any = projectData.images[0]
+      if (firstItem && typeof firstItem === 'object' && firstItem.src && Array.isArray(firstItem.src)) {
+        // Multiple image groups
+        projectData.images.forEach((imgGroup: any) => {
+          const imageRowComponent = processImageDataObject(imgGroup)
+          if (imageRowComponent) {
+            components.push(imageRowComponent)
+            components.push({ type: 'VSpace', data: { height: 8 } })
+          }
+        })
+      } else {
+        // Array of image sources or {src, caption} objects
+        const imageRowData = processImagesWithCaptions(projectData.images, projectData.imageCaptions)
+        components.push({
+          type: 'ImageRow',
+          data: {
+            items: imageRowData.items,
+            caption: imageRowData.caption,
+            align: 'center'
+          }
+        })
+      }
+    }
+  }
+
   return components
 }
+
+// Export helpers for use in other builders
+export { processImagesWithCaptions, processImageDataObject }

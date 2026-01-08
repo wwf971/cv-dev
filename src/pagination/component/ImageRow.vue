@@ -1,12 +1,17 @@
 <template>
   <div ref="imageRowRef" class="image-row-component" :style="{ textAlign: props.align }">
-    <component
-      v-for="(item, index) in visibleItems"
-      :key="index"
-      :is="getComponent(item.type)"
-      v-bind="item.data"
-      :ref="(el) => { if (el) componentRefs[index] = el }"
-    />
+    <div class="images-container">
+      <component
+        v-for="(item, index) in visibleItems"
+        :key="index"
+        :is="getComponent(item.type)"
+        v-bind="item.data"
+        :ref="(el) => { if (el) componentRefs[index] = el }"
+      />
+    </div>
+    <div v-if="props.caption" class="shared-caption">
+      {{ props.caption }}
+    </div>
   </div>
 </template>
 
@@ -23,6 +28,10 @@ const props = defineProps({
     type: String,
     default: 'center',
     validator: (value) => ['left', 'center', 'right'].includes(value)
+  },
+  caption: {
+    type: String,
+    default: null
   }
 })
 
@@ -117,14 +126,19 @@ const trySplit = (pageContext, docContext) => {
               const remainingParts = itemSplitResult.data.slice(1)  // Keeps all properties for each item
 
               // Create split result: spread operators preserve all item properties
+              // Shared caption only goes with the last part
               splitData = [
                 {
                   type: 'ImageRow',
-                  data: { items: [...beforeItems, firstPart] }  // Spread preserves all properties
+                  data: { items: [...beforeItems, firstPart], align: props.align }
                 },
                 {
                   type: 'ImageRow',
-                  data: { items: [...remainingParts, ...afterItems] }  // Spread preserves all properties
+                  data: { 
+                    items: [...remainingParts, ...afterItems],
+                    align: props.align,
+                    caption: props.caption  // Caption stays with last part
+                  }
                 }
               ]
               break
@@ -138,11 +152,15 @@ const trySplit = (pageContext, docContext) => {
           splitData = [
             {
               type: 'ImageRow',
-              data: { items: props.items.slice(0, i) }
+              data: { items: props.items.slice(0, i), align: props.align }
             },
             {
               type: 'ImageRow',
-              data: { items: props.items.slice(i) }
+              data: { 
+                items: props.items.slice(i),
+                align: props.align,
+                caption: props.caption  // Caption stays with last part
+              }
             }
           ]
           break
@@ -213,11 +231,15 @@ const trySplit = (pageContext, docContext) => {
     data: [
       {
         type: 'ImageRow',
-        data: { items: fittingItems }
+        data: { items: fittingItems, align: props.align }
       },
       {
         type: 'ImageRow',
-        data: { items: remainingItems }
+        data: { 
+          items: remainingItems,
+          align: props.align,
+          caption: props.caption  // Caption stays with last part
+        }
       }
     ]
   }
@@ -232,17 +254,31 @@ defineExpose({
 .image-row-component {
   display: block;
   width: 100%;
+}
+
+.images-container {
+  display: block;
+  width: 100%;
   line-height: 0;
 }
 
-.image-row-component > * {
+.images-container > * {
   display: inline-block;
   margin-right: 8px;
   vertical-align: top;
 }
 
-.image-row-component > *:last-child {
+.images-container > *:last-child {
   margin-right: 0;
+}
+
+.shared-caption {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  line-height: 1.4;
 }
 </style>
 

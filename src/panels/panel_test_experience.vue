@@ -169,12 +169,16 @@ const processContentItem = (item) => {
       }
     } else {
       // Multiple images - use ImageRow
+      // Check if we should use shared caption: multiple images but only one caption
+      const useSharedCaption = srcArray.length > 1 && captionArray.length === 1
+      
       const images = srcArray.map((src, index) => ({
         type: 'Image',
         data: {
           src: src,
           height: item.height || '200px',
-          caption: captionArray[index] || ''
+          // Only assign individual captions if NOT using shared caption
+          caption: useSharedCaption ? null : (captionArray[index] || '')
         }
       }))
       
@@ -183,7 +187,9 @@ const processContentItem = (item) => {
         component: {
           type: 'ImageRow',
           data: {
-            items: images
+            items: images,
+            // Use shared caption if applicable
+            caption: useSharedCaption ? captionArray[0] : undefined
           }
         }
       }

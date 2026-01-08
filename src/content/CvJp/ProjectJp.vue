@@ -13,6 +13,8 @@
 import { ref, computed, onMounted, watch, inject } from 'vue'
 import Table from '../../pagination/component/Table.vue'
 import VSpace from '../../pagination/component/VSpace.vue'
+// @ts-ignore
+import ImageRow from '../../pagination/component/ImageRow.vue'
 import { buildProjectComponents } from './ProjectBuilder'
 import { useInfoStore } from '../../content/info.js'
 
@@ -118,6 +120,8 @@ const getComponent = (type: string) => {
       return Table
     case 'VSpace':
       return VSpace
+    case 'ImageRow':
+      return ImageRow
     default:
       return null
   }

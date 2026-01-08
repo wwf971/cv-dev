@@ -1,44 +1,8 @@
-/* Shared Bilingual Field Styles */
-/* Can be used across multiple Vue components */
-
-/* Component-specific styles for CVHeader */
-.cv-header {
-	padding: 2px;
-	border-bottom: 2px solid #333;
-	margin-bottom: 20px;
-}
+/* Shared Styles for Japanese CV components */
 
 .section-basic-info-jp {
 	padding: 2px;
 	margin-bottom: 20px;
-}
-
-.field-container {
-display: flex;
-margin-bottom: 15px;
-min-height: 60px;
-align-items: stretch;
-}
-
-.field-key {
-width: 120px;
-display: flex;
-flex-direction: column;
-justify-content: space-between;
-padding-right: 20px;
-border-right: 1px solid #ddd;
-padding-top: 8px;
-padding-bottom: 8px;
-}
-
-.field-value {
-flex: 1;
-display: flex;
-flex-direction: column;
-justify-content: space-between;
-padding-left: 20px;
-padding-top: 8px;
-padding-bottom: 8px;
 }
 
 .font-cv {
@@ -51,66 +15,6 @@ padding-bottom: 8px;
 .form-table tr{
 	/* height: 40px; */
 	box-sizing: border-box;
-}
-
-.jp-text {
-font-size: 15px;
-font-weight: 600;
-color: #333;
-text-align: center;
-line-height: 1.2;
-flex-grow: 1;
-display: flex;
-align-items: center;
-justify-content: center;
-}
-
-.en-text {
-font-size: 10px;
-color: #666;
-text-align: center;
-line-height: 1;
-font-weight: 400;
-margin-top: auto;
-}
-
-/* Value styling - larger text for field values */
-.field-value .jp-text {
-font-size: 22px;
-font-weight: 700;
-color: #222;
-}
-
-.field-value .en-text {
-font-size: 13px;
-color: #777;
-font-style: italic;
-}
-
-/* When only one text type is present, style it prominently */
-.field-key .en-text:only-child,
-.field-value .en-text:only-child {
-font-size: 18px;
-font-weight: 600;
-color: #333;
-font-style: normal;
-margin-top: 0;
-flex-grow: 1;
-display: flex;
-align-items: center;
-justify-content: center;
-}
-
-.field-value .en-text:only-child {
-font-size: 22px;
-font-weight: 700;
-color: #222;
-}
-
-/* When jp-text is the only child, ensure it takes full space */
-.field-key .jp-text:only-child,
-.field-value .jp-text:only-child {
-margin-top: 0;
 }
 
 /* Shared Japanese CV Table Styles */
