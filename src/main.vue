@@ -8,9 +8,9 @@
     @back="exitPrintPreview"
   />
   
-  <!-- Normal UI Mode -->
-  <MasterDetail v-else title="CV Generator" sidebarWidth="200px">
-    <Tab label="Basic Components">
+  <!-- Normal UI Mode - use v-show to keep it mounted -->
+  <MasterDetail v-show="!printPreviewActive" title="CV Generator" sidebarWidth="200px">
+    <Tab label="Unit Tests">
       <SubTab label="Table Cross-Page">
         <Panel>
           <PanelTestTable />
@@ -54,8 +54,8 @@
           <PanelTestExperience />
         </Panel>
       </SubTab>
-
     </Tab>
+
 
     <Tab label="Old Pagination System">
       <SubTab label="Pagination-old">

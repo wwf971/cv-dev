@@ -278,11 +278,11 @@ defineExpose({
 }
 
 .image-caption {
-  margin-top: 4px;
+  margin-top: 6px;
   text-align: center;
   color: #666;
-  font-size: 12px;
-  line-height: 1.3;
+  font-size: 13px;
+  line-height: 1.4;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }

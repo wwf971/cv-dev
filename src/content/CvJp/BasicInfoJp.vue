@@ -59,9 +59,15 @@
 					</tr>
 					<tr>
 						<td class="form-cell key-cell" style="width: 115px;">メール<br>アドレス</td>
-						<td class="form-cell value-cell">{{ displayData.email }}</td>
+						<td class="form-cell value-cell align-left">{{ displayData.email }}</td>
 						<td class="form-cell key-cell" style="width: 115px;">電話番号</td>
-						<td class="form-cell value-cell">{{ displayData.phone }}</td>
+						<td class="form-cell value-cell align-left">{{ displayData.phone }}</td>
+					</tr>
+					<tr v-if="shouldShowNationalityRow">
+						<td class="form-cell key-cell" style="width: 115px;">在留資格</td>
+						<td class="form-cell value-cell align-left">{{ displayData.visaType }}</td>
+						<td class="form-cell key-cell" style="width: 115px;">本籍</td>
+						<td class="form-cell value-cell align-left">{{ displayData.nationality }}</td>
 					</tr>
 				  </tbody>
 				</table>
@@ -110,7 +116,9 @@ const props = defineProps({
   address: String,
   email: String,
   phone: String,
-  photoData: String
+  photoData: String,
+  nationality: String,
+  visaType: String
 })
 
 const basicInfoRef = ref<HTMLElement | null>(null)
@@ -134,19 +142,21 @@ const exampleData = {
   address: '東京都千代田区千代田1-1-1サンプルビル101',
   email: 'example@example.com',
   phone: '090-1234-5678',
-  photoData: null
+  photoData: null,
+  nationality: null,
+  visaType: null
 }
 
 // Use props if provided, otherwise use example data
 const displayData = computed(() => {
   // Filter out undefined props
   const definedProps = Object.keys(props).reduce((acc, key) => {
-	const value = props[key]
+	const value = (props as any)[key]
 	if (value !== undefined) {
-	  acc[key] = value
+	  (acc as any)[key] = value
 	}
 	return acc
-  }, {})
+  }, {} as Record<string, any>)
   
   const hasAnyProps = Object.keys(definedProps).length > 0
   
@@ -159,8 +169,13 @@ const displayData = computed(() => {
   return exampleData
 })
 
+// Show nationality row only if both nationality and visaType are provided
+const shouldShowNationalityRow = computed(() => {
+  return displayData.value.nationality && displayData.value.visaType
+})
+
 // trySplit implementation - returns code 2 (not splittable)
-const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
+const trySplit = (pageContext: any, docContext: any, _compIndex?: number) => {
   if (!basicInfoRef.value || !docContext || !pageContext) {
 	if (logger) {
 	  const reason = !basicInfoRef.value ? 'basicInfoRef is null' : !docContext ? 'docContext param is null' : 'pageContext param is null'

@@ -1,6 +1,6 @@
 import type { Logger } from '../../pagination/LogTypes'
 import { LogType } from '../../pagination/LogTypes'
-import { processDescription, createContentCell, createMultiLineContentCell } from './Utils'
+import { processDescription, createContentCell } from './Utils'
 
 /**
  * Build motivation component array for pagination
@@ -33,7 +33,10 @@ export function buildMotivationComponents(data: MotivationData, logger?: Logger 
       data: {
         rows: buildInterestTableRows(interestData),
         cssClass: 'form-table font-cv table-no-top-border',
-        cssStyle: tableStyle
+        cssStyle: tableStyle,
+        // Remove top border when not first on page (shares border with motivation table)
+        // But restore top border if pagination places this table at page top
+        removeTopBorderIfNotFirst: true
       }
     }
   ]
@@ -55,8 +58,8 @@ interface TreeResponse {
 }
 
 interface MotivationData {
-  motivation?: string | TreeResponse
-  interest?: string | TreeResponse
+  motivation?: string | TreeResponse | string[]
+  interest?: string | TreeResponse | string[]
 }
 
 // Helper to check if entry is a tree response
@@ -106,8 +109,13 @@ const extractTextFromTree = (treeResponse: TreeResponse, logger?: Logger | null)
 
 
 // Helper to process motivation/interest data
-const processMotivationData = (data: string | TreeResponse | undefined, logger?: Logger | null): string | string[] => {
+const processMotivationData = (data: string | TreeResponse | string[] | undefined, logger?: Logger | null): string | string[] => {
   if (!data) return ''
+
+  // Handle array data directly (e.g., ["xxx","yyy"])
+  if (Array.isArray(data)) {
+    return data.length === 1 ? data[0] : data
+  }
 
   let rawText = ''
 
@@ -126,6 +134,27 @@ const processMotivationData = (data: string | TreeResponse | undefined, logger?:
   return processedLines.length === 1 ? processedLines[0] : processedLines
 }
 
+
+// Helper to create content cell with TextList for array data
+const createTextListContentCell = (lines: string[], cssClass: string, textDisplayMode: 'bullet' | 'paragraph' | 'none' = 'paragraph') => {
+  return {
+    items: [
+      {
+        type: 'TextList',
+        data: {
+          mode: 'unordered',
+          textDisplayMode: textDisplayMode,
+          items: lines.map(line => ({
+            content: line,
+            display: 'block'
+          }))
+        }
+      }
+    ],
+    cssClass: `cv-jp-cell ${cssClass}`,
+    fillToPageBottom: true
+  }
+}
 
 // Build motivation table rows
 const buildMotivationTableRows = (motivationData: string | string[]) => {
@@ -153,7 +182,7 @@ const buildMotivationTableRows = (motivationData: string | string[]) => {
     data: {
       items: [
         isMultiLine
-          ? createMultiLineContentCell(motivationData as string[], 'motivation-content')
+          ? createTextListContentCell(motivationData as string[], 'motivation-content')
           : createContentCell(motivationData as string, 'motivation-content')
       ],
       cssClass: 'content-row'
@@ -189,7 +218,7 @@ const buildInterestTableRows = (interestData: string | string[]) => {
     data: {
       items: [
         isMultiLine
-          ? createMultiLineContentCell(interestData as string[], 'motivation-content')
+          ? createTextListContentCell(interestData as string[], 'motivation-content', 'none')
           : createContentCell(interestData as string, 'motivation-content')
       ],
       cssClass: 'content-row'

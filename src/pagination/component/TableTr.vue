@@ -124,31 +124,14 @@ const trySplit = (pageContext: any, docContext: any) => {
 
   if (!needsSplit) {
     // None of the Tds need splitting, but we're here because Tr overflows
-    // If fillToPageBottom is true, create an empty first part and put all content in second part
-    if (props.fillToPageBottom) {
-      if (logger) {
-        logger.addLog(`Tr overflows but no Td needs split - fillToPageBottom is true, creating empty first part`, 'Tr.trySplit')
-      }
-      // Force all TDs to be empty in first part, full content in second part
-      needsSplit = true
-      for (let i = 0; i < props.items.length; i++) {
-        tdSplitResults[i] = {
-          code: 1,
-          data: [
-            { type: 'Td', data: { items: [], widthRatio: props.items[i].widthRatio, isEmpty: true } },
-            { type: 'Td', data: { items: props.items[i].items, widthRatio: props.items[i].widthRatio } }
-          ]
-        }
-      }
-    } else {
-      // Move entire row to next page
-      if (logger) {
-        logger.addLog(`Tr overflows but no Td needs split - returning code 2 (move entire row to next page)`, 'Tr.trySplit', 1)
-      }
-      return {
-        code: 2,
-        data: null
-      }
+    // This means the overflow is due to borders/padding, not actual content
+    // In this case, the row actually fits - return code 0
+    if (logger) {
+      logger.addLog(`Tr overflows but no Td content needs split (all TDs fit), treating as fits (code: 0)`, 'Tr.trySplit')
+    }
+    return {
+      code: 0,
+      data: null
     }
   }
 

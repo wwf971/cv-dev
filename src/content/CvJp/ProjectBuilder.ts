@@ -1,5 +1,3 @@
-import type { Logger } from '../../pagination/LogTypes'
-
 const tableStyle = {
   width: '100%',
   borderCollapse: 'collapse' as const
@@ -68,9 +66,10 @@ const processImagesWithCaptions = (images: any[], captions?: string | string[]) 
   }
 
   // Check if we should use shared caption:
-  // - Multiple images (>1)
+  // - Single image or multiple images (>=1)
   // - Caption is string OR array with only one non-empty element
-  const useSharedCaption = images.length > 1 && captionArray.length === 1 && captionArray[0]
+  // This ensures even single images use ImageRow's centered caption display
+  const useSharedCaption = images.length >= 1 && captionArray.length === 1 && captionArray[0]
 
   if (useSharedCaption) {
     // Create images without individual captions - caption will be shown by ImageRow
@@ -159,7 +158,8 @@ const buildTitleTableRows = (projectData: ProjectData) => {
               type: 'Text',
               data: {
                 content: `${projectData.title || ''}${projectData.title_en ? `\n${projectData.title_en}` : ''}`,
-                display: 'block'
+                display: 'block',
+                cssClass: 'project-title'
               }
             },
             {
@@ -182,10 +182,21 @@ const buildTitleTableRows = (projectData: ProjectData) => {
 }
 
 // Build info table rows (people, time, place - in one row with three cells)
+// Only show the row if at least one field has a value
 const buildInfoTableRows = (projectData: ProjectData) => {
   const rows: any[] = []
+  
+  // Check if at least one field has a value
+  const hasPeople = projectData.people && projectData.people.trim() !== ''
+  const hasTime = projectData.time && projectData.time.trim() !== ''
+  const hasPlace = projectData.place && projectData.place.trim() !== ''
+  
+  // If all three are empty, don't show the row
+  if (!hasPeople && !hasTime && !hasPlace) {
+    return rows
+  }
 
-  // Single row with three cells
+  // At least one field exists, show the row with "-" for missing fields
   rows.push({
     type: 'Tr',
     data: {
@@ -204,7 +215,7 @@ const buildInfoTableRows = (projectData: ProjectData) => {
             {
               type: 'Text',
               data: {
-                content: projectData.people || '',
+                content: hasPeople ? projectData.people : '-',
                 cssClass: 'cell-content',
                 display: 'block'
               }
@@ -226,7 +237,7 @@ const buildInfoTableRows = (projectData: ProjectData) => {
             {
               type: 'Text',
               data: {
-                content: projectData.time || '',
+                content: hasTime ? projectData.time : '-',
                 cssClass: 'cell-content',
                 display: 'block'
               }
@@ -248,7 +259,7 @@ const buildInfoTableRows = (projectData: ProjectData) => {
             {
               type: 'Text',
               data: {
-                content: projectData.place || '',
+                content: hasPlace ? projectData.place : '-',
                 cssClass: 'cell-content',
                 display: 'block'
               }
@@ -284,7 +295,7 @@ const buildContentTableRows = (projectData: ProjectData) => {
                 }
               },
               // Create individual Text components for tech tags
-              ...projectData.techTags.map((tag: string, index: number) => ({
+              ...projectData.techTags.map((tag: string) => ({
                 type: 'Text',
                 data: {
                   content: tag,
@@ -322,6 +333,7 @@ const buildContentTableRows = (projectData: ProjectData) => {
                 type: 'TextList',
                 data: {
                   mode: 'unordered',
+                  textDisplayMode: 'paragraph',
                   items: Array.isArray(projectData.content)
                     ? projectData.content.map((item: any) => ({
                         content: typeof item === 'string' ? item : String(item),
@@ -366,6 +378,7 @@ const buildContentTableRows = (projectData: ProjectData) => {
                 type: 'TextList',
                 data: {
                   mode: 'unordered',
+                  textDisplayMode: 'paragraph',
                   items: Array.isArray(projectData.learnings)
                     ? projectData.learnings.map((item: any) => ({
                         content: typeof item === 'string' ? item : String(item),
@@ -426,15 +439,18 @@ export function buildProjectComponents(data: ProjectData) {
     }
   })
 
-  // Info table (people, time, place)
-  components.push({
-    type: 'Table',
-    data: {
-      rows: buildInfoTableRows(projectData),
-      cssClass: 'form-table font-cv project-table',
-      cssStyle: tableStyle
-    }
-  })
+  // Info table (people, time, place) - only add if rows exist
+  const infoRows = buildInfoTableRows(projectData)
+  if (infoRows.length > 0) {
+    components.push({
+      type: 'Table',
+      data: {
+        rows: infoRows,
+        cssClass: 'form-table font-cv project-table',
+        cssStyle: tableStyle
+      }
+    })
+  }
 
   // No gap between tables
 

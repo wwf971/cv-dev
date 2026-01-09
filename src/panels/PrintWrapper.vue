@@ -106,6 +106,9 @@ console.log(`[PrintWrapper] Received ${props.pages.length} pages (data-driven)`)
 console.log('[PrintWrapper] First page:', props.pages[0])
 console.log('[PrintWrapper] DocData length:', props.docData.length)
 console.log('[PrintWrapper] Max page dimensions:', maxPageDimensions.value)
+props.pages.forEach((page, i) => {
+  console.log(`[PrintWrapper] Page ${i}: ${page.components.length} components, height: ${page.sizes.pageHeight}`)
+})
 
 // Component mapping (same as Pagination.vue)
 const getComponent = (type) => {
@@ -185,50 +188,37 @@ const handlePrint = () => {
     background: white !important;
   }
   
-  /* Pages container - vertical flow */
+  /* Pages container */
   .pages-container {
     padding: 0 !important;
     margin: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 0 !important;
     width: 100% !important;
   }
   
-  /* Each print-page is a separate page with page break */
-  .print-page {
-    display: block !important;
-    width: 100% !important;
-    max-width: 100% !important;
+  /* Doc container */
+  .doc-container {
     margin: 0 !important;
     padding: 0 !important;
-    background-color: white !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    page-break-inside: avoid !important;
-    page-break-after: always !important;
-    overflow: visible !important;
-  }
-  
-  /* Last page should not force a break */
-  .print-page:last-child {
-    page-break-after: auto !important;
-  }
-  
-  /* Page container should fill width */
-  .print-page .page-container {
-    border: none !important;
-    display: block !important;
     width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
   }
   
-  /* Force tables to use full width */
+  /* Each print-page - one logical page */
   .print-page {
     width: 100% !important;
-    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Add page break AFTER each page except the last */
+  .print-page:not(:last-child) {
+    page-break-after: always !important;
+  }
+  
+  /* Page container - override Page.vue defaults */
+  .print-page .page-container {
+    border: none !important;
+    margin: 0 !important;
+    page-break-inside: auto !important;
   }
 }
 </style>

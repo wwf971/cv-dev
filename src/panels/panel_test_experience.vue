@@ -76,6 +76,8 @@ import TextList from '@/pagination/component/TextList.vue'
 import Text from '@/pagination/component/Text.vue'
 import Image from '@/pagination/component/Image.vue'
 import ImageRow from '@/pagination/component/ImageRow.vue'
+import PageBreak from '@/pagination/component/PageBreak.vue'
+import Title from '@/content/CvJp/Title.vue'
 import { fetchRemoteData } from '@/remote/remoteDataFetcher.js'
 import { useImageDataStore } from '@/remote/imageDataStore.js'
 
@@ -88,7 +90,9 @@ const getComponent = (type) => {
     'TextList': TextList,
     'Text': Text,
     'Image': Image,
-    'ImageRow': ImageRow
+    'ImageRow': ImageRow,
+    'PageBreak': PageBreak,
+    'Title': Title
   }
   return componentMap[type] || 'div'
 }
@@ -150,47 +154,32 @@ const processContentItem = (item) => {
     // Text content - mark it as text
     return { contentType: 'text', value: item }
   } else if (item && typeof item === 'object' && item.type === 'image') {
-    // Image content - convert to Image or ImageRow component
+    // Image content - always use ImageRow (even for single images) to get centered display
     const srcArray = Array.isArray(item.src) ? item.src : [item.src]
     const captionArray = Array.isArray(item.caption) ? item.caption : (item.caption ? [item.caption] : [])
     
-    if (srcArray.length === 1) {
-      // Single image
-      return {
-        contentType: 'image',
-        component: {
-          type: 'Image',
-          data: {
-            src: srcArray[0],
-            height: item.height || '200px',
-            caption: captionArray.join(' / ')
-          }
-        }
+    // Check if we should use shared caption (for single or multiple images with one caption)
+    const useSharedCaption = srcArray.length >= 1 && captionArray.length === 1
+    
+    const images = srcArray.map((src, index) => ({
+      type: 'Image',
+      data: {
+        src: src,
+        height: item.height || '200px',
+        // Only assign individual captions if NOT using shared caption
+        caption: useSharedCaption ? null : (captionArray[index] || '')
       }
-    } else {
-      // Multiple images - use ImageRow
-      // Check if we should use shared caption: multiple images but only one caption
-      const useSharedCaption = srcArray.length > 1 && captionArray.length === 1
-      
-      const images = srcArray.map((src, index) => ({
-        type: 'Image',
+    }))
+    
+    return {
+      contentType: 'imageRow',
+      component: {
+        type: 'ImageRow',
         data: {
-          src: src,
-          height: item.height || '200px',
-          // Only assign individual captions if NOT using shared caption
-          caption: useSharedCaption ? null : (captionArray[index] || '')
-        }
-      }))
-      
-      return {
-        contentType: 'imageRow',
-        component: {
-          type: 'ImageRow',
-          data: {
-            items: images,
-            // Use shared caption if applicable
-            caption: useSharedCaption ? captionArray[0] : undefined
-          }
+          items: images,
+          align: 'center',
+          // Use shared caption if applicable
+          caption: useSharedCaption ? captionArray[0] : undefined
         }
       }
     }
@@ -233,6 +222,7 @@ const buildProjectComponentsWithImages = (project) => {
           type: 'TextList',
           data: {
             mode: 'unordered',
+            textDisplayMode: 'paragraph',
             items: currentTextGroup.map(text => ({
               content: text,
               cssClass: 'cell-content',
@@ -263,6 +253,7 @@ const buildProjectComponentsWithImages = (project) => {
       type: 'TextList',
       data: {
         mode: 'unordered',
+        textDisplayMode: 'paragraph',
         items: currentTextGroup.map(text => ({
           content: text,
           cssClass: 'cell-content',
@@ -273,30 +264,73 @@ const buildProjectComponentsWithImages = (project) => {
   }
   
   // Build content table similar to ProjectBuilder but with mixed items
+  const contentTableRows = []
+  
+  // Add tech tags row if present
+  if (project.techTags && Array.isArray(project.techTags) && project.techTags.length > 0) {
+    contentTableRows.push({
+      type: 'Tr',
+      data: {
+        items: [
+          {
+            items: [
+              {
+                type: 'Text',
+                data: {
+                  content: '使用技術',
+                  cssClass: 'cell-label'
+                }
+              },
+              // Create individual Text components for tech tags
+              ...project.techTags.map(tag => ({
+                type: 'Text',
+                data: {
+                  content: tag,
+                  cssClass: 'tech-tag',
+                  display: 'inline-block',
+                  noSplit: true
+                }
+              }))
+            ],
+            cssClass: 'cv-jp-cell tech-cell',
+            fillToPageBottom: false
+          }
+        ],
+        cssClass: 'tech-row'
+      }
+    })
+  }
+  
+  // Add project content row if there's content
   if (cellItems.length > 0) {
+    contentTableRows.push({
+      type: 'Tr',
+      data: {
+        items: [{
+          items: [
+            {
+              type: 'Text',
+              data: {
+                content: 'プロジェクト内容',
+                cssClass: 'cell-label'
+              }
+            },
+            ...cellItems
+          ],
+          cssClass: 'cv-jp-cell content-cell',
+          fillToPageBottom: true
+        }],
+        cssClass: 'content-row'
+      }
+    })
+  }
+  
+  // Add content table if we have any rows
+  if (contentTableRows.length > 0) {
     components.push({
       type: 'Table',
       data: {
-        rows: [{
-          type: 'Tr',
-          data: {
-            items: [{
-              items: [
-                {
-                  type: 'Text',
-                  data: {
-                    content: 'プロジェクト内容',
-                    cssClass: 'cell-label'
-                  }
-                },
-                ...cellItems
-              ],
-              cssClass: 'cv-jp-cell content-cell',
-              fillToPageBottom: true
-            }],
-            cssClass: 'content-row'
-          }
-        }],
+        rows: contentTableRows,
         cssClass: 'form-table font-cv project-table',
         cssStyle: {
           width: '100%',
@@ -413,6 +447,30 @@ const fetchProjectData = async () => {
 // Build doc data based on current settings
 const buildDocData = () => {
   const components = []
+  
+  // Add PageBreak and Title at the beginning
+  components.push({
+    type: 'PageBreak',
+    data: {
+      skipIfAtPageTop: true
+    }
+  })
+  
+  components.push({
+    type: 'Title',
+    data: {
+      content: 'プロジェクト経験',
+      fontSize: '28px',
+      fontWeight: '500',
+      textAlign: 'center',
+      letterSpacing: '0.3em'
+    }
+  })
+  
+  components.push({
+    type: 'VSpace',
+    data: { height: 5 }
+  })
   
   // If there's a fetch error, display it as Text component
   if (fetchError.value) {

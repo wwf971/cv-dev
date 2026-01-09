@@ -20,11 +20,15 @@ const customData = {
     birthMonth: '{{remote:birth/month}}',
     birthDay: '{{remote:birth/day}}',
     gender: 'male',
-    postalCode: '{{remote:address/jp/latest/post-code}}',
-    address: '{{remote:address/jp/latest}}',
+    // address: '{{remote:address/jp/latest}}',
+    // postalCode: '{{remote:address/jp/latest/post-code}}',
+    address: '{{mongo:main/cv?name=linkedin-202601&path=address}}',
+    postalCode: '{{mongo:main/cv?name=linkedin-202601&path=postCode}}',
     email: '{{remote:email/latest}}',
     phone: '{{remote:phone/jp}}',
-    photoData: '{{remote:photo/latest}}'
+    photoData: '{{remote:photo/latest}}',
+    visaType: '{{mongo:main/cv?name=linkedin-202601&path=visaType}}',
+    nationality: '{{mongo:main/cv?name=linkedin-202601&path=nationality}}',
   },
   eduAndWork: {
     // eduEntries: [

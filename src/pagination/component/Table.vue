@@ -13,15 +13,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, onBeforeUpdate, onMounted, nextTick } from 'vue'
+import { ref, computed, inject, onBeforeUpdate } from 'vue'
 import Tr from './TableTr.vue'
 
+/**
+ * Props:
+ * - removeTopBorderIfNotFirst: When true, removes 'td-no-top-border' class from first row 
+ *   if table is placed at page top (compIndex === 0). Useful for stacked tables that share 
+ *   borders but need proper borders when split across pages.
+ */
 const props = withDefaults(defineProps<{
   rows: any[]
   cssClass?: string
   cssStyle?: any
+  removeTopBorderIfNotFirst?: boolean
 }>(), {
-  rows: () => []
+  rows: () => [],
+  removeTopBorderIfNotFirst: false
 })
 
 const tableRef = ref<HTMLElement | null>(null)
@@ -43,6 +51,30 @@ const getComponent = (type: string) => {
     default:
       return null
   }
+}
+
+// Helper: Remove td-no-top-border class from first row
+const removeTopBorderClass = (rows: any[]) => {
+  if (rows.length === 0) return rows
+  
+  const modifiedRows = [...rows]
+  const firstRow = modifiedRows[0]
+  
+  if (firstRow && firstRow.data && firstRow.data.items) {
+    const modifiedFirstRow = {
+      ...firstRow,
+      data: {
+        ...firstRow.data,
+        items: firstRow.data.items.map((item: any) => ({
+          ...item,
+          cssClass: item.cssClass ? item.cssClass.replace(/\s*td-no-top-border\s*/g, ' ').trim() : item.cssClass
+        }))
+      }
+    }
+    modifiedRows[0] = modifiedFirstRow
+  }
+  
+  return modifiedRows
 }
 
 // Split function - tables split by splitting rows
@@ -69,6 +101,28 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
   
   // If entire table fits, no split needed
   if (tableBottom <= pageBottomY) {
+    // If this table has removeTopBorderIfNotFirst=true and is first on page (compIndex===0),
+    // we need to modify the data to remove the td-no-top-border class
+    // Return code: 1 with single element to "replace" the component with modified version
+    if (props.removeTopBorderIfNotFirst && compIndex === 0) {
+      const modifiedRows = removeTopBorderClass(props.rows)
+      if (logger) {
+        logger.addLog(`Table fits on page, is first component, removing top border class (returning as "split" with 1 part)`, 'Table.trySplit')
+      }
+      return {
+        code: 1,
+        data: [{
+          type: 'Table',
+          data: {
+            rows: modifiedRows,
+            cssClass: props.cssClass,
+            cssStyle: props.cssStyle,
+            removeTopBorderIfNotFirst: props.removeTopBorderIfNotFirst
+          }
+        }]
+      }
+    }
+    
     return {
       code: 0,
       data: null
@@ -154,6 +208,16 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
     logger.addLog(`Split Table: first part has ${firstPartRows.length} rows, second part has ${secondPartRows.length} rows`, 'Table.trySplit')
   }
 
+  // If removeTopBorderIfNotFirst is true, the second part will be at page top
+  // so we should remove the td-no-top-border class to restore the border
+  const finalSecondPartRows = props.removeTopBorderIfNotFirst 
+    ? removeTopBorderClass(secondPartRows)
+    : secondPartRows
+  
+  if (logger && props.removeTopBorderIfNotFirst) {
+    logger.addLog(`Table split with removeTopBorderIfNotFirst=true. Second part border class removed.`, 'Table.trySplit')
+  }
+
   return {
     code: 1,
     data: [
@@ -162,15 +226,17 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
         data: {
           rows: firstPartRows,
           cssClass: props.cssClass,
-          cssStyle: props.cssStyle
+          cssStyle: props.cssStyle,
+          removeTopBorderIfNotFirst: props.removeTopBorderIfNotFirst
         }
       },
       {
         type: 'Table',
         data: {
-          rows: secondPartRows,
+          rows: finalSecondPartRows,
           cssClass: props.cssClass,
-          cssStyle: props.cssStyle
+          cssStyle: props.cssStyle,
+          removeTopBorderIfNotFirst: props.removeTopBorderIfNotFirst
         }
       }
     ]

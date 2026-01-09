@@ -46,8 +46,10 @@ import VSpace from './component/VSpace.vue'
 import TextRow from './component/TextRow.vue'
 import ImageRow from './component/ImageRow.vue'
 import Image from './component/Image.vue'
+import PageBreak from './component/PageBreak.vue'
 import BasicInfoJp from '../content/CvJp/BasicInfoJp.vue'
 import ProjectJp from '../content/CvJp/ProjectJp.vue'
+import Title from '../content/CvJp/Title.vue'
 import { A4_SIZES, PAGE_SIZES } from '../config.js'
 import type { PagePadding, PageContext } from './pagination'
 import { LogType } from './LogTypes'
@@ -163,10 +165,14 @@ const getComponent = (type: string) => {
       return Table
     case 'VSpace':
       return VSpace
+    case 'PageBreak':
+      return PageBreak
     case 'BasicInfoJp':
       return BasicInfoJp
     case 'ProjectJp':
       return ProjectJp
+    case 'Title':
+      return Title
     default:
       return null
   }
@@ -308,7 +314,7 @@ const trySplit = async (compData: ComponentData, pageIndex: number, compIndex: n
   }
   
   addLog(`trySplit: Calling trySplit on ${compData.type} instance`, `${compData.type}.trySplit`)
-  const result = compInstance.trySplit(pageContext, docContext)
+  const result = compInstance.trySplit(pageContext, docContext, compIndex)
   
   if (!result) {
     addLog(`trySplit: Component returned null/undefined`, `${compData.type}.trySplit`, LogType.Error)

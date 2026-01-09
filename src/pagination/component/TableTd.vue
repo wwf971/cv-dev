@@ -137,6 +137,12 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
 
   for (let i = 0; i < props.items.length; i++) {
     const comp = componentRefs.value[i]
+    const itemType = props.items[i]?.type || 'unknown'
+    
+    if (logger) {
+      logger.addLog(`Td checking item ${i} (type: ${itemType}), comp ref exists: ${!!comp}, has trySplit: ${comp && typeof comp.trySplit === 'function'}`, 'Td.trySplit')
+    }
+    
     if (comp && typeof comp.trySplit === 'function') {
       const result = comp.trySplit(adjustedPageContext, docContext)
       

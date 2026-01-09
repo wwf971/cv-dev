@@ -6,7 +6,21 @@
 }
 
 .font-cv {
-	font-family: 'MS Gothic', 'Yu Gothic', 'Hiragino Sans', sans-serif;
+	font-family: Arial, 'Segoe UI', 'MS Gothic', 'Yu Gothic', 'Hiragino Sans', sans-serif;
+}
+
+.tech-tag {
+	display: inline-block;
+	background-color: #e3f2fd;
+	border: 1px solid #90caf9;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 13px;
+	color: #1565c0;
+	font-weight: 500;
+	font-family: Arial, 'Segoe UI', 'MS Gothic', 'Yu Gothic', 'Hiragino Sans', sans-serif;
+	margin-left: 6px;
+	margin-top: 2px;
 }
 
 .no-top-border td {
@@ -19,7 +33,7 @@
 
 /* Shared Japanese CV Table Styles */
 .japanese-cv-table {
-	font-family: 'MS Gothic', 'Yu Gothic', 'Hiragino Sans', sans-serif;
+	font-family: Arial, 'Segoe UI', 'MS Gothic', 'Yu Gothic', 'Hiragino Sans', sans-serif;
 	width: 100%;
 	border-collapse: collapse;
 	border-spacing: 0;

@@ -10,7 +10,7 @@
         {{ getBullet(index) }}
       </span>
       <Text
-        v-bind="item"
+        v-bind="getTextProps(item)"
         :ref="(el: any) => { if (el) textComponentRefs[index] = el }"
       />
     </div>
@@ -23,6 +23,7 @@ import Text from './Text.vue'
 
 const props = withDefaults(defineProps<{
   mode?: 'ordered' | 'unordered' | 'paragraph'
+  textDisplayMode?: 'bullet' | 'paragraph' | 'none' // 'bullet': show bullets, 'paragraph': prepend two spaces, 'none': no decoration
   items: any[] // List of Text component data
   startBulletNumber?: number
   isSplit?: boolean
@@ -31,6 +32,7 @@ const props = withDefaults(defineProps<{
   isFirstChildEmpty?: boolean // Whether the first child is empty (has no content)
 }>(), {
   mode: 'unordered',
+  textDisplayMode: 'bullet',
   startBulletNumber: 1,
   isSplit: false,
   isFirstSplit: false,
@@ -49,6 +51,11 @@ onBeforeUpdate(() => {
 
 
 const shouldShowBullet = (index: number) => {
+  // Only show bullets if textDisplayMode is 'bullet'
+  if (props.textDisplayMode !== 'bullet') {
+    return false
+  }
+  
   // Show bullets for all items in list modes (ordered, unordered, paragraph)
   // But skip empty items (when Text component has startIndex === endIndex)
   if (props.mode === 'ordered' || props.mode === 'unordered' || props.mode === 'paragraph') {
@@ -85,6 +92,24 @@ const getBullet = (index: number) => {
   } else { // paragraph
     return '¶'
   }
+}
+
+// Get text props with paragraph indentation if needed
+const getTextProps = (item: any) => {
+  // If textDisplayMode is 'paragraph', prepend two non-breaking spaces to content
+  if (props.textDisplayMode === 'paragraph' && item.content) {
+    // Check if content already starts with two spaces to avoid double-prepending
+    // This can happen when split items are re-rendered
+    const twoSpaces = '\u2003\u2003'
+    if (item.content.startsWith(twoSpaces)) {
+      return item // Already has the spaces
+    }
+    return {
+      ...item,
+      content: twoSpaces + item.content  // Two non-breaking spaces (U+2003: EM SPACE, same width as 1em)
+    }
+  }
+  return item
 }
 
 // Calculate bullet alignment to match first line's vertical center of each Text component
@@ -131,6 +156,10 @@ const calcBulletYOffset = () => {
 
 // Pure function for splitting
 const trySplit = (pageContext: any, docContext: any) => {
+  if (logger) {
+    logger.addLog(`TextList.trySplit called with ${props.items.length} items, mode=${props.mode}, textDisplayMode=${props.textDisplayMode}`, 'TextList.trySplit')
+  }
+  
   if (!textListRef.value || !docContext || !pageContext) {
     if (logger) {
       const reason = !textListRef.value ? 'textListRef is null' : !docContext ? 'docContext param is null' : 'pageContext param is null'
@@ -145,6 +174,10 @@ const trySplit = (pageContext: any, docContext: any) => {
   const listBottom = docContext.measureVerticalPosEnd(textListRef.value)
   const pageBottomY = pageContext.pageBottomY
   
+  if (logger) {
+    logger.addLog(`TextList position: listBottom=${listBottom.toFixed(2)}, pageBottomY=${pageBottomY.toFixed(2)}`, 'TextList.trySplit')
+  }
+  
   // Safety check: invalid pageBottomY
   if (pageBottomY <= 0) {
     if (logger) {
@@ -158,6 +191,9 @@ const trySplit = (pageContext: any, docContext: any) => {
   
   // If entire list fits, no split needed
   if (listBottom <= pageBottomY) {
+    if (logger) {
+      logger.addLog(`TextList fits completely (code: 0)`, 'TextList.trySplit')
+    }
     // Calculate bullet alignment before returning
     calcBulletYOffset()
     
@@ -165,6 +201,10 @@ const trySplit = (pageContext: any, docContext: any) => {
       code: 0,
       data: null
     }
+  }
+  
+  if (logger) {
+    logger.addLog(`TextList needs split`, 'TextList.trySplit')
   }
 
   // Need to split - find which child to split at
@@ -297,6 +337,7 @@ const trySplit = (pageContext: any, docContext: any) => {
     type: 'TextList',
     data: {
       mode: props.mode,
+      textDisplayMode: props.textDisplayMode,
       items: firstPartItems,
       startBulletNumber: props.startBulletNumber,
       isSplit: true,
@@ -309,6 +350,7 @@ const trySplit = (pageContext: any, docContext: any) => {
     type: 'TextList',
     data: {
       mode: props.mode,
+      textDisplayMode: props.textDisplayMode,
       items: secondPartItems,
       startBulletNumber: secondPartStartBullet,
       isSplit: true,

@@ -80,7 +80,7 @@
 .info-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 
 .info-row span:first-child {

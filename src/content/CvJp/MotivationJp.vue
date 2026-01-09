@@ -13,11 +13,17 @@
 import { ref, computed, inject } from 'vue'
 import Table from '../../pagination/component/Table.vue'
 import VSpace from '../../pagination/component/VSpace.vue'
+import TextList from '../../pagination/component/TextList.vue'
 import { buildMotivationComponents } from './MotivationBuilder'
 
-const props = defineProps({
-  motivation: [String, Object],
-  interest: [String, Object]
+interface Props {
+  motivation?: string | string[] | Record<string, any>
+  interest?: string | string[] | Record<string, any>
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  motivation: undefined,
+  interest: undefined
 })
 
 const motivationRef = ref<HTMLElement | null>(null)
@@ -27,8 +33,8 @@ const logger = inject('paginationLogger', null) as any
 
 // Display components: use builder function to generate components
 const displayComponents = computed(() => buildMotivationComponents({
-  motivation: props.motivation,
-  interest: props.interest
+  motivation: props.motivation as any,
+  interest: props.interest as any
 }, logger))
 
 // Component mapping
@@ -38,6 +44,8 @@ const getComponent = (type: string) => {
       return Table
     case 'VSpace':
       return VSpace
+    case 'TextList':
+      return TextList
     default:
       return null
   }

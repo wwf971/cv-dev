@@ -110,9 +110,10 @@ defineExpose({
 @media print {
   .page-container {
     border: none;
-    height: auto !important;
-    min-height: 0 !important;
-    page-break-inside: avoid;
+    /* WARNING: Do NOT add height: auto, min-height, or page-break-inside here!
+     * - height: auto breaks the fixed page sizing that matches @page dimensions
+     * - page-break-inside: avoid causes blank pages when combined with page breaks in PrintWrapper
+     * The page container MUST maintain its calculated fixed height for proper print layout */
   }
 }
 </style>
