@@ -283,7 +283,7 @@ async function fetchMongoValue(mongoOrigin, path, username, password) {
     const collectionName = parts[1]
     
     // Construct URL with query parameters
-    const url = `${mongoOrigin}/mongo/db/${databaseName}/coll/${collectionName}/docs?${queryPart}`
+    const url = `${mongoOrigin}/mongo/db/${databaseName}/coll/${collectionName}/doc?${queryPart}`
     
     try {
       const response = await fetch(url, {

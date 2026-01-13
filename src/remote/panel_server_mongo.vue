@@ -411,7 +411,7 @@ const testMongoFetch = async () => {
       params.append('path', docPath)
     }
     
-    const url = `${mongoOrigin.value}/mongo/db/${database}/coll/${collection}/docs?${params.toString()}`
+    const url = `${mongoOrigin.value}/mongo/db/${database}/coll/${collection}/doc?${params.toString()}`
     const response = await fetch(url, {
       method: 'GET',
       headers: {

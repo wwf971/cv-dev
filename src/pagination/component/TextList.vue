@@ -234,12 +234,34 @@ const trySplit = (pageContext: any, docContext: any) => {
       splitIndex = i
 
       if (logger) {
-        logger.addLog(`Item ${i} overflows, attempting to split the Text component`, 'TextList.trySplit')
+        logger.addLog(`Item ${i} list-item overflows by ${(itemBottom - pageBottomY).toFixed(2)}px`, 'TextList.trySplit')
       }
 
       // Get the Text component instance for this item
       const textComponent = textComponentRefs.value[i]
       if (textComponent && typeof textComponent.trySplit === 'function') {
+        // Check if the TEXT itself (not the list-item container) actually fits
+        // The list-item might overflow due to margin-bottom or flex layout spacing
+        const textElement = listItems[i].querySelector('.text-component')
+        if (textElement) {
+          const textBottom = docContext.measureVerticalPosEnd(textElement)
+          const LIST_ITEM_MARGIN_BOTTOM = 4
+          
+          if (logger) {
+            logger.addLog(`Text element bottom: ${textBottom.toFixed(2)}, overflow: ${(textBottom - pageBottomY).toFixed(2)}px`, 'TextList.trySplit')
+          }
+          
+          // If text fits within page bottom + margin, it actually fits
+          // The list-item overflow is just due to the margin spacing
+          if (textBottom <= pageBottomY + LIST_ITEM_MARGIN_BOTTOM) {
+            if (logger) {
+              logger.addLog(`Text itself fits (within margin tolerance), treating as fit`, 'TextList.trySplit')
+            }
+            splitIndex = i + 1
+            continue
+          }
+        }
+        
         if (logger) {
           logger.addLog(`Calling trySplit on Text component at index ${i}`, 'TextList.trySplit')
         }
