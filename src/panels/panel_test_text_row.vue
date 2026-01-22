@@ -463,7 +463,7 @@ const paginationRef = ref(null)
 const logs = ref([])
 
 // Single logger that writes to logs array
-const logger = createLogger(logs.value, 'panel_test_text_row')
+const logger = createLogger(logs, 'panel_test_text_row')
 
 // Doc data - moderate VSpace at top, then TextRow test data
 const docData = ref([

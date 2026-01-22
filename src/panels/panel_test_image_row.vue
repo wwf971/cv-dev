@@ -80,7 +80,7 @@ const paginationRef = ref(null)
 const logs = ref([])
 const shouldFetchImages = ref(false)
 
-const logger = createLogger(logs.value, 'panel_test_image_row')
+const logger = createLogger(logs, 'panel_test_image_row')
 
 // Provide the fetch control flag to all Image components
 provide('shouldFetchImages', shouldFetchImages)

@@ -37,19 +37,7 @@
 import { ref, computed, h, provide, nextTick, inject, getCurrentInstance } from 'vue'
 import Doc from './component_core/Doc.vue'
 import Page from './component_core/Page.vue'
-import Text from './component/Text.vue'
-import TextList from './component/TextList.vue'
-import Tr from './component/TableTr.vue'
-import Td from './component/TableTd.vue'
-import Table from './component/Table.vue'
-import VSpace from './component/VSpace.vue'
-import TextRow from './component/TextRow.vue'
-import ImageRow from './component/ImageRow.vue'
-import Image from './component/Image.vue'
-import PageBreak from './component/PageBreak.vue'
-import BasicInfoJp from '../content/CvJp/BasicInfoJp.vue'
-import ProjectJp from '../content/CvJp/ProjectJp.vue'
-import Title from '../content/CvJp/Title.vue'
+import { getComponent } from './componentMapping.js'
 import { A4_SIZES, PAGE_SIZES } from '../config.js'
 import type { PagePadding, PageContext } from './pagination'
 import { LogType } from './LogTypes'
@@ -143,40 +131,6 @@ provide('paginationLogger', {
 provide('paginationSpaceManager', {
   applyForExtraHorizontalSpaceRight
 })
-
-// Map component type to Vue component
-const getComponent = (type: string) => {
-  switch(type) {
-    case 'Text':
-      return Text
-    case 'TextList':
-      return TextList
-    case 'TextRow':
-      return TextRow
-    case 'ImageRow':
-      return ImageRow
-    case 'Image':
-      return Image
-    case 'Tr':
-      return Tr
-    case 'Td':
-      return Td
-    case 'Table':
-      return Table
-    case 'VSpace':
-      return VSpace
-    case 'PageBreak':
-      return PageBreak
-    case 'BasicInfoJp':
-      return BasicInfoJp
-    case 'ProjectJp':
-      return ProjectJp
-    case 'Title':
-      return Title
-    default:
-      return null
-  }
-}
 
 // Pagination APIs
 type ComponentData = {
@@ -395,7 +349,7 @@ const runPagination = async () => {
     }
     
     const { pageIndexCurrent, pageDataCurrent } = appendEmptyPage(pageData)
-    addLog(`Created page ${pageIndexCurrent + 1}`, 'runPagination')
+    addLog(`Created page ${pageIndexCurrent + 1} (startY will be measured after render)`, 'runPagination')
     
     // Update pages to trigger render
     pages.value = [...pageData]
@@ -483,6 +437,14 @@ const runPagination = async () => {
       if (compDataAfterSplitTrialList.length === 1) {
         // No split needed, continue
         addLog(`Component ${compIndexCurrent} fits in page ${pageIndexCurrent + 1}`, 'runPagination')
+        
+        // CRITICAL: Wait for DOM to fully settle after adding component
+        // When tables are split and their second parts are added to new pages, the browser needs time
+        // to recalculate layouts and remove stale height values from the previous unsplit state.
+        // Without this delay, split table parts may be measured with incorrect heights (e.g., 601px 
+        // instead of actual 370px), causing subsequent components to incorrectly overflow to next pages.
+        await new Promise(resolve => setTimeout(resolve, 200))
+        
         continue
       } else if (compDataAfterSplitTrialList.length > 1) {
         // Split occurred

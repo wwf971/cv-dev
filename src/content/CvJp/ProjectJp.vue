@@ -244,7 +244,8 @@ defineExpose({
 /* Tech stack styles */
 .tech-row {
   height: auto;
-  min-height: 45px;
+  /* Removed min-height to allow proper pagination measurement */
+  /* min-height: 45px; */
 }
 
 .tech-cell {
@@ -257,7 +258,8 @@ defineExpose({
 /* Content styles */
 .content-row {
   height: auto;
-  min-height: 80px;
+  /* Removed min-height to allow proper pagination measurement */
+  /* min-height: 80px; */
 }
 
 .content-cell {
@@ -290,7 +292,8 @@ defineExpose({
 /* Learning styles */
 .learning-row {
   height: auto;
-  min-height: 60px;
+  /* Removed min-height to allow proper pagination measurement */
+  /* min-height: 60px; */
 }
 
 .learning-cell {

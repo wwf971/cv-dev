@@ -166,7 +166,7 @@ const buildMotivationTableRows = (motivationData: string | string[]) => {
     data: {
       items: [
         {
-          items: [{ type: 'Text', data: { content: '志 望 の 動 機', noSplit: true } }],
+          items: [{ type: 'Text', data: { content: '志 望 動 機', noSplit: true } }],
           cssClass: 'cv-jp-cell header-cell word-spacing-0p5',
           cssStyle: { wordSpacing: '0.5em' }
         }

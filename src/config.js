@@ -38,9 +38,13 @@ export let SERVER_MONGO_INFO = {
     // find from main database, config collection, a doc that satisfies doc.name == 'test'
     // then fetch the value of doc.a.b.0
   },
-  test_fetch_file_url: null
+  test_fetch_file_url: null,
   // Image URL format for MongoDB: {{mongo:accessPointId/filePathOrId}}
   // Example: {{mongo:aa/bb/image.jpg}}
+  template_db: 'main',
+  template_collection: 'cv-templates',
+  draft_db: 'main',
+  draft_collection: 'cv-drafts',
 }
 
 export let educationEntries = []
@@ -50,6 +54,8 @@ export let motivation = ''
 export let interest = ''
 export let url_motivation_text = ''
 export let projectEntries = []
+export let homePage = ''
+export let githubPage = ''
 
 // Try to import and override with private config
 try {
@@ -69,6 +75,8 @@ try {
   if (privateConfig.interest) interest = privateConfig.interest
   if (privateConfig.url_motivation_text) url_motivation_text = privateConfig.url_motivation_text
   if (privateConfig.projectEntries) projectEntries = privateConfig.projectEntries
+  if (privateConfig.homePage) homePage = privateConfig.homePage
+  if (privateConfig.githubPage) githubPage = privateConfig.githubPage
 } catch (error) {
   console.warn('Failed to load config.0.js, using default values:', error.message)
 }

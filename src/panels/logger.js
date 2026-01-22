@@ -1,11 +1,14 @@
 /**
  * Logger utility for panel test components
- * Creates a logger that writes to a provided logs array
- * @param {Array} logsArray - The array to push log entries to
+ * Creates a logger that writes to a provided logs array or ref
+ * @param {Array|Ref} logsArrayOrRef - The array or ref to push log entries to
  * @param {string} defaultFrom - Default source identifier for logs
  * @returns {Object} Logger object with addLog method
  */
-export function createLogger(logsArray, defaultFrom = 'unknown') {
+export function createLogger(logsArrayOrRef, defaultFrom = 'unknown') {
+  // Determine if we have a ref or a plain array
+  const isRef = logsArrayOrRef && typeof logsArrayOrRef === 'object' && 'value' in logsArrayOrRef
+  
   return {
     /**
      * Add a log entry to the logs array
@@ -28,12 +31,19 @@ export function createLogger(logsArray, defaultFrom = 'unknown') {
       const tzSign = tzOffset >= 0 ? '+' : '-'
       const timestamp = `${year}${month}${day}_${hours}${minutes}${seconds}${ms}${tzSign}${tzHours}`
 
-      logsArray.push({
+      const logEntry = {
         message,
         from: from || defaultFrom,
         type,
         timestamp
-      })
+      }
+      
+      // Push to the correct target (ref.value or array)
+      if (isRef) {
+        logsArrayOrRef.value.push(logEntry)
+      } else {
+        logsArrayOrRef.push(logEntry)
+      }
     }
   }
 }

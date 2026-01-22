@@ -61,7 +61,7 @@ onMounted(() => {
   }
 })
 
-const trySplit = (pageContext, docContext) => {
+const trySplit = (pageContext, docContext, compIndex) => {
   if (!imageRowRef.value || !docContext || !pageContext) {
     if (logger) {
       logger.addLog('Error - missing refs or contexts', 'ImageRow.trySplit', 'Error')
@@ -73,19 +73,69 @@ const trySplit = (pageContext, docContext) => {
   }
 
   if (logger) {
-    logger.addLog('Starting split analysis', 'ImageRow.trySplit')
+    logger.addLog(`Starting split analysis (compIndex: ${compIndex !== undefined ? compIndex : 'unknown'})`, 'ImageRow.trySplit')
   }
 
   const rowBottom = docContext.measureVerticalPosEnd(imageRowRef.value)
   const rowTop = docContext.measureVerticalPos(imageRowRef.value)
   const pageBottomY = pageContext.pageBottomY
+  const pageStartY = pageContext.pageStartY || 0
   const rowHeight = rowBottom - rowTop
   const spaceRemaining = pageBottomY - rowBottom
+  const overflow = rowBottom - pageBottomY
+  const spaceBeforeRow = rowTop - pageStartY
+
+  // Get more details about the row's parent and positioning
+  const parentElement = imageRowRef.value.parentElement
+  const parentTag = parentElement ? parentElement.tagName : 'unknown'
+  const parentClass = parentElement ? parentElement.className : 'unknown'
+  
+  // Check if there are sibling elements before this ImageRow
+  const siblings = parentElement ? Array.from(parentElement.children) : []
+  const imageRowIndex = siblings.indexOf(imageRowRef.value)
+  const siblingsBefore = siblings.slice(0, imageRowIndex)
+  
+  // Measure siblings to see what's taking up space
+  let siblingsInfo = []
+  if (siblingsBefore.length > 0 && docContext) {
+    siblingsBefore.forEach((sibling, idx) => {
+      const sibTop = docContext.measureVerticalPos(sibling)
+      const sibBottom = docContext.measureVerticalPosEnd(sibling)
+      const sibHeight = sibBottom - sibTop
+      siblingsInfo.push(`${idx}[${sibling.tagName}.${sibling.className}]: ${sibHeight.toFixed(2)}px`)
+    })
+  }
 
   if (logger) {
-    logger.addLog(`Row measurements - top: ${rowTop.toFixed(2)}, bottom: ${rowBottom.toFixed(2)}, height: ${rowHeight.toFixed(2)}, pageBottom: ${pageBottomY.toFixed(2)}, spaceRemaining: ${spaceRemaining.toFixed(2)}, exceeds: ${rowBottom > pageBottomY}`, 'ImageRow.trySplit')
-    logger.addLog(`ImageRow has ${props.items.length} images, ${componentRefs.value.length} refs`, 'ImageRow.trySplit')
-    logger.addLog(`Page context: pageIndex=${pageContext.pageIndex}, pageStartY=${pageContext.pageStartY?.toFixed(2)}, pageEndY=${pageContext.pageEndY?.toFixed(2)}, padding.bottom=${pageContext.padding.bottom}`, 'ImageRow.trySplit')
+    logger.addLog(`Row measurements - top: ${rowTop.toFixed(2)}, bottom: ${rowBottom.toFixed(2)}, height: ${rowHeight.toFixed(2)}`, 'ImageRow.trySplit')
+    logger.addLog(`Page bounds - start: ${pageStartY.toFixed(2)}, bottom: ${pageBottomY.toFixed(2)}, total space: ${(pageBottomY - pageStartY).toFixed(2)}`, 'ImageRow.trySplit')
+    logger.addLog(`Space analysis - before row: ${spaceBeforeRow.toFixed(2)}px, after row: ${spaceRemaining.toFixed(2)}px, overflow: ${overflow.toFixed(2)}px`, 'ImageRow.trySplit')
+    logger.addLog(`Does ImageRow fit? ${rowBottom.toFixed(2)} <= ${pageBottomY.toFixed(2)} ? ${rowBottom <= pageBottomY}`, 'ImageRow.trySplit')
+    logger.addLog(`ImageRow has ${props.items.length} images, ${componentRefs.value.length} refs, caption: ${props.caption ? 'yes' : 'no'}`, 'ImageRow.trySplit')
+    logger.addLog(`Parent context: tag=${parentTag}, class="${parentClass}", position in parent: ${imageRowIndex}/${siblings.length}`, 'ImageRow.trySplit')
+    if (siblingsInfo.length > 0) {
+      logger.addLog(`Siblings before ImageRow: ${siblingsInfo.join(', ')}`, 'ImageRow.trySplit')
+    }
+    logger.addLog(`Component index: ${compIndex !== undefined ? compIndex : 'not provided'}, exceeds: ${rowBottom > pageBottomY}`, 'ImageRow.trySplit')
+  }
+
+  // Measure sub-components for detailed analysis
+  const imagesContainer = imageRowRef.value.querySelector('.images-container')
+  const captionElement = imageRowRef.value.querySelector('.shared-caption')
+  
+  if (logger && imagesContainer) {
+    const containerBottom = docContext.measureVerticalPosEnd(imagesContainer)
+    const containerTop = docContext.measureVerticalPos(imagesContainer)
+    const containerHeight = containerBottom - containerTop
+    logger.addLog(`Images container - top: ${containerTop.toFixed(2)}, bottom: ${containerBottom.toFixed(2)}, height: ${containerHeight.toFixed(2)}`, 'ImageRow.trySplit')
+    
+    if (captionElement) {
+      const captionBottom = docContext.measureVerticalPosEnd(captionElement)
+      const captionTop = docContext.measureVerticalPos(captionElement)
+      const captionHeight = captionBottom - captionTop
+      const captionMargin = captionTop - containerBottom
+      logger.addLog(`Caption - top: ${captionTop.toFixed(2)}, bottom: ${captionBottom.toFixed(2)}, height: ${captionHeight.toFixed(2)}, margin from images: ${captionMargin.toFixed(2)}`, 'ImageRow.trySplit')
+    }
   }
 
   // Unified loop: check items one by one for split opportunities
@@ -281,4 +331,3 @@ defineExpose({
   line-height: 1.4;
 }
 </style>
-

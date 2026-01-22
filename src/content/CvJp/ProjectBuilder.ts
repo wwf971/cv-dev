@@ -170,11 +170,10 @@ const buildTitleTableRows = (projectData: ProjectData) => {
               }
             }
           ],
-          cssClass: 'cv-jp-cell title-cell',
-          fillToPageBottom: false
+          cssClass: 'cv-jp-cell title-cell'
         }
       ],
-      cssClass: 'title-row'
+      cssClass: 'title-row',
     }
   })
 
@@ -305,11 +304,10 @@ const buildContentTableRows = (projectData: ProjectData) => {
                 }
               }))
             ],
-            cssClass: 'cv-jp-cell tech-cell',
-            fillToPageBottom: false
+            cssClass: 'cv-jp-cell tech-cell'
           }
         ],
-        cssClass: 'tech-row'
+        cssClass: 'tech-row',
       }
     })
   }
@@ -348,11 +346,10 @@ const buildContentTableRows = (projectData: ProjectData) => {
                 }
               }
             ],
-            cssClass: 'cv-jp-cell content-cell',
-            fillToPageBottom: true
+            cssClass: 'cv-jp-cell content-cell'
           }
         ],
-        cssClass: 'content-row'
+        cssClass: 'content-row',
       }
     })
   }
@@ -393,11 +390,10 @@ const buildContentTableRows = (projectData: ProjectData) => {
                 }
               }
             ],
-            cssClass: 'cv-jp-cell learning-cell',
-            fillToPageBottom: false
+            cssClass: 'cv-jp-cell learning-cell'
           }
         ],
-        cssClass: 'learning-row'
+        cssClass: 'learning-row',
       }
     })
   }

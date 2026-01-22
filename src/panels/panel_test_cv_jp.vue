@@ -20,15 +20,17 @@ const customData = {
     birthMonth: '{{remote:birth/month}}',
     birthDay: '{{remote:birth/day}}',
     gender: 'male',
-    // address: '{{remote:address/jp/latest}}',
+    address: '{{remote:address/jp/latest}}',
     // postalCode: '{{remote:address/jp/latest/post-code}}',
-    address: '{{mongo:main/cv?name=linkedin-202601&path=address}}',
-    postalCode: '{{mongo:main/cv?name=linkedin-202601&path=postCode}}',
+    // address: '{{mongo:main/cv?name=202601-linkedin&path=address}}',
+    postalCode: '{{mongo:main/cv?name=202601-linkedin&path=postCode}}',
     email: '{{remote:email/latest}}',
     phone: '{{remote:phone/jp}}',
     photoData: '{{remote:photo/latest}}',
-    visaType: '{{mongo:main/cv?name=linkedin-202601&path=visaType}}',
-    nationality: '{{mongo:main/cv?name=linkedin-202601&path=nationality}}',
+    visaType: '{{mongo:main/cv?name=202601-linkedin&path=visaType}}',
+    nationality: '{{mongo:main/cv?name=202601-linkedin&path=nationality}}',
+    homePage: '{{mongo:main/cv?name=202601-linkedin&path=homepage}}',
+    githubPage: '{{mongo:main/cv?name=202601-linkedin&path=githubPage}}',
   },
   eduAndWork: {
     // eduEntries: [
@@ -75,11 +77,11 @@ const exampleEduAndWorkData = {
 // Example motivation and interest data
 const exampleMotivationData = {
   motivation: 'システム開発に興味を持ち、プログラミングを独学で学び始めました。大学では情報理工学を専攻し、アルゴリズムやデータ構造、ソフトウェア工学について学びました。卒業研究では、機械学習を活用した画像認識システムを開発し、優れた成果を上げることができました。',
-  interest: '登山・スキー・アウトドアスポーツ<br>音楽鑑賞'
+  interest: ['登山・スキー・アウトドアスポーツ', '音楽鑑賞']
 }
 
 
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, provide } from 'vue'
 import PaginationWrapper from '../pagination/Pagination.vue'
 import PanelTest from './panel_test.vue'
 import Doc from '@/pagination/component_core/Doc.vue'
@@ -110,9 +112,11 @@ const useExampleData = ref(false)
 const isFetching = ref(false)
 const fetchError = ref('')
 
-// Single logger that writes to logs array
-const logger = createLogger(logs.value, 'panel_test_cv_jp')
+// Single logger that writes to logs array (pass ref, not value)
+const logger = createLogger(logs, 'panel_test_cv_jp')
 
+// Provide logger to all child components so they can log before pagination runs
+provide('paginationLogger', logger)
 
 // Reactive custom data (will be populated with fetched values - this is a working copy)
 const customDataReplaced = ref(customData)

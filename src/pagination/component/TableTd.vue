@@ -98,8 +98,10 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
     }
   }
 
+  const tdTop = docContext.measureVerticalPos(tdRef.value)
   const tdBottom = docContext.measureVerticalPosEnd(tdRef.value)
   const pageBottomY = pageContext.pageBottomY
+  const pageStartY = pageContext.pageStartY
   
   // If entire td fits, no split needed
   if (tdBottom <= pageBottomY) {
@@ -111,6 +113,20 @@ const trySplit = (pageContext: any, docContext: any, compIndex?: number) => {
 
   if (logger) {
     logger.addLog(`Td needs split. Items: ${props.items.length}`, 'Td.trySplit')
+    logger.addLog(`Td position: top=${tdTop.toFixed(2)}, bottom=${tdBottom.toFixed(2)}, height=${(tdBottom-tdTop).toFixed(2)}, page: ${pageStartY.toFixed(2)} to ${pageBottomY.toFixed(2)}`, 'Td.trySplit')
+    logger.addLog(`Td offset from page start: ${(tdTop - pageStartY).toFixed(2)}px`, 'Td.trySplit')
+    
+    // Check what's actually rendered in the TD
+    if (tdRef.value) {
+      const children = Array.from(tdRef.value.children)
+      const childInfo = children.map((child, idx) => {
+        const childTop = docContext.measureVerticalPos(child)
+        const childBottom = docContext.measureVerticalPosEnd(child)
+        const childHeight = childBottom - childTop
+        return `[${idx}] ${child.tagName}.${child.className}: top=${childTop.toFixed(2)}, height=${childHeight.toFixed(2)}px`
+      })
+      logger.addLog(`Td has ${children.length} direct children: ${JSON.stringify(childInfo).slice(0, 300)}`, 'Td.trySplit')
+    }
   }
 
   // Try to split the content items

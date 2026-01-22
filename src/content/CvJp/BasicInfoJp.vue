@@ -26,7 +26,7 @@
 					</tr>
 				  </tbody>
 				</table>
-				<table class="form-table no-top-border">
+				<table class="form-table no-top-border table-no-bottom-border">
 				  <tbody>
 					<tr>
 						<td class="form-cell key-cell" style="width: 115px;">生年月日</td>
@@ -57,17 +57,17 @@
 							</div>
 						</td>
 					</tr>
-					<tr>
-						<td class="form-cell key-cell" style="width: 115px;">メール<br>アドレス</td>
-						<td class="form-cell value-cell align-left">{{ displayData.email }}</td>
-						<td class="form-cell key-cell" style="width: 115px;">電話番号</td>
-						<td class="form-cell value-cell align-left">{{ displayData.phone }}</td>
+					<tr :class="{ 'last-main-row': !shouldShowNationalityRow }">
+						<td class="form-cell key-cell" :class="{ 'td-no-bottom-border': !shouldShowNationalityRow && shouldShowPageLinksRow }" style="width: 115px;">メール<br>アドレス</td>
+						<td class="form-cell value-cell align-left" :class="{ 'td-no-bottom-border': !shouldShowNationalityRow && shouldShowPageLinksRow }">{{ displayData.email }}</td>
+						<td class="form-cell key-cell" :class="{ 'td-no-bottom-border': !shouldShowNationalityRow && shouldShowPageLinksRow }" style="width: 115px;">電話番号</td>
+						<td class="form-cell value-cell align-left" :class="{ 'td-no-bottom-border': !shouldShowNationalityRow && shouldShowPageLinksRow }">{{ displayData.phone }}</td>
 					</tr>
 					<tr v-if="shouldShowNationalityRow">
-						<td class="form-cell key-cell" style="width: 115px;">在留資格</td>
-						<td class="form-cell value-cell align-left">{{ displayData.visaType }}</td>
-						<td class="form-cell key-cell" style="width: 115px;">本籍</td>
-						<td class="form-cell value-cell align-left">{{ displayData.nationality }}</td>
+						<td class="form-cell key-cell" :class="{ 'td-no-bottom-border': shouldShowPageLinksRow }" style="width: 115px;">在留資格</td>
+						<td class="form-cell value-cell align-left" :class="{ 'td-no-bottom-border': shouldShowPageLinksRow }">{{ displayData.visaType }}</td>
+						<td class="form-cell key-cell" :class="{ 'td-no-bottom-border': shouldShowPageLinksRow }" style="width: 115px;">本籍</td>
+						<td class="form-cell value-cell align-left" :class="{ 'td-no-bottom-border': shouldShowPageLinksRow }">{{ displayData.nationality }}</td>
 					</tr>
 				  </tbody>
 				</table>
@@ -92,12 +92,22 @@
 				</div>
 			</div>
 		</div>
+		<table v-if="shouldShowPageLinksRow" class="form-table page-links-table">
+		  <tbody>
+			<tr>
+				<td class="form-cell key-cell" style="width: 115px;">GitHub ページ</td>
+				<td ref="githubCellRef" class="form-cell value-cell align-left page-links-github-value">{{ displayData.githubPage }}</td>
+				<td class="form-cell key-cell" style="width: 115px;">ホームページ</td>
+				<td class="form-cell value-cell align-left">{{ displayData.homePage }}</td>
+			</tr>
+		  </tbody>
+		</table>
 </div>
 </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject } from 'vue'
+import { ref, computed, inject, watch, nextTick } from 'vue'
 
 const props = defineProps({
   currentDate: String,
@@ -118,10 +128,13 @@ const props = defineProps({
   phone: String,
   photoData: String,
   nationality: String,
-  visaType: String
+  visaType: String,
+  homePage: String,
+  githubPage: String
 })
 
 const basicInfoRef = ref<HTMLElement | null>(null)
+const githubCellRef = ref<HTMLElement | null>(null)
 const logger = inject('paginationLogger', null) as any
 
 // Example data defined internally
@@ -144,7 +157,9 @@ const exampleData = {
   phone: '090-1234-5678',
   photoData: null,
   nationality: null,
-  visaType: null
+  visaType: null,
+  homePage: null,
+  githubPage: null
 }
 
 // Use props if provided, otherwise use example data
@@ -172,6 +187,65 @@ const displayData = computed(() => {
 // Show nationality row only if both nationality and visaType are provided
 const shouldShowNationalityRow = computed(() => {
   return displayData.value.nationality && displayData.value.visaType
+})
+
+// Show page links row only if both homePage and githubPage are provided and not empty
+const shouldShowPageLinksRow = computed(() => {
+  return displayData.value.homePage && displayData.value.githubPage
+})
+
+// Function to sync GitHub cell width with email cell
+const syncGithubCellWidth = () => {
+  nextTick(() => {
+    setTimeout(() => {
+      if (basicInfoRef.value && githubCellRef.value) {
+        // Find the email/phone row (the row with email and phone cells side by side)
+        // This row has 4 cells: key-cell, value-cell, key-cell, value-cell
+        const allRows = basicInfoRef.value.querySelectorAll('.form-table:not(.page-links-table) tr')
+        let emailCell: HTMLElement | null = null
+        
+        for (const row of allRows) {
+          const cells = row.querySelectorAll('td')
+          // Look for a row with exactly 4 cells where 2nd and 4th are value cells
+          if (cells.length === 4) {
+            const secondCell = cells[1]
+            const fourthCell = cells[3]
+            if (secondCell.classList.contains('value-cell') && fourthCell.classList.contains('value-cell')) {
+              emailCell = secondCell as HTMLElement
+              break
+            }
+          }
+        }
+        
+        if (emailCell) {
+          const width = emailCell.getBoundingClientRect().width
+          githubCellRef.value.style.width = `${width}px`
+          githubCellRef.value.style.minWidth = `${width}px`
+          githubCellRef.value.style.maxWidth = `${width}px`
+          
+          if (logger) logger.addLog(`GitHub cell width synced: ${width.toFixed(1)}px`, 'BasicInfoJp.syncWidth')
+        } else {
+          if (logger) logger.addLog(`Email cell not found`, 'BasicInfoJp.syncWidth', 1)
+        }
+      } else {
+        if (logger) logger.addLog(`Refs not available`, 'BasicInfoJp.syncWidth', 1)
+      }
+    }, 100)
+  })
+}
+
+// Watch for when page links row should be shown and sync width
+watch(shouldShowPageLinksRow, (newVal) => {
+  if (newVal) {
+    syncGithubCellWidth()
+  }
+}, { immediate: true })
+
+// Also watch basicInfoRef to sync when element is mounted
+watch(basicInfoRef, (newVal) => {
+  if (newVal && shouldShowPageLinksRow.value) {
+    syncGithubCellWidth()
+  }
 })
 
 // trySplit implementation - returns code 2 (not splittable)
@@ -364,5 +438,9 @@ transition: all 0.2s ease;
 
 .gender-option.selected {
 border-color: #000;
+}
+
+.page-links-table {
+width: 100%;
 }
 </style>

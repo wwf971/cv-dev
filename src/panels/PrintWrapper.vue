@@ -59,13 +59,7 @@
 import { computed } from 'vue'
 import Doc from '@/pagination/component_core/Doc.vue'
 import Page from '@/pagination/component_core/Page.vue'
-import Text from '@/pagination/component/Text.vue'
-import TextList from '@/pagination/component/TextList.vue'
-import Tr from '@/pagination/component/TableTr.vue'
-import Td from '@/pagination/component/TableTd.vue'
-import Table from '@/pagination/component/Table.vue'
-import VSpace from '@/pagination/component/VSpace.vue'
-import BasicInfoJp from '@/content/CvJp/BasicInfoJp.vue'
+import { getComponent } from '@/pagination/componentMapping.js'
 
 const props = defineProps({
   pages: {
@@ -109,20 +103,6 @@ console.log('[PrintWrapper] Max page dimensions:', maxPageDimensions.value)
 props.pages.forEach((page, i) => {
   console.log(`[PrintWrapper] Page ${i}: ${page.components.length} components, height: ${page.sizes.pageHeight}`)
 })
-
-// Component mapping (same as Pagination.vue)
-const getComponent = (type) => {
-  const componentMap = {
-    'Text': Text,
-    'TextList': TextList,
-    'Tr': Tr,
-    'Td': Td,
-    'Table': Table,
-    'VSpace': VSpace,
-    'BasicInfoJp': BasicInfoJp
-  }
-  return componentMap[type] || 'div'
-}
 
 const goBack = () => {
   emit('back')

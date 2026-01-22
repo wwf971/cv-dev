@@ -80,6 +80,12 @@ const trySplit = (pageContext: any, docContext: any) => {
 
   if (logger) {
     logger.addLog(`Tr needs split. Tds: ${props.items.length}`, 'Tr.trySplit')
+    // Check TR's parent (should be a table)
+    const parentEl = trRef.value.parentElement
+    if (parentEl) {
+      const parentTop = docContext.measureVerticalPos(parentEl)
+      logger.addLog(`Tr parent (${parentEl.tagName}.${parentEl.className}): top=${parentTop.toFixed(2)}, tr offset from parent=${(trTop - parentTop).toFixed(2)}px`, 'Tr.trySplit')
+    }
   }
 
   // Try to split each Td and find which one needs splitting
@@ -144,13 +150,17 @@ const trySplit = (pageContext: any, docContext: any) => {
     
     if (result.code === 1) {
       // This Td was split
+      // Only apply alignBottom if fillToPageBottom is enabled (default true)
+      // When fillToPageBottom=false, content should flow naturally without forced alignment
+      const shouldAlignBottom = props.fillToPageBottom !== false
+      
       if (logger) {
-        logger.addLog(`Creating split Td ${i} with alignBottom=true`, 'Tr.trySplit')
+        logger.addLog(`Creating split Td ${i} with alignBottom=${shouldAlignBottom} (fillToPageBottom=${props.fillToPageBottom})`, 'Tr.trySplit')
       }
       firstTrTds.push({
         items: result.data[0].data.items,
         widthRatio: props.items[i].widthRatio,
-        alignBottom: true, // Align to bottom when this Td is split
+        alignBottom: shouldAlignBottom,
         colspan: props.items[i].colspan,
         cssClass: props.items[i].cssClass,
         cssStyle: props.items[i].cssStyle
@@ -194,6 +204,10 @@ const trySplit = (pageContext: any, docContext: any) => {
   // Calculate height for first part to fill to page bottom when row is split
   let firstPartStyle = props.cssStyle
 
+  if (logger) {
+    logger.addLog(`Tr split - fillToPageBottom prop value: ${props.fillToPageBottom}, will apply height: ${props.fillToPageBottom !== false}`, 'Tr.trySplit')
+  }
+
   // Automatically fill to page bottom when a row is split (unless explicitly disabled)
   if (firstTrTds.length > 0 && props.fillToPageBottom !== false) {
     const remainingHeight = pageBottomY - trTop
@@ -231,7 +245,10 @@ const trySplit = (pageContext: any, docContext: any) => {
         data: {
           items: secondTrTds,
           cssClass: props.cssClass,
-          cssStyle: props.cssStyle,
+          // Don't pass height/minHeight to second part - it should size naturally
+          cssStyle: props.cssStyle ? Object.fromEntries(
+            Object.entries(props.cssStyle).filter(([key]) => key !== 'height' && key !== 'minHeight')
+          ) : undefined,
           fillToPageBottom: props.fillToPageBottom
         }
       }

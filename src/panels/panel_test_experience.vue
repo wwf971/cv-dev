@@ -103,7 +103,7 @@ const paginationRef = ref(null)
 const logs = ref([])
 
 // Single logger that writes to logs array
-const logger = createLogger(logs.value, 'panel_test_experience')
+const logger = createLogger(logs, 'panel_test_experience')
 
 // Available example projects
 const exampleProjects = [exampleProject1, exampleProject2, exampleProject3]
@@ -292,11 +292,11 @@ const buildProjectComponentsWithImages = (project) => {
                 }
               }))
             ],
-            cssClass: 'cv-jp-cell tech-cell',
-            fillToPageBottom: false
+            cssClass: 'cv-jp-cell tech-cell'
           }
         ],
-        cssClass: 'tech-row'
+        cssClass: 'tech-row',
+        // fillToPageBottom: false
       }
     })
   }
@@ -317,10 +317,10 @@ const buildProjectComponentsWithImages = (project) => {
             },
             ...cellItems
           ],
-          cssClass: 'cv-jp-cell content-cell',
-          fillToPageBottom: true
+          cssClass: 'cv-jp-cell content-cell'
         }],
-        cssClass: 'content-row'
+        cssClass: 'content-row',
+        // fillToPageBottom: false
       }
     })
   }
