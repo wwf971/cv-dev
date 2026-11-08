@@ -1,0 +1,31 @@
+# The types of the package cv (design: main/doc_page_impl_type.md#declaring-a-type). Every doc page
+# of a workspace importing the package has them, so its objects need no declaration of their own.
+# The data of both types is split into the same partitions (doc/README.md#partitions), and its paths
+# start with their partition, /{partition}/info/..., /{partition}/template/..., so no kind fixes a prefix
+# of its paths.
+typeList:
+  # a person's information (doc/cv-query.md)
+  - id: cv.profile
+    label: Profile
+    description: personal information, read through query paths whose words may come in any order
+    icon: user
+    assetKindList:
+      - { id: info, label: Information, langList: [yaml] }
+    partitionList: &partitionList
+      - { id: example, label: Example, description: the made-up person of the demonstration }
+      - { id: real, label: My data, description: your own data, isGitIgnored: true }
+      - { id: playground, label: Playground, description: anything tried out, isGitIgnored: true }
+    modeList:
+      - { id: info, label: Information, comp: CvProfileInfo, category: edit, isDefault: true, description: every value with its query path }
+  # templates and CVs of the Japanese form (doc/cv-jp.md)
+  - id: cv.jp
+    label: Japanese-style CV
+    description: templates and instances of the Japanese-style CV, reading a profile
+    icon: file-text
+    assetKindList:
+      - { id: template, label: Template, langList: [yaml], groupPath: template }
+      - { id: instance, label: CV, langList: [yaml], groupPath: instance }
+    partitionList: *partitionList
+    modeList:
+      - { id: sheet, label: Sheet, comp: CvJpSheet, isDefault: true, description: "one CV, edited in place" }
+      - { id: list, label: CVs, comp: CvJpList, category: edit, description: "the CVs and templates, a new CV" }

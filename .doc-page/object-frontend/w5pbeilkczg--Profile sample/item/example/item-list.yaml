@@ -1,0 +1,68 @@
+# the assets of the frontend object lying in this folder and below, down to a folder with an
+# item-list.yaml of its own: written by the page (doc_page_impl_obj_frontend.md#the-item-lists)
+assetList:
+  - key: info-1
+    kind: info
+    itemId: w5pbein84kd
+    pathList:
+      - /example/info/name
+  - key: info-2
+    kind: info
+    itemId: w5pbeio2fba
+    pathList:
+      - /example/info/birth
+  - key: info-3
+    kind: info
+    itemId: w5pbeiovhza
+    pathList:
+      - /example/info/gender
+  - key: info-4
+    kind: info
+    itemId: w5pbeiqfjxz
+    pathList:
+      - /example/info/address
+  - key: info-5
+    kind: info
+    itemId: w5pbeireyly
+    pathList:
+      - /example/info/email
+  - key: info-6
+    kind: info
+    itemId: w5pbeisxhuw
+    pathList:
+      - /example/info/phone
+  - key: info-7
+    kind: info
+    itemId: w5pbeiwvqht
+    pathList:
+      - /example/info/edu/bachelor
+  - key: info-8
+    kind: info
+    itemId: w5pbeixqw7j
+    pathList:
+      - /example/info/edu/master
+  - key: info-9
+    kind: info
+    itemId: w5pbeiya2jg
+    pathList:
+      - /example/info/work/sample-robotics
+  - key: info-10
+    kind: info
+    itemId: w5pbeizu4jb
+    pathList:
+      - /example/info/work/sample-systems
+  - key: info-11
+    kind: info
+    itemId: w5pbej0yqu8
+    pathList:
+      - /example/info/license/toefl
+  - key: info-12
+    kind: info
+    itemId: w5pbej5pyoj
+    pathList:
+      - /example/info/license/jlpt
+  - key: info-13
+    kind: info
+    itemId: w5pbej7zhnk
+    pathList:
+      - /example/info/motivation

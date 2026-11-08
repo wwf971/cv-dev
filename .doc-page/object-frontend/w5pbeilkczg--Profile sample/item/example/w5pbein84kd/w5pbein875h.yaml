@@ -1,0 +1,12 @@
+# the members of a group {…} come in any order: name/jp/last and name/last/jp read the same.
+# "/" ends a segment that something follows: {jp/last/} has keys below it, {en, last} a value
+"{jp/last/}":
+  kanji: 山田
+  hiragana: やまだ
+  romaji: Yamada
+"{jp/first/}":
+  kanji: 太郎
+  hiragana: たろう
+  romaji: Taro
+"{en, last}": Yamada
+"{en, first}": Taro

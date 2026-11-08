@@ -1,0 +1,46 @@
+itemId: w5pbej9h4eq
+name: ""
+lang: yaml
+contentType: text/yaml
+fileExt: yaml
+owner:
+  ref: frontend:w5pbej9gcnn
+  role: entry
+versionIdHead: w5pbej9gnfj
+isDeleted: false
+isLocked: false
+timeCreated: 20261108_02170706+09
+versionList:
+  - versionId: w5pbej9gnfj
+    versionIdPrevList: []
+    time: 20261108_02170706+09
+    note: the entry of the frontend object CV sample of the package
+    size: 151
+    hash: 4e021b155eef37833df36e13df0a50bc6cf8b0b4
+    isLocked: false
+    dependencyList: []
+eventList:
+  - eventType: create
+    time: 20261108_02170706+09
+    versionId: w5pbej9gnfj
+  - eventType: updateInPlace
+    time: 20261108_02170709+09
+    versionId: w5pbej9gnfj
+  - eventType: updateInPlace
+    time: 20261108_02170713+09
+    versionId: w5pbej9gnfj
+  - eventType: updateInPlace
+    time: 20261108_02170715+09
+    versionId: w5pbej9gnfj
+  - eventType: updateInPlace
+    time: 20261108_02170768+09
+    versionId: w5pbej9gnfj
+  - eventType: updateInPlace
+    time: 20261108_07093399+09
+    versionId: w5pbej9gnfj
+  - eventType: updateInPlace
+    time: 20261108_07093400+09
+    versionId: w5pbej9gnfj
+  - eventType: updateInPlace
+    time: 20261108_07093402+09
+    versionId: w5pbej9gnfj

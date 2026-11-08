@@ -1,0 +1,21 @@
+# the assets of the frontend object lying in this folder and below, down to a folder with an
+# item-list.yaml of its own: written by the page (doc_page_impl_obj_frontend.md#the-item-lists)
+assetList:
+  - key: template-1
+    kind: template
+    itemId: w5pbejan114
+    name: 履歴書
+    pathList:
+      - /example/template/jp-standard
+  - key: instance-1
+    kind: instance
+    itemId: w5pbejc81ze
+    name: サンプルの履歴書
+    pathList:
+      - /example/instance/sample
+  - key: instance-2
+    kind: instance
+    itemId: w5pbejcv2ma
+    name: ローマ字の氏名
+    pathList:
+      - /example/instance/name-in-romaji

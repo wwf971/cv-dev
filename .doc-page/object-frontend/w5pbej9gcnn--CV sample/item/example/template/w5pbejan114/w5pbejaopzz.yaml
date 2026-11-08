@@ -1,0 +1,27 @@
+name: 履歴書
+sectionList:
+  - id: basic
+    type: basic
+  - id: history
+    type: history
+    title: 学 歴・職 歴
+    groupList:
+      - id: edu
+        title: 学 歴
+        list: edu/jp
+      - id: work
+        title: 職 歴
+        list: work/jp
+        isNote: true
+  - id: license
+    type: history
+    title: 免 許・資 格
+    isNote: true
+    groupList:
+      - id: license
+        list: license/jp
+        isNote: true
+  - id: motivation
+    type: text
+    title: 志 望 の 動 機
+    text: "{{motivation/jp}}"

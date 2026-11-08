@@ -1,0 +1,10 @@
+name: ローマ字の氏名
+template: /example/template/jp-standard
+profile: frontend:w5pbeilkczg
+asOf: 2026-11-08
+valueByCell:
+  name-last: "{{name/jp/last/romaji/uppercase-all}}"
+  name-first: "{{name/jp/first/romaji/uppercase-all}}"
+  name-furigana-last: "{{name/last/jp/katakana}}"
+  name-furigana-first: "{{name/first/jp/katakana}}"
+  motivation: この履歴書のセルにだけ直接書いた文章です。

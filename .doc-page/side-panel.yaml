@@ -1,0 +1,12 @@
+# The side panel of the package's doc page: the demonstration first, its design documents below.
+sidePanelById:
+  main:
+    tree:
+      - id: cv
+        text: cv
+        doc: ~cv/doc/README.md
+        defaultOpen: true
+        children:
+          - doc: ~cv/doc/cv-demo.md
+          - doc: ~cv/doc/cv-query.md
+          - doc: ~cv/doc/cv-jp.md

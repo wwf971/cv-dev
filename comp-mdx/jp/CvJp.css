@@ -1,0 +1,769 @@
+/* The Japanese-style CV (doc/cv-jp.md). The paper is white with black rules in every theme of the
+   page, as it is printed; what floats over it for editing follows the page. The sizes are those
+   of the common form, in px of an A4 sheet 794px wide. */
+.doc-cv-jp {
+	position: relative;
+	margin: 1rem 0;
+}
+
+/* as wide as the paper, so the Edit button at its end stands over the right edge of the paper */
+.doc-cv-jp-bar {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	box-sizing: border-box;
+	max-width: 794px;
+	min-height: 2rem;
+	margin-bottom: 0.4rem;
+}
+
+.doc-cv-jp-select {
+	max-width: 20rem;
+	padding: 0.2rem 0.4rem;
+	font-size: 0.8rem;
+	color: var(--color-fd-foreground);
+	background: var(--color-fd-background);
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.375rem;
+}
+
+.doc-cv-jp-loading {
+	min-height: 40rem;
+}
+
+.doc-cv-jp-problem {
+	margin: 0 0 0.4rem;
+}
+
+.doc-cv-jp-scroll {
+	overflow-x: auto;
+}
+
+.doc-cv-jp-paper {
+	box-sizing: border-box;
+	width: 794px;
+	min-height: 400px;
+	padding: 36px 40px 40px;
+	color: #000;
+	background: #fff;
+	border: 1px solid var(--color-fd-border);
+	font-family: Arial, 'Segoe UI', 'MS Gothic', 'Yu Gothic', 'Hiragino Sans', sans-serif;
+	font-size: 14px;
+	line-height: 1.35;
+}
+
+.doc-cv-jp-table {
+	width: 100%;
+	table-layout: fixed;
+	border-collapse: collapse;
+	border-spacing: 0;
+	margin: 0;
+}
+
+.doc-cv-jp-table td {
+	box-sizing: border-box;
+	border: 1px solid #000;
+	vertical-align: middle;
+	padding: 2px 6px;
+	color: #000;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+/* the top: the title, and the date at the right of the form */
+.doc-cv-jp-head {
+	position: relative;
+	display: flex;
+	align-items: flex-end;
+	height: 42px;
+	width: calc(100% - 160px);
+}
+
+.doc-cv-jp-title {
+	font-size: 28px;
+	font-weight: 500;
+	margin-left: 3px;
+	margin-bottom: 2px;
+	word-spacing: 15px;
+	line-height: 1.2;
+}
+
+.doc-cv-jp-date {
+	margin-left: auto;
+	min-width: 6em;
+	padding-right: 5px;
+	margin-bottom: 2px;
+	text-align: right;
+}
+
+.doc-cv-jp-basic {
+	margin-bottom: 20px;
+}
+
+.doc-cv-jp-basic-body {
+	display: flex;
+	gap: 10px;
+}
+
+.doc-cv-jp-form {
+	flex: 1;
+	min-width: 0;
+}
+
+.doc-cv-jp-key {
+	background: #f8f8f8;
+	font-weight: 700;
+	text-align: center;
+	white-space: normal !important;
+}
+
+.doc-cv-jp-key-spaced {
+	word-spacing: 1.2em;
+}
+
+.doc-cv-jp-key-width {
+	width: 115px;
+}
+
+.doc-cv-jp-col-end {
+	width: 118px;
+}
+
+/* the name: its parts in columns of their own width, no rule between them */
+.doc-cv-jp-table-name {
+	table-layout: auto;
+}
+
+.doc-cv-jp-table-name td.doc-cv-jp-name-part {
+	width: 1px;
+	padding: 2px 1.2em 2px 10px;
+	white-space: nowrap;
+	border-left: none;
+	border-right: none;
+}
+
+.doc-cv-jp-table-name td.doc-cv-jp-key {
+	border-right: 1px solid #000;
+}
+
+.doc-cv-jp-table-name td.doc-cv-jp-name-rest {
+	border-left: none;
+}
+
+.doc-cv-jp-row-furigana td {
+	height: 26px;
+}
+
+.doc-cv-jp-row-name td {
+	height: 40px;
+}
+
+.doc-cv-jp-table-name td.doc-cv-jp-furigana {
+	font-size: 12px;
+	min-width: 3em;
+}
+
+.doc-cv-jp-table-name td.doc-cv-jp-name {
+	font-size: 16px;
+	font-weight: 500;
+	min-width: 3em;
+}
+
+.doc-cv-jp-table-form td {
+	height: 40px;
+	border-top: none;
+}
+
+.doc-cv-jp-table-form td.doc-cv-jp-value {
+	padding-left: 10px;
+}
+
+.doc-cv-jp-table-form td.doc-cv-jp-value-center {
+	padding-left: 4px;
+	text-align: center;
+}
+
+.doc-cv-jp-table-link {
+	margin-top: -1px;
+}
+
+.doc-cv-jp-table-link td {
+	border-top: 1px solid #000;
+}
+
+.doc-cv-jp-birth {
+	display: flex;
+	align-items: flex-end;
+	gap: 0.6em;
+}
+
+.doc-cv-jp-birth-year {
+	display: inline-flex;
+	flex-direction: column;
+}
+
+.doc-cv-jp-era {
+	display: block;
+	min-height: 11px;
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 1;
+}
+
+.doc-cv-jp-age {
+	margin-left: auto;
+}
+
+/* a piece inside a line keeps a width to click on, in both modes */
+.doc-cv-jp-birth .doc-cv-jp-cell {
+	display: inline-block;
+	min-width: 0.6em;
+}
+
+/* the form is as tall as the photo beside it */
+.doc-cv-jp-row-contact td {
+	height: 54px;
+}
+
+.doc-cv-jp-gender {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.doc-cv-jp-gender-option {
+	display: inline-block;
+	padding: 1px 6px;
+	border: 1px solid transparent;
+	border-radius: 50%;
+}
+
+.doc-cv-jp-gender-option[data-selected] {
+	border-color: #000;
+}
+
+.doc-cv-jp-postal {
+	display: block;
+	min-height: 15px;
+	font-size: 12px;
+}
+
+.doc-cv-jp-address {
+	display: block;
+	min-height: 18px;
+}
+
+.doc-cv-jp-photo {
+	flex: none;
+	box-sizing: border-box;
+	width: 150px;
+	height: 200px;
+	border: 1px solid #000;
+	overflow: hidden;
+}
+
+.doc-cv-jp-photo-image {
+	display: block;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	object-fit: cover;
+	object-position: center;
+}
+
+.doc-cv-jp-photo-placeholder {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	padding: 5px;
+	border: 1px dashed #666;
+	color: #666;
+}
+
+.doc-cv-jp-photo-title {
+	margin-bottom: 10px;
+	font-size: 12px;
+	text-align: center;
+}
+
+.doc-cv-jp-photo-note {
+	font-size: 8px;
+	line-height: 1.4;
+}
+
+/* the history: 年, 月, the text, and sometimes 備考 */
+.doc-cv-jp-table-history,
+.doc-cv-jp-table-text {
+	margin-bottom: 18px;
+}
+
+.doc-cv-jp-col-time {
+	width: 8%;
+}
+
+.doc-cv-jp-col-note {
+	width: 18%;
+}
+
+.doc-cv-jp-row-head td,
+.doc-cv-jp-row-group td {
+	position: relative;
+	height: 35px;
+	padding: 4px;
+	background: #f8f8f8;
+	font-weight: 700;
+	text-align: center;
+	word-spacing: 0.5em;
+}
+
+.doc-cv-jp-row td {
+	height: 35px;
+	padding: 6px;
+}
+
+.doc-cv-jp-row td.doc-cv-jp-time {
+	padding: 4px;
+	text-align: center;
+}
+
+.doc-cv-jp-row td.doc-cv-jp-note {
+	text-align: center;
+}
+
+.doc-cv-jp-paragraph {
+	display: table-cell;
+	min-height: 120px;
+	height: 120px;
+	padding: 6px 10px !important;
+	vertical-align: top !important;
+	font-size: 15px;
+	line-height: 1.7;
+	text-indent: 2em;
+}
+
+/* in-place editing: an outline over what can be clicked; nothing takes room */
+.doc-cv-jp-paper [data-editable] {
+	cursor: pointer;
+}
+
+.doc-cv-jp-paper .doc-cv-jp-cell[data-editable]:hover,
+.doc-cv-jp-paper .doc-cv-jp-cell[data-open],
+.doc-cv-jp-paper .doc-cv-jp-row[data-editable]:hover td,
+.doc-cv-jp-paper .doc-cv-jp-row[data-open] td {
+	background: #e8f1ff;
+}
+
+.doc-cv-jp-paper .doc-cv-jp-cell[data-editable] {
+	outline: 1px dashed #9bb7e0;
+	outline-offset: -2px;
+}
+
+.doc-cv-jp-paper .doc-cv-jp-cell[data-missing] {
+	outline-color: #d6453d;
+	background: #fff3f2;
+}
+
+.doc-cv-jp-row-add {
+	position: absolute;
+	top: 50%;
+	right: 4px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	transform: translateY(-50%);
+	color: #1f4f96;
+	background: #fff;
+	border: 1px solid #9bb7e0;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+/* a cell typed in place: the surface has the type of the cell and the width the cell had when it
+   opened, so nothing moves; only a line break makes it taller. A piece inside a line (a year, a
+   month) keeps its box, and the surface floats over it, growing to the right over its neighbors */
+.doc-cv-jp-paper .doc-cv-jp-cell[data-open],
+.doc-cv-jp-paper .doc-cv-jp-row[data-open] td {
+	background: #e8f1ff;
+	outline: 1px solid #1f4f96;
+	outline-offset: -2px;
+	cursor: text;
+}
+
+.doc-cv-jp-surface-box {
+	box-sizing: border-box;
+	display: block;
+	max-width: 100%;
+}
+
+.doc-cv-jp-paper .doc-edit-surface {
+	min-height: 1lh;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	caret-color: #1f4f96;
+}
+
+.doc-cv-jp-paper .doc-cv-jp-cell[data-float] {
+	position: relative;
+	outline: none;
+	background: none;
+}
+
+.doc-cv-jp-cell-hold {
+	visibility: hidden;
+}
+
+.doc-cv-jp-surface-float {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 5;
+	width: max-content;
+	max-width: 360px;
+	background: #e8f1ff;
+	outline: 1px solid #1f4f96;
+	box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
+}
+
+/* the order of the rows: a grip in the margin of the paper, a line where the row would go */
+.doc-cv-jp-row td[data-field="year"] {
+	position: relative;
+}
+
+.doc-cv-jp-row-grip {
+	position: absolute;
+	top: 50%;
+	left: -26px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 24px;
+	color: #5b6b85;
+	border-radius: 4px;
+	transform: translateY(-50%);
+	cursor: grab;
+}
+
+.doc-cv-jp-row-grip:hover {
+	color: #1f4f96;
+	background: #e8f1ff;
+}
+
+.doc-cv-jp-row[data-drop="before"] td {
+	box-shadow: inset 0 3px 0 #1f4f96;
+}
+
+.doc-cv-jp-row[data-drop="after"] td {
+	box-shadow: inset 0 -3px 0 #1f4f96;
+}
+
+.doc-cv-jp-row[data-dragging] td {
+	opacity: 0.45;
+}
+
+/* what floats for editing follows the page */
+.doc-cv-jp-editor {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 30;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	width: 400px;
+	max-width: 100%;
+	padding: 0.6rem;
+	font-size: 0.8rem;
+	color: var(--color-fd-foreground);
+	background: var(--color-fd-popover, var(--color-fd-background));
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.5rem;
+	box-shadow: 0 6px 24px rgb(0 0 0 / 18%);
+}
+
+.doc-cv-jp-editor-head {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.5rem;
+	font-weight: 600;
+}
+
+.doc-cv-jp-editor-hint,
+.doc-cv-jp-editor-label,
+.doc-cv-jp-editor-count {
+	font-weight: 400;
+	color: var(--color-fd-muted-foreground);
+}
+
+.doc-cv-jp-editor-text,
+.doc-cv-jp-editor-input {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 0.3rem 0.4rem;
+	font: inherit;
+	color: inherit;
+	background: var(--color-fd-background);
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.375rem;
+	resize: vertical;
+}
+
+.doc-cv-jp-editor-input-short {
+	width: 6rem;
+}
+
+.doc-cv-jp-editor-row {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+
+.doc-cv-jp-editor-row .doc-button {
+	flex: none;
+}
+
+.doc-cv-jp-editor-complete {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	max-height: 13rem;
+	overflow-y: auto;
+	padding: 0.3rem;
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.375rem;
+}
+
+.doc-cv-jp-editor-tag-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.2rem;
+	margin-bottom: 0.2rem;
+}
+
+.doc-cv-jp-editor-tag {
+	cursor: pointer;
+}
+
+.doc-cv-jp-editor-leaf {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding: 0.15rem 0.3rem;
+	color: inherit;
+	text-align: left;
+	background: transparent;
+	border: none;
+	border-radius: 0.25rem;
+	cursor: pointer;
+}
+
+.doc-cv-jp-editor-leaf:hover {
+	background: var(--color-fd-accent);
+}
+
+.doc-cv-jp-editor-leaf-path {
+	font-weight: 500;
+	color: var(--color-fd-foreground);
+}
+
+.doc-cv-jp-editor-leaf-value {
+	overflow: hidden;
+	color: var(--color-fd-muted-foreground);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.doc-cv-jp-editor-preview {
+	max-height: 6rem;
+	overflow-y: auto;
+	padding: 0.25rem 0.4rem;
+	white-space: pre-wrap;
+	background: var(--color-fd-muted);
+	border-radius: 0.25rem;
+}
+
+.doc-cv-jp-editor-preview[data-empty] {
+	color: var(--color-fd-muted-foreground);
+}
+
+.doc-cv-jp-editor-missing {
+	margin: 0;
+	color: var(--color-fd-error, #c0392b);
+}
+
+.doc-cv-jp-editor-profile {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	padding-top: 0.4rem;
+	border-top: 1px solid var(--color-fd-border);
+}
+
+.doc-cv-jp-editor-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.3rem;
+}
+
+.doc-cv-jp-editor-space {
+	flex: 1;
+}
+
+.doc-cv-jp-field {
+	position: relative;
+}
+
+.doc-cv-jp-field-list {
+	position: absolute;
+	top: calc(100% + 4px);
+	right: 0;
+	z-index: 30;
+	display: flex;
+	flex-direction: column;
+	min-width: 12rem;
+	max-height: 16rem;
+	overflow-y: auto;
+	padding: 0.25rem;
+	font-size: 0.8rem;
+	background: var(--color-fd-popover, var(--color-fd-background));
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.5rem;
+	box-shadow: 0 6px 24px rgb(0 0 0 / 18%);
+}
+
+.doc-cv-jp-field-item {
+	padding: 0.25rem 0.5rem;
+	color: inherit;
+	text-align: left;
+	background: transparent;
+	border: none;
+	border-radius: 0.25rem;
+	cursor: pointer;
+}
+
+.doc-cv-jp-field-item:hover {
+	background: var(--color-fd-accent);
+}
+
+/* the modes that are lists */
+.doc-cv-list {
+	margin: 1rem 0;
+	font-size: 0.85rem;
+}
+
+.doc-cv-list table {
+	width: 100%;
+	margin: 0.4rem 0 0.9rem;
+	border-collapse: collapse;
+}
+
+.doc-cv-list th,
+.doc-cv-list td {
+	padding: 0.25rem 0.5rem;
+	text-align: left;
+	vertical-align: top;
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+.doc-cv-list th {
+	font-weight: 500;
+	color: var(--color-fd-muted-foreground);
+}
+
+.doc-cv-list h4 {
+	margin: 0.8rem 0 0.2rem;
+	font-size: 0.85rem;
+	font-weight: 600;
+}
+
+.doc-cv-list-path {
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+.doc-cv-list-value {
+	width: 100%;
+	overflow-wrap: anywhere;
+}
+
+.doc-cv-list-muted {
+	color: var(--color-fd-muted-foreground);
+}
+
+.doc-cv-list-thumb {
+	display: block;
+	width: 48px;
+	height: 64px;
+	margin: 0;
+	object-fit: cover;
+}
+
+.doc-cv-list-form {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem;
+	margin: 0.4rem 0;
+}
+
+.doc-cv-list-form input,
+.doc-cv-list-form select {
+	flex: 1 1 10rem;
+	min-width: 8rem;
+	padding: 0.25rem 0.4rem;
+	font: inherit;
+	color: inherit;
+	background: var(--color-fd-background);
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.375rem;
+}
+
+/* a choice among a few words (a set, a template): as wide as they are, the fields take the rest */
+.doc-cv-list-form select {
+	flex: 0 0 auto;
+	min-width: 0;
+}
+
+.doc-cv-list-result {
+	min-height: 1.5em;
+	margin: 0.2rem 0 0.8rem;
+	white-space: pre-wrap;
+}
+
+.doc-cv-list-link {
+	padding: 0;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+	text-decoration: underline;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+}
+
+/* where what a form makes goes: the partition, and whether git keeps it */
+.doc-cv-list-place {
+	margin: 0 0 0.6rem;
+	font-size: 0.85em;
+}
+
+/* the text of a cell not on the sheet (an optional row not drawn), typed in the card */
+.doc-cv-jp-editor-surface .doc-edit-surface {
+	min-height: 2.2em;
+	padding: 0.3rem 0.45rem;
+	color: var(--color-fd-foreground);
+	background: var(--color-fd-background);
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.375rem;
+}

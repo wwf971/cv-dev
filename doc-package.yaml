@@ -1,0 +1,7 @@
+# The config of a package (design: main/doc_page_impl_package.md).
+# Its name and place are fixed: doc-package.yaml at the root of the package.
+name: cv
+description: >-
+  Curricula vitae kept as data: personal information in one frontend object, read through
+  order-free query paths, and CV templates and instances in another, drawn as a Japanese-style CV and edited in place.
+packageDependList: []

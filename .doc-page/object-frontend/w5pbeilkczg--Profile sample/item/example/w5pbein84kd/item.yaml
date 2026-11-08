@@ -1,0 +1,28 @@
+itemId: w5pbein84kd
+name: ""
+lang: yaml
+contentType: text/yaml
+fileExt: yaml
+owner:
+  ref: frontend:w5pbeilkczg
+versionIdHead: w5pbein875h
+isDeleted: false
+isLocked: false
+timeCreated: 20261108_02170649+09
+versionList:
+  - versionId: w5pbein875h
+    versionIdPrevList: []
+    time: 20261108_02170649+09
+    note: info of the frontend object Profile sample of the package
+    size: 367
+    hash: ec160215680db37a961152e6916d147ebccaaacf
+    isLocked: false
+    dependencyList: []
+eventList:
+  - eventType: create
+    time: 20261108_02170649+09
+    versionId: w5pbein875h
+  - eventType: move
+    time: 20261108_07093378+09
+    placeFrom: ~cv:cv/.doc-page/object-frontend/w5pbeilkczg--Profile sample/item
+    placeTo: ~cv:cv/.doc-page/object-frontend/w5pbeilkczg--Profile sample/item/example

@@ -1,0 +1,12 @@
+start:
+  year: 2020
+  month: 4
+  jp: サンプル大学大学院 情報理工学系研究科 入学
+  en: Entered the graduate school
+end:
+  year: 2022
+  month: 3
+  jp:
+    - サンプル大学大学院 情報理工学系研究科 修士課程修了
+    - "  修士（情報理工学）取得"
+  en: Finished the master course

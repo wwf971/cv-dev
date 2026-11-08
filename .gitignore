@@ -1,8 +1,18 @@
-setup.sh
 node_modules/
-/dist
-/build
-/build-single-html
-/.claude
-/.vscode
-config.0.js
+.DS_Store
+
+# local notes, not part of the package
+/temp.md
+
+# what running a doc page writes (react-doc: main/doc_page_impl_dir.md)
+*.bak
+*.tmp
+*.playground.md
+**/.doc-page/service-kernel.yaml
+**/.doc-page/service-backup/
+**/.doc-page/service-infra/
+
+# the partitions of the frontend objects kept out of git (doc/README.md#partitions): real data, and
+# what is tried out; each folder holds its items and their item list, so nothing of them is left behind
+**/.doc-page/object-frontend/*/item/real/
+**/.doc-page/object-frontend/*/item/playground/

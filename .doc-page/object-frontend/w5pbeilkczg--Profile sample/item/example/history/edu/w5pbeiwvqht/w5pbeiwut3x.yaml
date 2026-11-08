@@ -1,0 +1,12 @@
+start:
+  year: 2016
+  month: 4
+  jp: サンプル大学 理学部 物理学科 入学
+  en: Entered Sample University
+end:
+  year: 2020
+  month: 3
+  jp:
+    - サンプル大学 理学部 物理学科 卒業
+    - "  学士（理学）取得"
+  en: Graduated from Sample University

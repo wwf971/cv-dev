@@ -1,0 +1,106 @@
+itemId: w5pbeilkqps
+name: ""
+lang: yaml
+contentType: text/yaml
+fileExt: yaml
+owner:
+  ref: frontend:w5pbeilkczg
+  role: entry
+versionIdHead: w5pbeill27x
+isDeleted: false
+isLocked: false
+timeCreated: 20261108_02170645+09
+versionList:
+  - versionId: w5pbeill27x
+    versionIdPrevList: []
+    time: 20261108_02170645+09
+    note: the entry of the frontend object Profile sample of the package
+    size: 122
+    hash: 4216fce81c9e973f96a91763b90a37025efba769
+    isLocked: false
+    dependencyList: []
+eventList:
+  - eventType: create
+    time: 20261108_02170645+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_02170649+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_02170651+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_02170653+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_02170657+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_02170660+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_02170664+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_02170674+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_02170676+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_02170678+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_02170682+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_02170684+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_02170697+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_02170702+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_02170767+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_07093379+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_07093381+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_07093383+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_07093384+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_07093386+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_07093387+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_07093389+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_07093390+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_07093392+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_07093393+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_07093395+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_07093396+09
+    versionId: w5pbeill27x
+  - eventType: updateInPlace
+    time: 20261108_07093397+09
+    versionId: w5pbeill27x

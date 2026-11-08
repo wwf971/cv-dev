@@ -1,0 +1,12 @@
+# The components of the package cv (doc/README.md): modes of frontend objects, rendered by
+# the entry component ObjectFrontend, never written as blocks themselves.
+compList:
+  - tagName: CvProfileInfo
+    entry: ./cv-comp.js
+    export: CvProfileInfoDefine
+  - tagName: CvJpSheet
+    entry: ./cv-comp.js
+    export: CvJpSheetDefine
+  - tagName: CvJpList
+    entry: ./cv-comp.js
+    export: CvJpListDefine

@@ -1,0 +1,12 @@
+# The doc page of the package: its documents, and a demonstration of what it draws. Served alone
+# (react-doc dev <this folder>) the package is edited like any doc page, its sample objects
+# included; listed in a workspace or mounted, it is read-only.
+# design: main/doc_page_impl_package.md#a-package-as-a-doc-page
+docEntry:
+  title: cv
+  homeDoc: ~cv/doc/README.md
+source:
+  file: ./source.yaml
+sidePanelById:
+  main:
+    file: ./side-panel.yaml

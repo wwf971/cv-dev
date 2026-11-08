@@ -1,0 +1,8 @@
+setup.sh
+node_modules/
+/dist
+/build
+/build-single-html
+/.claude
+/.vscode
+config.0.js

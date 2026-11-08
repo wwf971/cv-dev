@@ -1,0 +1,4 @@
+name: Profile sample
+type: cv.profile
+description: a made-up person, for the demonstration of the package cv
+metadata: {}

@@ -1,0 +1,29 @@
+itemId: w5pbejan114
+name: ""
+lang: yaml
+contentType: text/yaml
+fileExt: yaml
+owner:
+  ref: frontend:w5pbej9gcnn
+versionIdHead: w5pbejaopzz
+isDeleted: false
+isLocked: false
+timeCreated: 20261108_02170709+09
+versionList:
+  - versionId: w5pbejaopzz
+    versionIdPrevList: []
+    time: 20261108_02170709+09
+    note: template of the frontend object CV sample of the package
+    size: 536
+    hash: 673c319353ef1aebae3754f77196155ab54040b0
+    isLocked: false
+    dependencyList: []
+eventList:
+  - eventType: create
+    time: 20261108_02170709+09
+    versionId: w5pbejaopzz
+  - eventType: move
+    time: 20261108_07093399+09
+    placeFrom: ~cv:cv/.doc-page/object-frontend/w5pbej9gcnn--CV sample/item/template
+    placeTo: ~cv:cv/.doc-page/object-frontend/w5pbej9gcnn--CV
+      sample/item/example/template
