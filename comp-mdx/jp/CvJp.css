@@ -767,3 +767,37 @@
 	border: 1px solid var(--color-fd-border);
 	border-radius: 0.375rem;
 }
+
+/* a CV laid out on pages (CvJpPagination.jsx): the content of a page is the paper without its
+   own box, the page being the box; a table cut at the bottom of a page keeps no margin under
+   it, so that its rules reach the bottom, and a text going on starts without an indent */
+.doc-cv-jp-paper.doc-cv-jp-page {
+	width: auto;
+	min-height: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+}
+
+.doc-cv-jp-table[data-cut-below] {
+	margin-bottom: 0;
+}
+
+.doc-cv-jp-paragraph[data-continued] {
+	text-indent: 0;
+}
+
+.doc-cv-jp-fill {
+	display: block;
+}
+
+/* the row drawing a cut table's rules to the bottom of its page: exactly as tall as it is told */
+.doc-cv-jp-table .doc-cv-jp-row-fill td {
+	height: auto;
+	padding: 0;
+}
+
+/* the pages of a CV, as previewed */
+.doc-cv-jp-pages {
+	padding: 0.5rem 0 1rem;
+}

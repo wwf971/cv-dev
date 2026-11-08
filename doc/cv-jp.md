@@ -45,7 +45,7 @@ A cell says the first of: the instance's `valueByCell`, the template's `cellById
 
 | mode | component | |
 | --- | --- | --- |
-| `sheet` | `CvJpSheet` | one CV; `param.instance` names it (a path, a key), the first otherwise |
+| `sheet` | `CvJpSheet` | one CV; `param.instance` names it (a path, a key), the first otherwise; `param.view: pages` shows its pages first |
 | `list` | `CvJpList` | the CVs and templates; a click opens one, a form makes a new CV |
 
 ## Editing in place
@@ -81,8 +81,23 @@ More fields   the optional rows not drawn now (their text is typed in the card),
 
 A cell with a query nothing answers is marked in edit mode and empty in reading mode.
 
+## Pages
+
+**Pages** in the bar of a sheet lays the CV out on A4 pages, as it is printed, with react-doc's pagination (react-doc: `main/doc_page_impl_pagination.md`); **Sheet** goes back to the sheet edited in place. The sheet declares it in the registry (`expose.pagination` in `cv-comp.js`), and `jp/CvJpPagination.jsx` is all of it: the flow of a CV is its sections, each a piece of plain, resolved data, drawn by the components of the sheet (`jp/CvJpSection.jsx`) read-only.
+
+```text
+piece     cut                                 a part going on                 a part cut below
+basic     never                               -                               -
+history   between rows (never after a group's  the head row of the table again; its rules drawn to the bottom
+          heading, which stays with its rows)   a group cut in two without its  of the page, no margin under it
+                                                heading again
+text      between lines of its text             no indent of its first line     its box drawn to the bottom of the page
+```
+
+The page is A4 with the margins of the common form (`CV_JP_PAGE_SPEC`). **Print / PDF** prints the pages through a document of their own, so "Save as PDF" in the print dialog makes a PDF whose text is text; the button's hint says what Firefox and Safari need set in their dialog. **Download PDF** makes a PDF of page images in the page, the same in every browser. A row taller than a page is not cut (it is placed alone and reported); the CV's own fields are edited in **Sheet**.
+
 ## The look
 
-The form follows the common Japanese CV form: an A4 width of 794px, black rules on white in every theme of the page, the title with the date at its right, a photo box of 150 by 200 pixels, the era above the year in small type, rows of 年, 月, the text and sometimes 備考. It is not paginated yet ([README](README.md#not-here-yet)).
+The form follows the common Japanese CV form: an A4 width of 794px, black rules on white in every theme of the page, the title with the date at its right, a photo box of 150 by 200 pixels, the era above the year in small type, rows of 年, 月, the text and sometimes 備考. On pages it is cut as [Pages](#pages) says.
 
 A mode reaches a second object through `otherGet` of its api (react-doc: `main/doc_page_impl_obj_frontend.md#the-entry-component`), never the asset store.

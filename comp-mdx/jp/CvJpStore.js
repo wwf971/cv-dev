@@ -38,9 +38,14 @@ export class CvJpStore {
 	// a row dragged to another place in its group: { groupId, rowId }, and where it would go
 	dragRow = null;
 	dropTarget = null;
+	// what is drawn: the sheet, edited in place, or its pages (CvJpPagination.jsx), as printed
+	view = 'sheet';
+	// what the pages say of themselves: { status: measuring | done, pageCount, problemList }
+	pageState = { status: 'measuring', pageCount: 0, problemList: [] };
 
-	constructor(instanceRef) {
+	constructor(instanceRef, view) {
 		this.instanceRef = instanceRef ?? '';
+		this.view = view === 'pages' ? 'pages' : 'sheet';
 		makeAutoObservable(this, { rootElement: observable.ref, editor: observable.ref, anchorElement: observable.ref }, { autoBind: true });
 	}
 
@@ -63,6 +68,17 @@ export class CvJpStore {
 		this.isEditing = !this.isEditing;
 		this.isFieldListOpen = false;
 		this.editorClose();
+	}
+
+	viewSet(view) {
+		if (this.view === view) return;
+		if (this.editor) this.editorClose();
+		this.isFieldListOpen = false;
+		this.view = view;
+	}
+
+	pageStateSet(state) {
+		this.pageState = { status: state.status, pageCount: state.pageCount, problemList: state.problemList ?? [] };
 	}
 
 	fieldListToggle() {

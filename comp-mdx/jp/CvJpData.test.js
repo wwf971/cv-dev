@@ -82,3 +82,29 @@ test('the order of the rows: a CV may give its own; rows it does not name follow
 	assert.deepEqual(textOf(instanceOf({ rowOrderByGroup: { work: [idList[2]] } })), ['B', 'A', 'X']);
 	assert.deepEqual(cvJpRowOrderMove(['a', 'b', 'c'], 'a', 'c', true), ['b', 'c', 'a']);
 });
+
+test('pages: a history cut between rows, never after a heading; a text cut between lines', async () => {
+	const { cvJpHistorySplit, cvJpTextSplit } = await import('./CvJpPaginationData.js');
+	const data = {
+		id: 'history', title: '学 歴・職 歴', isNote: false,
+		groupList: [
+			{ id: 'edu', title: '学 歴', rowList: [{ id: 'e1', text: 'a' }, { id: 'e2', text: 'b' }] },
+			{ id: 'work', title: '職 歴', rowList: [{ id: 'w1', text: 'c' }, { id: 'w2', text: 'd' }, { id: 'w3', text: 'e' }] },
+		],
+	};
+	// the rows as measured: a break after each row (the headings are no break)
+	const measured = { height: 300, breakList: [['e1', 80], ['e2', 120], ['w1', 200], ['w2', 240], ['w3', 280]].map(([key, bottom]) => ({ key, top: bottom - 40, bottom })) };
+	const cut = cvJpHistorySplit(data, { space: 210, measured });
+	assert.equal(cut.breakKey, 'w1');
+	assert.equal(cut.head.isCutBelow, true);
+	assert.deepEqual(cut.head.groupList.map((group) => group.rowList.map((row) => row.id)), [['e1', 'e2'], ['w1']]);
+	assert.deepEqual(cut.tail.groupList.map((group) => [group.id, group.isContinued === true, group.rowList.map((row) => row.id)]), [['work', true, ['w2', 'w3']]]);
+	// cut at the end of a group: the next group starts the tail with its heading
+	const atEnd = cvJpHistorySplit(data, { space: 150, measured });
+	assert.deepEqual(atEnd.tail.groupList.map((group) => [group.id, group.isContinued === true]), [['work', false]]);
+	assert.equal(cvJpHistorySplit(data, { space: 50, measured }), null);
+	const text = { id: 'motivation', title: '志 望 の 動 機', text: 'line one\nline two\nline three' };
+	const measuredText = { height: 200, textList: [{ key: 'text', lineList: [{ offset: 0, top: 40, bottom: 60 }, { offset: 9, top: 60, bottom: 80 }, { offset: 18, top: 80, bottom: 100 }] }] };
+	const cutText = cvJpTextSplit(text, { space: 90, measured: measuredText });
+	assert.deepEqual([cutText.head.text, cutText.tail.text, cutText.tail.isContinued], ['line one\nline two', 'line three', true]);
+});

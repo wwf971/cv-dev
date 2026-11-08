@@ -70,9 +70,11 @@ cv/
     │                   CvProfile.js (a profile read through its object's api). Knows no form of CV
     ├── profile/        CvProfileInfo: the mode "information" of a profile
     └── jp/             CvJpData.js (templates, instances, the sheet as data), CvJpStore.js (its state and writes),
-                        CvJpSheet.jsx, CvJpList.jsx, CvJp.css
+                        CvJpSection.jsx (the sections drawn: cells, rows, tables), CvJpSheet.jsx (the sheet edited
+                        in place, its cards, its pages), CvJpPagination.jsx (the CV on pages), cv-query-slash.js
+                        (/query), CvJpList.jsx, CvJp.css
 ```
 
 ## Not here yet
 
-Pagination is left out on purpose: a sheet is one long A4-wide page. It is planned as a capability of MDX components in general, not of this package. Printing to a PDF therefore has no page breaks of its own.
+Other forms (an English CV) are other types reading the same profile; none is written yet. A row of a history taller than a page is not cut between lines.
