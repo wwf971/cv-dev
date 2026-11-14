@@ -10,8 +10,10 @@ import { CV_JP_STORE_READ, CvJpBasic, CvJpHistory, CvJpText } from './CvJpSectio
 //             the table, a part cut below is drawn to the bottom of its page
 //   text      a section of text (the motivation): cut between lines of its text
 //
-// The data of a piece is plain and already resolved (texts read from the profile), so the
-// pieces draw without the profile, and a cut is a cut of the data.
+// The data of a piece is plain: a cut is a cut of the data. A cell and a row keep their text as
+// written beside its plain text, and are drawn with the cell of the sheet around the pages
+// (CvJpEditContext), so a page shows a token as the sheet does: a link, a badge. A section of
+// text, which is cut between its lines, is its plain text.
 
 // ---------- the pieces drawn ----------
 
@@ -25,7 +27,8 @@ function HistoryPiece({ data, layout }) {
 }
 
 function TextPiece({ data, layout }) {
-	const section = { title: data.title, isContinued: data.isContinued, isCutBelow: data.isCutBelow, cell: { id: data.id, text: data.text, raw: '', missingList: [] } };
+	// isPlain: drawn as its plain text, the text the lines were measured and cut in
+	const section = { title: data.title, isContinued: data.isContinued, isCutBelow: data.isCutBelow, cell: { id: data.id, text: data.text, raw: '', isPlain: true, missingList: [] } };
 	return <CvJpText section={section} store={CV_JP_STORE_READ} fillHeight={layout?.fillHeight ?? 0} />;
 }
 

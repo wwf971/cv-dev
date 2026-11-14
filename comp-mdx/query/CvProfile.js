@@ -1,4 +1,4 @@
-import { cvInfoBuild } from './CvQuery.js';
+import { cvInfoBuild, cvQueryResolve, cvQuerySlashItemListGet } from './CvQuery.js';
 
 // The information of a profile as its object says now: every data item of the kind "info", read
 // through the object's api: { info, countLoading, countAll, problemList }.
@@ -82,4 +82,78 @@ export function cvLeafQueryGet(leaf) {
 // the path pattern of a leaf, as its item and keys write it: name/{jp/last/}kanji
 export function cvLeafPatternGet(leaf) {
 	return leaf.pathText;
+}
+
+// ---------- a profile seen from outside: its inner paths ----------
+//
+// What is inside a profile, for whoever names something inside a frontend object (react-doc:
+// main/doc_page_impl_obj_frontend.md#things-inside-an-object-inner-paths), is its values, not its
+// data items: a value is what a reader looks for, and how the data is cut into items is nobody
+// else's business. So an inner path of a profile is a partition and a query path:
+//
+//   example/name/jp/first       the value of the query name/jp/first in the partition example
+//   example/name/               completing: the folders and values below name, as /query lists them
+//
+// (a profile whose items have no partition: the query alone.) The two functions below are what
+// the mode Information exposes as objectInner (cv-comp.js): react-doc asks them when a
+// reference such as frontend:{id}#example/name/jp/first is drawn, and when /object walks into a profile.
+
+// { partition, query }: the first segment when it is a partition the profile has
+export function cvProfileInnerSplit(profile, path) {
+	const text = String(path ?? '').trim().replace(/^\/+/, '');
+	const indexSlash = text.indexOf('/');
+	const first = indexSlash < 0 ? text : text.slice(0, indexSlash);
+	const partitionList = cvPartitionListGet(profile, profile.assetList(CV_KIND_INFO)).map((one) => one.id).filter(Boolean);
+	if (indexSlash < 0 || !partitionList.includes(first)) return { partition: '', query: text };
+	return { partition: first, query: text.slice(indexSlash + 1) };
+}
+
+// what an inner path names: { status: found | unknown | loading, path, label, detail, kind, text?, message }
+export function cvProfileInnerResolve(profile, path, dateNow = new Date()) {
+	const { partition, query } = cvProfileInnerSplit(profile, path);
+	const pathKept = [partition, query].filter(Boolean).join('/');
+	const read = cvProfileRead(profile, {}, partition);
+	if (read.countLoading > 0) return { status: 'loading', path: pathKept, label: query, detail: '', kind: 'value', message: '' };
+	const resolved = cvQueryResolve(read.info, query, { dateNow });
+	if (resolved.status !== 'found') return { status: 'unknown', path: pathKept, label: query, detail: '', kind: 'value', message: resolved.message };
+	const value = String(resolved.value);
+	return {
+		status: 'found',
+		path: pathKept,
+		label: query,
+		detail: partition ? `a value of the partition ${partition}` : 'a value of the profile',
+		kind: 'value',
+		// an image kept as text is not drawn as text: the name of the value stands for it
+		...(value.startsWith('data:') ? {} : { text: value }),
+		message: '',
+	};
+}
+
+// the candidates completing a typed inner path: the partitions first, then what /query lists
+// in the partition typed: { status, itemList: [{ kind: 'dir' | 'item', path, label, detail }] }
+export function cvProfileInnerComplete(profile, text, dateNow = new Date()) {
+	const typed = String(text ?? '').trim().replace(/^\/+/, '');
+	// the partitions holding information: one declared and still empty has nothing to walk into
+	const assetList = profile.assetList(CV_KIND_INFO);
+	const partitionFilledSet = new Set(assetList.map((asset) => cvPathSplit(asset.pathList?.[0]).partition));
+	const partitionList = cvPartitionListGet(profile, assetList).filter((one) => one.id && partitionFilledSet.has(one.id));
+	const { partition, query } = cvProfileInnerSplit(profile, typed);
+	const itemList = [];
+	if (!partition && !typed.includes('/')) {
+		for (const one of partitionList) {
+			if (typed && !one.id.startsWith(typed.toLowerCase())) continue;
+			itemList.push({ kind: 'dir', path: `${one.id}/`, label: `${one.id}/`, detail: one.label });
+		}
+		// a profile cut into partitions is walked a partition first
+		if (partitionList.length > 0) return { status: 'done', itemList };
+	}
+	const read = cvProfileRead(profile, {}, partition);
+	if (read.countLoading > 0) return { status: 'loading', itemList };
+	const prefix = partition ? `${partition}/` : '';
+	for (const item of cvQuerySlashItemListGet(read.info, query, { dateNow })) {
+		itemList.push(item.kind === 'dir'
+			? { kind: 'dir', path: `${prefix}${item.paramNext}`, label: item.label, detail: item.detail }
+			: { kind: 'item', path: `${prefix}${item.query}`, label: item.label, detail: item.detail });
+	}
+	return { status: 'done', itemList };
 }

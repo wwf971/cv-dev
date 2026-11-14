@@ -609,6 +609,13 @@
 	border-top: 1px solid var(--color-fd-border);
 }
 
+/* the card of the photo: its lines one under another, as the card's own are */
+.doc-cv-jp-editor-photo {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
 .doc-cv-jp-editor-actions {
 	display: flex;
 	flex-wrap: wrap;
@@ -687,27 +694,12 @@
 	font-weight: 600;
 }
 
-.doc-cv-list-path {
-	font-weight: 500;
-	white-space: nowrap;
-}
 
-.doc-cv-list-value {
-	width: 100%;
-	overflow-wrap: anywhere;
-}
 
 .doc-cv-list-muted {
 	color: var(--color-fd-muted-foreground);
 }
 
-.doc-cv-list-thumb {
-	display: block;
-	width: 48px;
-	height: 64px;
-	margin: 0;
-	object-fit: cover;
-}
 
 .doc-cv-list-form {
 	display: flex;
@@ -735,11 +727,6 @@
 	min-width: 0;
 }
 
-.doc-cv-list-result {
-	min-height: 1.5em;
-	margin: 0.2rem 0 0.8rem;
-	white-space: pre-wrap;
-}
 
 .doc-cv-list-link {
 	padding: 0;
@@ -801,3 +788,136 @@
 .doc-cv-jp-pages {
 	padding: 0.5rem 0 1rem;
 }
+
+/* ---------- the pages, in their dialog (doc/cv-jp.md#pages) ---------- */
+/* wide enough for an A4 sheet with air around it, most of the window high */
+.doc-cv-jp-pages-popup {
+	width: min(58rem, 94vw);
+	height: min(72rem, 92vh);
+}
+
+.doc-cv-jp-pages-popup-body {
+	padding: 0.5rem 1rem;
+	background: var(--color-fd-muted, var(--color-fd-background));
+}
+
+/* the sheets in the middle of the dialog */
+.doc-cv-jp-pages-popup-body .doc-cv-jp-pages {
+	width: fit-content;
+	margin: 0 auto;
+}
+
+.doc-cv-jp-pages-bar {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	margin-right: 0.5rem;
+	font-size: 0.8rem;
+}
+
+/* ---------- an image given to a CV: a photo, the image of a badge (CvJpImagePick) ---------- */
+.doc-cv-jp-image-pick {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem;
+}
+
+/* ---------- a badge in a line (doc/cv-badge.md) ----------
+   its height is its size here, whatever the image: s the height of a line, m, l. a line holding
+   one grows to it, which is what a badge in a row is for */
+.doc-cv-badge-box {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3em;
+	margin: 0 0.15em;
+	vertical-align: middle;
+}
+
+.doc-cv-badge {
+	display: block;
+	width: auto;
+	height: 30px;
+	max-width: none;
+	margin: 0;
+}
+
+.doc-cv-badge-box[data-size="s"] .doc-cv-badge {
+	height: 18px;
+}
+
+.doc-cv-badge-box[data-size="l"] .doc-cv-badge {
+	height: 46px;
+}
+
+.doc-cv-badge-name {
+	font-size: 0.85em;
+}
+
+/* a badge nothing answers to, seen only while the sheet is edited */
+.doc-cv-badge-missing {
+	display: inline-block;
+	margin: 0 0.15em;
+	padding: 0 0.3em;
+	font-size: 0.75em;
+	color: #b91c1c;
+	border: 1px dashed #dc2626;
+	border-radius: 3px;
+}
+
+/* in the menu of /badge */
+.doc-cv-badge-thumb {
+	flex: 0 0 auto;
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	object-fit: contain;
+}
+
+/* the card of a selected badge */
+.doc-cv-badge-card-top {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+}
+
+.doc-cv-badge-card-image {
+	flex: 0 0 auto;
+	width: 52px;
+	height: 52px;
+	margin: 0;
+	object-fit: contain;
+}
+
+.doc-cv-badge-card-image[data-empty] {
+	border: 1px dashed var(--color-fd-border);
+	border-radius: 4px;
+}
+
+.doc-cv-badge-card-what {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.doc-cv-badge-card-path {
+	font-weight: 550;
+	overflow-wrap: anywhere;
+}
+
+.doc-cv-badge-card-section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	padding-top: 0.4rem;
+	border-top: 1px solid var(--color-fd-border);
+}
+
+.doc-cv-badge-card-line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem;
+}
+
+/* the badges of a profile, in its mode Information */

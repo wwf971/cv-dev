@@ -4,16 +4,17 @@ A package for curricula vitae kept as data. Personal information lives in one fr
 
 ```text
 frontend object: a profile (type cv.profile)        frontend object: CVs (type cv.jp)
-  data items, kind info                               data items, kind template    the form: sections, what each cell says
+  data items, kind info, kind badge                   data items, kind template    the form: sections, what each cell says
     /example/info/name    { "{jp/first/}": { kanji: 太郎 } }  data items, kind instance    a template, a profile, what differs
     /example/info/birth   { year: 2000, month: 1, day: 1 }       │
     /example/info/edu/... dated entries                          ▼
-         ▲                                            a cell's text: words, or queries in {{ }}
-         └───────────── name/first/jp/kanji ───────── {{name/jp/first/kanji}}
+         ▲                                            a cell's text: words, with tokens: queries in {{ }},
+         └───────────── name/first/jp/kanji ───────── {{name/jp/first/kanji}}     links, views of objects
 ```
 
 - [Query paths](cv-query.md): how information is stored and read, and where segments may come in any order. **Read this first.**
-- [Japanese-style CV](cv-jp.md): templates, instances, the sheet and editing it in place.
+- [Japanese-style CV](cv-jp.md): templates, instances, the sheet, its cells and editing them in place.
+- [Badges](cv-badge.md): a certification badge of the profile shown in a line of a CV, and changed where it stands.
 
 Two objects on purpose: the same person can have many CVs, in other forms later (an English CV is another type reading the same profile), and a profile can be copied without any CV. Each is a self-contained folder (react-doc: `main/doc_page_impl_obj_frontend.md#the-folder-of-an-object`).
 
@@ -34,6 +35,8 @@ param:
 ````
 
 The package is also a doc page ([Demonstration](cv-demo.md)). Served alone, `react-doc dev <this folder>`, it is edited in place once the page is in edit mode, its sample objects included (in reading mode its modes only read); listed in a workspace or mounted, it is read-only.
+
+**To try things without touching the example**, open **Playground** in the side panel: a document git ignores (`doc/cv.playground.md`, made from `.doc-page/playground/cv.md`; react-doc: `main/doc_page_impl_test.md`), showing the profile and a CV of the partition `playground`, which git ignores too. After a clone both are empty: the page offers to create the document, and its first block to fill the partition with a copy of the example.
 
 ## Partitions
 
@@ -61,18 +64,25 @@ item/                         the item folder of the profile (the same in the CV
 cv/
 ├── doc-package.yaml, package.json
 ├── type.yaml           the types cv.profile and cv.jp, with their modes and kinds of assets
-├── doc/                README.md, cv-demo.md, cv-query.md, cv-jp.md
-├── .doc-page/          makes the package a doc page; object-frontend/ holds its objects, their partitions inside
+├── doc/                README.md, cv-demo.md, cv-query.md, cv-jp.md, cv-badge.md; cv.playground.md (ignored by git)
+├── .doc-page/          makes the package a doc page; object-frontend/ holds its objects, their partitions inside;
+│                       playground.yaml and playground/cv.md: the playground document and its template
 ├── vue-legacy/         the former Vue project of this repository, kept for reference; not part of the package
 └── comp-mdx/
     ├── comp.yaml, cv-comp.js   the components: modes of frontend objects
     ├── query/          CvQuery.js (the leaves, resolving, entries, writing), CvText.js (kana, romaji, era, age),
-    │                   CvProfile.js (a profile read through its object's api). Knows no form of CV
-    ├── profile/        CvProfileInfo: the mode "information" of a profile
+    │                   CvProfile.js (a profile read through its object's api, and from outside: its inner paths),
+    │                   CvBadge.js (the badges of a profile), CvInfoExplore.js and CvInfoTree.js (the values walked
+    │                   as an explorer walks folders, and as a tree). Knows no form of CV
+    ├── profile/        CvProfileInfo.jsx: the mode "information" of a profile, a panel of limited height; its two
+    │                   views of the values (CvProfileExplore.jsx, CvProfileTree.jsx, their rows CvProfileRow.jsx),
+    │                   its badges (CvProfileBadgeList.jsx), CvProfileStore.js, CvProfile.css
     └── jp/             CvJpData.js (templates, instances, the sheet as data), CvJpStore.js (its state and writes),
                         CvJpSection.jsx (the sections drawn: cells, rows, tables), CvJpSheet.jsx (the sheet edited
-                        in place, its cards, its pages), CvJpPagination.jsx (the CV on pages), cv-query-slash.js
-                        (/query), CvJpList.jsx, CvJp.css
+                        in place, its cards, its pages), CvJpPagination.jsx (the CV on pages), cv-query-cell.js
+                        (the query as a token of a cell: written, drawn, typed with {{ or /query), cv-badge-cell.jsx
+                        (the badge as a token: drawn, typed with /badge, its card), CvJpImagePick.jsx (an image
+                        chosen or pasted), CvJpList.jsx, CvJp.css
 ```
 
 ## Not here yet

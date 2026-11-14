@@ -1,5 +1,7 @@
 import { makeAutoObservable, observable } from 'mobx';
-import { cvDataRemove, cvDataSet, cvLeafPlaceGet, cvLeafValueBuild, cvQueryParse } from '../query/CvQuery.js';
+import { cellTextRangeReplace } from '@wwf971/react-doc';
+import { cvBadgeCreateInput } from '../query/CvBadge.js';
+import { cvDataRemove, cvDataSet, cvLeafPlaceGet, cvLeafValueBuild, cvQueryParse, cvQueryResolve } from '../query/CvQuery.js';
 import { cvInfoCreateInput } from '../query/CvProfile.js';
 import { CV_JP_ROW_FIELD_LIST, cvJpRowIdNew, cvJpRowOrderMove } from './CvJpData.js';
 
@@ -23,6 +25,11 @@ import { CV_JP_ROW_FIELD_LIST, cvJpRowIdNew, cvJpRowOrderMove } from './CvJpData
 //        row         undefined for a new row of this CV
 //        field       the field focused: year, month, text, note
 //   anchorElement   what the card stands under: the open cell, the focused field of the row
+//   selection       what is selected in the text of the open cell: { start, end, text, isPlain }
+//                   (react-doc's CellEdit). a selection of words only can be kept in the profile
+//                   as a value and named in its place (selectionExtract); extractPath: the path
+//                   typed for it. draftVersion: the draft was set by code, the surface shows it again
+//   isPagesOpen     the pages of the CV are shown, in their dialog
 export class CvJpStore {
 	instanceRef = '';
 	isEditing = false;
@@ -30,6 +37,9 @@ export class CvJpStore {
 	editor = null;
 	anchorElement = null;
 	draft = '';
+	draftVersion = 0;
+	selection = null;
+	extractPath = '';
 	draftProfile = '';
 	draftRow = { year: '', month: '', text: '', note: '' };
 	status = 'idle';
@@ -38,15 +48,14 @@ export class CvJpStore {
 	// a row dragged to another place in its group: { groupId, rowId }, and where it would go
 	dragRow = null;
 	dropTarget = null;
-	// what is drawn: the sheet, edited in place, or its pages (CvJpPagination.jsx), as printed
-	view = 'sheet';
+	// the pages of the CV (CvJpPagination.jsx), as printed, shown in a dialog over the page
+	isPagesOpen = false;
 	// what the pages say of themselves: { status: measuring | done, pageCount, problemList }
 	pageState = { status: 'measuring', pageCount: 0, problemList: [] };
 
-	constructor(instanceRef, view) {
+	constructor(instanceRef) {
 		this.instanceRef = instanceRef ?? '';
-		this.view = view === 'pages' ? 'pages' : 'sheet';
-		makeAutoObservable(this, { rootElement: observable.ref, editor: observable.ref, anchorElement: observable.ref }, { autoBind: true });
+		makeAutoObservable(this, { rootElement: observable.ref, editor: observable.ref, anchorElement: observable.ref, selection: observable.ref }, { autoBind: true });
 	}
 
 	rootElementSet(element) {
@@ -70,11 +79,14 @@ export class CvJpStore {
 		this.editorClose();
 	}
 
-	viewSet(view) {
-		if (this.view === view) return;
+	pagesOpen() {
 		if (this.editor) this.editorClose();
 		this.isFieldListOpen = false;
-		this.view = view;
+		this.isPagesOpen = true;
+	}
+
+	pagesClose() {
+		this.isPagesOpen = false;
 	}
 
 	pageStateSet(state) {
@@ -85,17 +97,24 @@ export class CvJpStore {
 		this.isFieldListOpen = !this.isFieldListOpen;
 	}
 
+	fieldListClose() {
+		this.isFieldListOpen = false;
+	}
+
 	anchorSet(element) {
 		if (element && element !== this.anchorElement) this.anchorElement = element;
 	}
 
 	// a cell opened in place: element is the cell, point where it was clicked
-	cellOpen(cell, element, valueProfile, { point, isOffSheet = false, isMultiline = false } = {}) {
+	//   isImage   the cell is an image (the photo): nothing is typed in it, its card gives the image
+	cellOpen(cell, element, valueProfile, { point, isOffSheet = false, isMultiline = false, isImage = false } = {}) {
 		if (!this.isEditing) return;
 		this.isFieldListOpen = false;
-		this.editor = { kind: 'cell', id: cell.id, cell, point, width: isOffSheet ? undefined : contentWidthGet(element), offset: isOffSheet ? undefined : contentOffsetGet(element), isOffSheet, isMultiline };
+		this.editor = { kind: 'cell', id: cell.id, cell, point, width: isOffSheet ? undefined : contentWidthGet(element), offset: isOffSheet ? undefined : contentOffsetGet(element), isOffSheet, isMultiline, isImage };
 		this.anchorElement = element;
 		this.draft = cell.raw;
+		this.selection = null;
+		this.extractPath = '';
 		this.draftProfile = valueProfile ?? '';
 		this.status = 'idle';
 		this.message = '';
@@ -125,12 +144,91 @@ export class CvJpStore {
 	editorClose() {
 		this.editor = null;
 		this.anchorElement = null;
+		this.selection = null;
+		this.extractPath = '';
 		this.status = 'idle';
 		this.message = '';
 	}
 
 	draftSet(text) {
 		this.draft = text;
+	}
+
+	// what is selected in the text of the open cell (the last selection inside it)
+	selectionSet(selection) {
+		const one = selection && selection.end > selection.start ? selection : null;
+		if (one === null && this.selection === null) return;
+		if (one && this.selection && one.start === this.selection.start && one.end === this.selection.end && one.text === this.selection.text) return;
+		this.selection = one;
+		this.message = '';
+	}
+
+	extractPathSet(text) {
+		this.extractPath = text;
+		this.message = '';
+	}
+
+	// why the selected words cannot be kept in the profile at the path typed ('' when they can):
+	// only words are kept (no token in the selection, in part or whole), at a path nothing holds yet
+	extractProblemGet(info) {
+		const selection = this.selection;
+		if (!selection || selection.text.trim() === '') return 'Select some words of the cell.';
+		if (!selection.isPlain) return 'The selection holds a token, in part or whole: select words only.';
+		const { segmentList } = cvQueryParse(this.extractPath);
+		if (segmentList.length === 0) return 'Name the path it is kept at: address/jp/building.';
+		const resolved = cvQueryResolve(info, segmentList.join('/'));
+		if (resolved.status === 'found' && resolved.value !== selection.text) return `${segmentList.join('/')} holds ${String(resolved.value).slice(0, 40)} already.`;
+		return '';
+	}
+
+	// the selected words kept in the profile as a value at the path typed, and named in their place
+	// by a query of it: the cell reads the same, and every CV can now read the value. a path
+	// holding exactly those words already is only named
+	async selectionExtract(profile, info, partition) {
+		const problem = this.extractProblemGet(info);
+		if (problem) {
+			this.message = problem;
+			return false;
+		}
+		const { start, end, text } = this.selection;
+		const path = cvQueryParse(this.extractPath).segmentList.join('/');
+		const editorAtStart = this.editor;
+		if (cvQueryResolve(info, path).status !== 'found') {
+			this.status = 'submitting';
+			const place = cvLeafPlaceGet(info, path);
+			let result;
+			try {
+				result = place.assetKey
+					? await profile.assetWrite(place.assetKey, cvDataSet(profile.assetDataGet(place.assetKey).data, place.keyPath, text), path)
+					: await profile.assetCreate(cvInfoCreateInput(partition, place, place.keyPath.length > 0 ? cvDataSet({}, place.keyPath, text) : text));
+			} catch (error) {
+				result = { code: -1, message: String(error?.message ?? error) };
+			}
+			this.extractResultApply(result, editorAtStart, start, end, path);
+			return result?.code === 0 || result === undefined;
+		}
+		this.extractResultApply({ code: 0 }, editorAtStart, start, end, path);
+		return true;
+	}
+
+	extractResultApply(result, editorAtStart, start, end, path) {
+		if (result?.code !== 0 && result !== undefined) {
+			this.status = 'error';
+			this.message = result?.message ?? 'the value was not written';
+			return;
+		}
+		this.status = 'idle';
+		// the cell may be another one when the answer comes: the draft of that one is left alone
+		if (this.editor !== editorAtStart) return;
+		this.draft = cellTextRangeReplace(this.draft, start, end, `{{${path}}}`);
+		this.draftVersion += 1;
+		this.selection = null;
+		this.extractPath = '';
+		this.message = '';
+	}
+
+	messageSet(text) {
+		this.message = String(text ?? '');
 	}
 
 	draftProfileSet(text) {
@@ -141,7 +239,9 @@ export class CvJpStore {
 		this.draftRow = { ...this.draftRow, ...change };
 	}
 
-	async writeRun(write) {
+	// isEditorKept: the write is not the save of what is open (a badge made while a cell is
+	// typed, a token changed from its card): the editor stays as it is
+	async writeRun(write, { isEditorKept = false } = {}) {
 		// the editor may be another one when the answer comes (a click on the next cell saves this one)
 		const editorAtStart = this.editor;
 		this.status = 'submitting';
@@ -153,13 +253,20 @@ export class CvJpStore {
 			result = { code: -1, message: String(error?.message ?? error) };
 		}
 		if (result?.code === 0 || result === undefined) {
-			if (this.editor === editorAtStart) this.editorClose();
+			if (this.editor === editorAtStart && !isEditorKept) this.editorClose();
 			else this.status = 'idle';
 			return true;
 		}
 		this.status = 'error';
 		this.message = result?.message ?? 'the write failed';
 		return false;
+	}
+
+	// the text of a cell written at once, without its editor: a token of it changed from its card
+	// (a badge given another size, taken out)
+	cellTextWrite(service, instanceAsset, instanceData, cell, text) {
+		if (text === cell.raw) return Promise.resolve(true);
+		return this.writeRun(() => service.assetWrite(instanceAsset.key, cvDataSet(instanceData, ['valueByCell', cell.id], text), `the cell ${cell.id}`), { isEditorKept: true });
 	}
 
 	// this CV's own text of the cell: written only when it differs from what the cell says now
@@ -210,13 +317,24 @@ export class CvJpStore {
 			this.editorClose();
 			return Promise.resolve(true);
 		}
+		return this.rowWrite(service, profile, instanceAsset, instanceData, group, row, draft);
+	}
+
+	// one field of a row written at once, without its editor: a token of it changed from its card
+	rowFieldWrite(service, profile, instanceAsset, instanceData, group, row, field, text) {
+		if (!row || String(row[field] ?? '') === text) return Promise.resolve(true);
+		return this.rowWrite(service, profile, instanceAsset, instanceData, group, row, { year: row.year, month: row.month, text: row.text, note: row.note, [field]: text }, { isEditorKept: true });
+	}
+
+	// the fields of a row written where the row lives
+	rowWrite(service, profile, instanceAsset, instanceData, group, row, draft, option) {
 		if (row && !row.isExtra) {
 			let data = profile.assetDataGet(row.assetKey).data;
 			data = cvDataSet(data, [...row.keyPath, 'year'], Number(draft.year) || draft.year);
 			data = cvDataSet(data, [...row.keyPath, 'month'], Number(draft.month) || draft.month);
 			data = cvDataSet(data, row.textKeyPath, cvLeafValueBuild(draft.text, row.isTextList));
 			data = draft.note || row.note ? cvDataSet(data, row.noteKeyPath, draft.note) : data;
-			return this.writeRun(() => profile.assetWrite(row.assetKey, data, 'a row of a history'));
+			return this.writeRun(() => profile.assetWrite(row.assetKey, data, 'a row of a history'), option);
 		}
 		const listBefore = Array.isArray(instanceData?.rowExtraByGroup?.[group.id]) ? instanceData.rowExtraByGroup[group.id] : [];
 		const rowNext = {
@@ -227,7 +345,7 @@ export class CvJpStore {
 			...(draft.note ? { note: draft.note } : {}),
 		};
 		const listNext = row ? listBefore.map((one, index) => (index === row.extraIndex ? rowNext : one)) : [...listBefore, rowNext];
-		return this.writeRun(() => service.assetWrite(instanceAsset.key, cvDataSet(instanceData, ['rowExtraByGroup', group.id], listNext), 'a row of this CV'));
+		return this.writeRun(() => service.assetWrite(instanceAsset.key, cvDataSet(instanceData, ['rowExtraByGroup', group.id], listNext), 'a row of this CV'), option);
 	}
 
 	// a row of this CV goes; an entry of the profile only leaves this CV
@@ -244,6 +362,24 @@ export class CvJpStore {
 		const listBefore = Array.isArray(instanceData?.rowHiddenByGroup?.[group.id]) ? instanceData.rowHiddenByGroup[group.id] : [];
 		const listNext = listBefore.includes(row.id) ? listBefore.filter((id) => id !== row.id) : [...listBefore, row.id];
 		return this.writeRun(() => service.assetWrite(instanceAsset.key, cvDataSet(instanceData, ['rowHiddenByGroup', group.id], listNext), 'a row of the profile shown or left out'));
+	}
+
+	// ---------- the badges of the profile ----------
+
+	// a badge made at a path of the profile's partition, with a stand-in image (typed in a cell:
+	// /badge aws/dva/v1), and a badge's own data changed: its name, its image
+	badgeCreate(profile, partition, path) {
+		return this.writeRun(() => profile.assetCreate(cvBadgeCreateInput(partition, path)), { isEditorKept: true });
+	}
+
+	badgeWrite(profile, badge, change) {
+		const dataNext = { ...badge.data, ...change };
+		return this.writeRun(async () => {
+			const result = await profile.assetWrite(badge.key, dataNext, `the badge ${badge.path}`);
+			// its name is how the profile lists it too
+			if (result?.code === 0 && change.name !== undefined && change.name !== badge.name) await profile.assetMetaSet(badge.key, { name: change.name });
+			return result;
+		}, { isEditorKept: true });
 	}
 
 	// ---------- the order of the rows ----------

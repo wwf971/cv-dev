@@ -12,9 +12,11 @@ const TABLE_BELOW = 2;
 // px a part of a text takes under its last kept line: the padding and rule of its cell
 const TEXT_BELOW = 9;
 
-// a cell as a piece keeps it: what it says, nothing of where it comes from
+// a cell as a piece keeps it: what it says, nothing of where it comes from. raw: its text as
+// written, so that a page draws its tokens as the sheet does (a link, a badge); text: its plain
+// text, which also makes the piece another one when what a token reads has changed
 function cellPlain(cell) {
-	return { id: cell.id, text: cell.text, raw: '', missingList: [] };
+	return { id: cell.id, text: cell.text, raw: cell.raw ?? '', missingList: [] };
 }
 
 // the flow of a drawn CV (context.sheet: cvJpSheetBuild's)

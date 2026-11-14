@@ -5,8 +5,10 @@ import { cvEntryListResolve, cvTextExpand } from '../query/CvQuery.js';
 //   a template (kind template, /{partition}/template/{name})   the sections, and the text of every cell
 //   an instance (kind instance, /{partition}/instance/{name})  a template, a profile, and what differs from the template
 //
-// A text of a cell is literal words, or holds queries of the profile in {{ }}. An instance
-// overrides a cell with its own text, so both a hard-coded value and another query are one thing.
+// A text of a cell is literal words with tokens in it: queries of the profile in {{ }}, and
+// what every cell of react-doc's cell edit layer may hold (a link, a view of an object). An
+// instance overrides a cell with its own text, so a hard-coded value, another query and a
+// link are one thing.
 
 export const CV_KIND_TEMPLATE = 'template';
 export const CV_KIND_INSTANCE = 'instance';
@@ -134,9 +136,15 @@ export function cvJpCellRawGet(cellId, template, instance, section) {
 	return { raw: CV_JP_CELL_DEFAULT[cellId] ?? '', source: 'default' };
 }
 
+// a cell as it is drawn: its text as written (raw), where that text is said, and what it says:
+//   text          its plain text: the queries read, and, with context.cellTextGet (the cell of
+//                 react-doc's cell edit layer the sheet draws its cells with), every other token
+//                 as text too (a link as its label): what the pages print and what is compared
+//   missingList   the queries nothing answers; leaf, query: when the cell is one query
 export function cvJpCellGet(cellId, template, instance, info, context, section) {
 	const { raw, source } = cvJpCellRawGet(cellId, template, instance, section);
-	return { id: cellId, raw, source, isOverride: source === 'instance', ...cvTextExpand(info, raw, context) };
+	const expanded = cvTextExpand(info, raw, context);
+	return { id: cellId, raw, source, isOverride: source === 'instance', ...expanded, text: context?.cellTextGet ? context.cellTextGet(raw) : expanded.text };
 }
 
 // the fields of a row of a history, in the order Tab goes through them

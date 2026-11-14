@@ -283,13 +283,16 @@ export function cvQuerySlashItemListGet(info, param, context = {}, limit = 40) {
 
 // ---------- text with queries ----------
 
-// a text of a cell: literal, or holding queries in {{ }}: "{{birth/month}}月{{birth/day}}日"
+// a text of a cell: literal, or holding queries in {{ }}: "{{birth/month}}月{{birth/day}}日". a
+// brace token whose body starts with a sigil ({{@frontend:…}}: a view of an object, a token
+// kind of react-doc's cell edit layer) is not a query and stays text here
 export function cvTextParse(text) {
 	const partList = [];
 	const pattern = /\{\{([^{}]*)\}\}/g;
 	const source = String(text ?? '');
 	let indexLast = 0;
 	for (const match of source.matchAll(pattern)) {
+		if (CV_TOKEN_SIGIL_REGEX.test(match[1].trim())) continue;
 		if (match.index > indexLast) partList.push({ kind: 'text', text: source.slice(indexLast, match.index) });
 		partList.push({ kind: 'query', query: match[1].trim() });
 		indexLast = match.index + match[0].length;
@@ -297,6 +300,10 @@ export function cvTextParse(text) {
 	if (indexLast < source.length) partList.push({ kind: 'text', text: source.slice(indexLast) });
 	return partList;
 }
+
+// what a query never starts with: the sigil of a token of another kind ("@" an object,
+// "/" a data item of the profile named by its path: a badge, {{/badge/aws/saa}})
+const CV_TOKEN_SIGIL_REGEX = /^[@#!$%^&*~/]/;
 
 // { text, partList, missingList, leaf }: leaf when the whole text is one query read from one leaf
 export function cvTextExpand(info, text, context = {}) {

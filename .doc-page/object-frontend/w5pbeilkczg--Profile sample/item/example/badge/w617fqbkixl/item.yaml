@@ -1,0 +1,24 @@
+itemId: w617fqbkixl
+name: ""
+lang: yaml
+contentType: text/yaml
+fileExt: yaml
+owner:
+  ref: frontend:w5pbeilkczg
+versionIdHead: w617fqbjuhg
+isDeleted: false
+isLocked: false
+timeCreated: 20261114_00272447+09
+versionList:
+  - versionId: w617fqbjuhg
+    versionIdPrevList: []
+    time: 20261114_00272447+09
+    note: the badge of an AWS certification
+    size: 53294
+    hash: bef264e7397952e14352cef6c4c8ce08cbd21eb6
+    isLocked: false
+    dependencyList: []
+eventList:
+  - eventType: create
+    time: 20261114_00272447+09
+    versionId: w617fqbjuhg

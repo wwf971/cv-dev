@@ -1,0 +1,542 @@
+/* The mode Information of a profile (CvProfileInfo.jsx): one tight panel, its head, its tools,
+   and a list of rows no taller than the height it is given (param.heightMax), scrolling inside.
+   Rows are a line high; what is said twice elsewhere on the page (a path, a count) is small. */
+.doc-cv-profile {
+	display: flex;
+	flex-direction: column;
+	margin: 0.8rem 0;
+	font-size: 0.8rem;
+	line-height: 1.35;
+	color: var(--color-fd-foreground);
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.5rem;
+	overflow: hidden;
+}
+
+.doc-cv-profile-muted {
+	color: var(--color-fd-muted-foreground);
+}
+
+.doc-cv-profile-space {
+	flex: 1;
+}
+
+/* ---------- the head: the tabs, the partition ---------- */
+.doc-cv-profile-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.3rem 0.5rem 0;
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+.doc-cv-profile-tab-list {
+	display: flex;
+	gap: 0.1rem;
+}
+
+/* the tab chosen is marked by a line and its colour, never by a heavier font: its width stays */
+.doc-cv-profile-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.25rem 0.5rem 0.35rem;
+	font: inherit;
+	font-weight: 500;
+	color: var(--color-fd-muted-foreground);
+	background: transparent;
+	border: none;
+	border-bottom: 2px solid transparent;
+	margin-bottom: -1px;
+	cursor: pointer;
+}
+
+.doc-cv-profile-tab:hover {
+	color: var(--color-fd-foreground);
+}
+
+.doc-cv-profile-tab[aria-selected="true"] {
+	color: var(--color-fd-foreground);
+	border-bottom-color: var(--color-fd-foreground);
+}
+
+.doc-cv-profile-count {
+	font-size: 0.85em;
+	font-weight: 400;
+	color: var(--color-fd-muted-foreground);
+	font-variant-numeric: tabular-nums;
+}
+
+.doc-cv-profile-select {
+	padding: 0.1rem 0.3rem;
+	font: inherit;
+	color: inherit;
+	background: var(--color-fd-background);
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.3rem;
+}
+
+/* ---------- the tools: add, find, open all ---------- */
+.doc-cv-profile-tool {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	min-height: 2rem;
+	padding: 0.3rem 0.5rem;
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+.doc-cv-profile-find {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	gap: 0.3rem;
+	min-width: 8rem;
+	padding: 0 0.4rem;
+	color: var(--color-fd-muted-foreground);
+	background: var(--color-fd-background);
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.3rem;
+}
+
+.doc-cv-profile-find:focus-within {
+	border-color: var(--color-fd-muted-foreground);
+}
+
+.doc-cv-profile-find input {
+	flex: 1;
+	min-width: 0;
+	padding: 0.2rem 0;
+	font: inherit;
+	color: var(--color-fd-foreground);
+	background: transparent;
+	border: none;
+	outline: none;
+}
+
+.doc-cv-profile-result {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.35rem;
+	padding: 0.25rem 0.6rem;
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+.doc-cv-profile-result-value {
+	font-weight: 500;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.doc-cv-profile-problem {
+	margin: 0;
+	padding: 0.25rem 0.6rem;
+	color: var(--color-fd-error, #c0392b);
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+/* the words typed to find a value, where the rows say them (cv-profile-highlight.js) */
+::highlight(cv-profile-find) {
+	color: inherit;
+	background-color: rgb(250 204 21 / 45%);
+}
+
+/* ---------- the rows ---------- */
+.doc-cv-profile-body {
+	overflow: auto;
+}
+
+.doc-cv-profile-empty {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.6rem;
+}
+
+/* name | value | actions: the names take a share of the width, so the values start in one column
+   at every depth; a badge row has its image first */
+.doc-cv-profile-row {
+	display: grid;
+	grid-template-columns: minmax(7.5rem, 34%) minmax(0, 1fr) auto;
+	align-items: center;
+	column-gap: 0.5rem;
+	min-height: 1.65rem;
+	padding: 0 0.3rem 0 0.5rem;
+}
+
+.doc-cv-profile-row[data-kind="badge"],
+.doc-cv-profile-badge-list .doc-cv-profile-row[data-kind="draft"] {
+	grid-template-columns: 1.6rem minmax(7.5rem, 30%) minmax(0, 1fr) auto;
+}
+
+.doc-cv-profile-row + .doc-cv-profile-row {
+	border-top: 1px solid color-mix(in srgb, var(--color-fd-border) 55%, transparent);
+}
+
+.doc-cv-profile-row:hover,
+.doc-cv-profile-row:focus-within {
+	background: color-mix(in srgb, var(--color-fd-muted, #8881) 55%, transparent);
+}
+
+.doc-cv-profile-row[data-kind="folder"] {
+	cursor: pointer;
+	user-select: none;
+}
+
+.doc-cv-profile-row[data-kind="folder"]:focus-visible {
+	outline: 2px solid var(--color-fd-muted-foreground);
+	outline-offset: -2px;
+}
+
+.doc-cv-profile-row[data-kind="draft"] {
+	background: color-mix(in srgb, var(--color-fd-muted, #8881) 80%, transparent);
+}
+
+.doc-cv-profile-name {
+	display: flex;
+	align-items: center;
+	gap: 0.3rem;
+	min-width: 0;
+}
+
+.doc-cv-profile-name-text {
+	overflow: hidden;
+	font-weight: 500;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.doc-cv-profile-row[data-kind="leaf"] .doc-cv-profile-name-text {
+	font-weight: 400;
+	color: var(--color-fd-muted-foreground);
+}
+
+.doc-cv-profile-chevron,
+.doc-cv-profile-chevron-space {
+	flex: 0 0 12px;
+	width: 12px;
+	color: var(--color-fd-muted-foreground);
+}
+
+.doc-cv-profile-chevron {
+	transition: transform 0.12s ease;
+}
+
+.doc-cv-profile-chevron[data-open] {
+	transform: rotate(90deg);
+}
+
+.doc-cv-profile-value {
+	min-width: 0;
+	padding: 0.2rem 0;
+	overflow-wrap: anywhere;
+}
+
+/* a row being typed is as high as the others */
+.doc-cv-profile-row[data-kind="draft"] .doc-cv-profile-value {
+	padding: 0.1rem 0;
+}
+
+.doc-cv-profile-text {
+	white-space: pre-wrap;
+}
+
+/* what a closed folder holds: one line, cut where the row ends */
+.doc-cv-profile-preview {
+	overflow: hidden;
+	color: var(--color-fd-muted-foreground);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.doc-cv-profile-thumb {
+	display: block;
+	width: auto;
+	/* no taller than a line of the list: a row holding an image is as high as the others */
+	height: 1.25rem;
+	margin: 0;
+	border-radius: 2px;
+}
+
+/* what can be done with a row shows when the row is pointed at or holds the focus; its room is
+   always kept, so a row is as wide and as high either way */
+.doc-cv-profile-action-list {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.1rem;
+	min-width: 1.5rem;
+	opacity: 0;
+}
+
+.doc-cv-profile-row:hover .doc-cv-profile-action-list,
+.doc-cv-profile-row:focus-within .doc-cv-profile-action-list,
+.doc-cv-profile-action-list[data-shown] {
+	opacity: 1;
+}
+
+.doc-cv-profile-action-list .doc-button {
+	padding-top: 0.05rem;
+	padding-bottom: 0.05rem;
+}
+
+.doc-cv-profile-icon-button {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 1.4rem;
+	height: 1.4rem;
+	padding: 0;
+	color: var(--color-fd-muted-foreground);
+	background: transparent;
+	border: none;
+	border-radius: 0.3rem;
+	cursor: pointer;
+}
+
+.doc-cv-profile-icon-button:hover:not(:disabled) {
+	color: var(--color-fd-foreground);
+	background: color-mix(in srgb, var(--color-fd-border) 70%, transparent);
+}
+
+.doc-cv-profile-icon-button[data-primary] {
+	color: var(--color-fd-foreground);
+}
+
+.doc-cv-profile-icon-button:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+/* a new value, a new badge: typed in a row of the list */
+.doc-cv-profile-input {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+	padding: 0.1rem 0.35rem;
+	font: inherit;
+	color: inherit;
+	background: var(--color-fd-background);
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.25rem;
+	outline: none;
+}
+
+.doc-cv-profile-input:focus {
+	border-color: var(--color-fd-muted-foreground);
+}
+
+/* a level of the tree that comes in any order with another */
+.doc-cv-profile-order-free {
+	display: inline-flex;
+	flex: 0 0 auto;
+	color: var(--color-fd-muted-foreground);
+	opacity: 0.8;
+}
+
+/* ---------- the choice of a view ---------- */
+.doc-cv-profile-view {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.doc-cv-profile-segment-list {
+	display: inline-flex;
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.3rem;
+	overflow: hidden;
+}
+
+/* the view chosen is marked by its ground, never by a heavier font: its width stays */
+.doc-cv-profile-segment {
+	padding: 0.15rem 0.5rem;
+	font: inherit;
+	color: var(--color-fd-muted-foreground);
+	background: transparent;
+	border: none;
+	cursor: pointer;
+}
+
+.doc-cv-profile-segment + .doc-cv-profile-segment {
+	border-left: 1px solid var(--color-fd-border);
+}
+
+.doc-cv-profile-segment:hover {
+	color: var(--color-fd-foreground);
+}
+
+.doc-cv-profile-segment[aria-pressed="true"] {
+	color: var(--color-fd-foreground);
+	background: color-mix(in srgb, var(--color-fd-border) 70%, transparent);
+}
+
+.doc-cv-profile-icon-button[data-hidden] {
+	visibility: hidden;
+}
+
+/* ---------- the explorer: the path walked, the items next to it ---------- */
+.doc-cv-profile-path {
+	display: flex;
+	align-items: center;
+	gap: 0.3rem;
+	min-height: 1.8rem;
+	padding: 0.1rem 0.6rem 0.1rem 0.3rem;
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+.doc-cv-profile-crumb-list {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	min-width: 0;
+}
+
+.doc-cv-profile-crumb-step {
+	display: inline-flex;
+	align-items: center;
+}
+
+.doc-cv-profile-crumb-mark {
+	flex: 0 0 auto;
+	color: var(--color-fd-muted-foreground);
+}
+
+.doc-cv-profile-crumb {
+	display: inline-flex;
+	align-items: center;
+	min-height: 1.4rem;
+	padding: 0 0.3rem;
+	font: inherit;
+	color: var(--color-fd-muted-foreground);
+	background: transparent;
+	border: none;
+	border-radius: 0.3rem;
+	cursor: pointer;
+}
+
+.doc-cv-profile-crumb:hover {
+	color: var(--color-fd-foreground);
+	background: color-mix(in srgb, var(--color-fd-border) 70%, transparent);
+}
+
+/* where the reader is: the last crumb */
+.doc-cv-profile-crumb[aria-current="page"] {
+	font-weight: 500;
+	color: var(--color-fd-foreground);
+}
+
+.doc-cv-profile-item-icon {
+	display: inline-flex;
+	flex: 0 0 14px;
+	width: 14px;
+	color: var(--color-fd-muted-foreground);
+}
+
+.doc-cv-profile-enter-mark {
+	color: var(--color-fd-muted-foreground);
+	opacity: 0.6;
+}
+
+/* segments in any order, one item: its members side by side in one outline, each a way forward */
+.doc-cv-profile-group {
+	display: inline-flex;
+	align-items: center;
+	min-width: 0;
+	padding-left: 0.3rem;
+	border: 1px solid var(--color-fd-border);
+	border-radius: 999px;
+	overflow: hidden;
+}
+
+.doc-cv-profile-group-mark {
+	flex: 0 0 auto;
+	margin-right: 0.15rem;
+	color: var(--color-fd-muted-foreground);
+}
+
+.doc-cv-profile-group-member {
+	padding: 0 0.4rem;
+	font: inherit;
+	font-weight: 500;
+	line-height: 1.3;
+	color: inherit;
+	white-space: nowrap;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+}
+
+.doc-cv-profile-group-member + .doc-cv-profile-group-member {
+	border-left: 1px solid var(--color-fd-border);
+}
+
+.doc-cv-profile-group-member:hover {
+	background: color-mix(in srgb, var(--color-fd-border) 80%, transparent);
+}
+
+.doc-cv-profile-row[data-kind="leaf"] .doc-cv-profile-group-member {
+	font-weight: 400;
+	color: var(--color-fd-muted-foreground);
+}
+
+.doc-cv-profile-row[data-kind="leaf"] .doc-cv-profile-group-member:hover {
+	color: var(--color-fd-foreground);
+}
+
+/* a value found: the folder it lies in, then its name; a click goes to the folder */
+.doc-cv-profile-found {
+	display: inline-flex;
+	min-width: 0;
+	padding: 0;
+	overflow: hidden;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+	white-space: nowrap;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+}
+
+.doc-cv-profile-found:hover {
+	text-decoration: underline;
+}
+
+.doc-cv-profile-found-folder {
+	overflow: hidden;
+	color: var(--color-fd-muted-foreground);
+	text-overflow: ellipsis;
+}
+
+/* ---------- the badges ---------- */
+.doc-cv-profile-badge-image {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 1.5rem;
+}
+
+.doc-cv-profile-badge-image img {
+	display: block;
+	width: auto;
+	max-width: 100%;
+	height: 1.4rem;
+	margin: 0;
+}
+
+.doc-cv-profile-row[data-kind="badge"] .doc-cv-profile-name-text {
+	font-weight: 400;
+}
+
+.doc-cv-profile-badge-make {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.3rem;
+}

@@ -1,0 +1,8 @@
+# The playground documents of the package's doc page (react-doc: main/doc_page_impl_test.md): each
+# lives at `doc`, ignored by git, written from `template`, which is what git keeps.
+playgroundList:
+  - id: cv
+    title: The CV playground
+    description: A profile and a CV of the partition playground, to edit, break and start over, without touching the example.
+    doc: ~cv/doc/cv.playground.md
+    template: ./playground/cv.md

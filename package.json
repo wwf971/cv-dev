@@ -5,6 +5,6 @@
   "type": "module",
   "description": "A react-doc package (doc-package.yaml is its config). Not an npm package; this file marks the folder's .js modules as ES modules for node (tests).",
   "scripts": {
-    "test": "node --import ./test/react-doc-resolve.js --test comp-mdx/query/CvQuery.test.js comp-mdx/jp/CvJpData.test.js"
+    "test": "node --import ./test/react-doc-resolve.js --test comp-mdx/query/CvQuery.test.js comp-mdx/query/CvBadge.test.js comp-mdx/query/CvInfoTree.test.js comp-mdx/query/CvInfoExplore.test.js comp-mdx/jp/CvJpData.test.js"
   }
 }

@@ -228,3 +228,56 @@ test('/query lists what is below the folder typed, a segment at a time, with the
 	assert.deepEqual(label('name/last/jp/katakana'), ['query:name/last/jp/katakana=ヤマダ']);
 	assert.match(label('edu/bachelor/end/')[0], /value:year=2020/);
 });
+
+test('a brace token of another kind is not a query', () => {
+	// {{@…}} is a token of react-doc's cell edit layer (a view of an object): text here
+	const expanded = cvTextExpand(info, '{{name/jp/first}} {{@frontend:w5j7#/book/dune}}', {});
+	assert.equal(expanded.text, '太郎 {{@frontend:w5j7#/book/dune}}');
+	assert.deepEqual(expanded.missingList, []);
+});
+
+test('a profile seen from outside: an inner path is a partition and a query', async () => {
+	const { cvProfileInnerComplete, cvProfileInnerResolve, cvProfileInnerSplit } = await import('./CvProfile.js');
+	// a profile as the api of a mode gives it: its data items of the kind info, by partition
+	const dataByKey = {
+		name: { '{jp/first/}': { kanji: '太郎', hiragana: 'たろう' }, '{en, first}': 'Taro' },
+		birth: { year: 1998, month: 8, day: 17 },
+		photo: 'data:image/png;base64,AAAA',
+		real: { '{jp/first/}': { kanji: '次郎' } },
+	};
+	const assetList = [
+		{ key: 'name', kind: 'info', status: 'found', pathList: ['/example/info/name'] },
+		{ key: 'birth', kind: 'info', status: 'found', pathList: ['/example/info/birth'] },
+		{ key: 'photo', kind: 'info', status: 'found', pathList: ['/example/info/photo'] },
+		{ key: 'real', kind: 'info', status: 'found', pathList: ['/real/info/name'] },
+	];
+	const profile = {
+		partitionList: [{ id: 'example', label: 'Example' }, { id: 'real', label: 'My data', isGitIgnored: true }],
+		assetList: () => assetList,
+		assetDataGet: (key) => ({ status: 'done', data: dataByKey[key] }),
+	};
+	assert.deepEqual(cvProfileInnerSplit(profile, 'example/name/jp/first'), { partition: 'example', query: 'name/jp/first' });
+	assert.deepEqual(cvProfileInnerSplit(profile, 'name/jp/first'), { partition: '', query: 'name/jp/first' });
+
+	const first = cvProfileInnerResolve(profile, 'example/name/first/jp');
+	assert.deepEqual([first.status, first.path, first.label, first.text, first.kind], ['found', 'example/name/first/jp', 'name/first/jp', '太郎', 'value']);
+	// each partition is its own profile
+	assert.equal(cvProfileInnerResolve(profile, 'real/name/jp/first').text, '次郎');
+	assert.equal(cvProfileInnerResolve(profile, 'example/name/jp/none').status, 'unknown');
+	// an image is not a text to draw in a line
+	assert.equal(cvProfileInnerResolve(profile, 'example/photo').text, undefined);
+
+	// the partitions first, then what /query lists inside one
+	assert.deepEqual(cvProfileInnerComplete(profile, '').itemList.map((item) => [item.kind, item.path]), [['dir', 'example/'], ['dir', 'real/']]);
+	assert.deepEqual(cvProfileInnerComplete(profile, 'ex').itemList.map((item) => item.path), ['example/']);
+	const top = cvProfileInnerComplete(profile, 'example/').itemList;
+	assert.ok(top.some((item) => item.kind === 'dir' && item.path === 'example/name/'));
+	assert.ok(top.some((item) => item.kind === 'dir' && item.path === 'example/birth/'));
+	const below = cvProfileInnerComplete(profile, 'example/name/jp/first/').itemList;
+	assert.deepEqual(below.map((item) => [item.kind, item.path, item.detail]), [['item', 'example/name/jp/first/kanji', '太郎'], ['item', 'example/name/jp/first/hiragana', 'たろう']]);
+
+	// while the data of an item is on its way, the answer says so
+	const profileLoading = { ...profile, assetDataGet: () => ({ status: 'loading' }) };
+	assert.equal(cvProfileInnerResolve(profileLoading, 'example/name/jp/first').status, 'loading');
+	assert.equal(cvProfileInnerComplete(profileLoading, 'example/name/').status, 'loading');
+});

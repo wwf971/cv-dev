@@ -116,18 +116,106 @@ A text of a CV's cell is words, with queries in double braces wherever wanted. A
 東京都千代田区
 ```
 
-While a cell is edited, the query at the caret completes: the segments that can follow what is typed (in every order a group allows), with how many values lie below each, and the values themselves, each with the query reaching it the way it was typed.
+A query in braces is the CV's kind of **token** in react-doc's cell edit layer, beside the kinds every cell has, a link and a view of an object ([The cells](cv-jp.md#the-cells)); a brace token starting with a sigil (`{{@…}}`) is one of those and not a query.
+
+While a cell is edited, the query at the caret completes once `{{` is typed (or `/query`): the segments that can follow what is typed (in every order a group allows), with how many values lie below each, and the values themselves, each with the query reaching it the way it was typed.
+
+## From outside a CV
+
+A CV reads the profile it names, in its own partition. Anything else of the page names a value of a profile by a **reference**: the profile, `#`, the partition and the query.
+
+```text
+frontend:w5pbeilkczg#example/name/jp/first        the value 太郎, drawn as that text in a line
+```
+
+This is react-doc's convention for naming something inside a frontend object (react-doc: `main/doc_page_impl_obj_frontend.md#things-inside-an-object-inner-paths`), with one difference from most objects: what is inside a profile is its **values**, not its data items, since a value is what a reader looks for and how the data is cut into items is nobody else's business. So the profile says what an inner path is itself: its mode Information exposes `objectInner` (`cv-comp.js`), two functions of `query/CvProfile.js`:
+
+```text
+cvProfileInnerResolve(profile, 'example/name/jp/first')   what the path names: found, its text; else why not
+cvProfileInnerComplete(profile, 'example/name/')          the candidates: the partitions holding information,
+                                                          then what /query lists in the partition typed
+```
+
+With them, `/object` in any paragraph or cell walks Profile → the profile → `example/` → `name/` → `jp/` … and writes the reference, and the reference is drawn wherever it stands. A profile whose items have no partition is walked from the query directly.
+
+## The mode Information
+
+The mode **Information** (`CvProfileInfo`) of a profile is one panel showing a partition of it, never taller than it is told to be. Its values are shown in one of two views:
+
+```text
+[ Information 57 ][ Badges 12 ]                       Partition [ Playground ] kept out of git
+[+ Add a value]  View [ Explorer | Tree ]  [ find a value, or try a query                    ]
+[↑]  ⌂ › name                                                                        8 values
+▭ ( ⇄ jp | last )   3   山田 · やまだ · Yamada                                              ›
+▭ ( ⇄ jp | first )  3   太郎 · たろう · Taro                                                ›
+  ( ⇄ en | last )       Yamada                                                 [copy][bin]
+  ( ⇄ en | first )      Taro                                                   [copy][bin]
+```
+
+### The explorer
+
+The **explorer** (the default) walks the values as a file explorer walks folders: a **path bar**, and under it what lies next to the path walked. A click on a folder goes into it; a value is read where it lies. The bar goes back: up a level, to the top, to any folder on the way.
+
+What lies next is read off the path patterns, not off the canonical paths, so **segments that come in any order are one item**, as they are written: the unordered group `{jp/last/}` is one item holding `jp` and `last`, and each of them is a way forward.
+
+```text
+at name                                   jp of the first item          last of the first item
+  ( ⇄ jp | last )   3                      ⌂ › name › jp                 ⌂ › name › last
+  ( ⇄ jp | first )  3                        ▭ last    3                   ▭ jp   3
+  ( ⇄ en | last )      Yamada                ▭ first   3                     en      Yamada
+  ( ⇄ en | first )     Taro
+```
+
+- **A member chosen is walked first**, and what was the group is then a plain step: after `last`, the item is `jp`. The path bar says the order the reader took, which is one of the orders a query may have (`name/last/jp/kanji`).
+- **The row of a group** (anywhere but on a member) goes past all of it, its members in the order written: `name/jp/last`.
+- **A group ending its path** (`{en, last}`) is an item holding the value itself, shown and changed there; its members still lead on (`en`: to `name/en`, where `last` is the value).
+- **A choice** (`[address, addr]`, other names of one thing) is walked by its first name.
+
+### The tree
+
+The **tree** draws every level under the one above it, by the canonical paths: `name/jp/last/kanji` is under `name`, `jp`, `last`. A click opens a folder, a level at a time; a closed folder says its first values and how many it holds. A tree has one order, so a level that comes in any order with another one is **marked ⇄** (its tooltip names the other): `jp` and `last` are two levels here and one step of a path.
+
+### In both
+
+- **Its height is limited.** The list scrolls inside the panel past `param.heightMax` pixels (360). The explorer is as tall as its top level needs, whatever folder it shows, so walking moves nothing below it.
+- **The order is the order of the data**, since the first value below a path is what a query of that path answers with.
+- **It stays where it was.** The tab, the view, the path walked, the folders opened, the words typed and how far the list is scrolled are the block's, not the mount's (react-doc: `main/doc_page_impl_mdx_comp_state.md#stores-kept-across-mounts`): the document entering or leaving edit mode mounts the panel again, and it is found as it was left.
+- **One field finds and tries.** Words typed leave the values whose path or text holds them all, **each word marked where a row says it** (in a name, a path, a value, also one that can be edited; `cv-profile-highlight.js`, ranges given to the browser's highlight registry, so no row is drawn differently for it). `/` parts words as a space does, so a query finds what it names in whatever order its segments are. The tree keeps their folders, open; the explorer lists them with the folder each lies in, a click on which goes there. A query that reads something also says what a CV would get and how (`{{name/first/jp/katakana}} reads タロウ · written in another script of the value stored`), and the values it reads from stay listed.
+- **A row is where a value is changed**, while the document is edited: its text in place, **Copy** (the `{{query}}` a CV writes), **Replace…** for an image, a remove button. They show when the row is pointed at. The tooltip of a value's name is its path pattern.
+- **Up and Down go from a value being edited to the one above or below**, as in a sheet of cells, and the value left is saved when it was changed (Enter saves too, Esc puts it back). In a value of several lines the arrows first move inside it, and leave from its first or last line. The names of the badges are walked the same way.
+- **A value is added where it will be.** **Add a value** at the top of the panel adds where the explorer is (in the tree: at the top level, and the **+** of a folder adds inside it). It opens a row at that place, the first of its folder: its name (one segment, or several, `jp/floor`), then its value; Enter goes on and adds, Esc gives up. It goes to the place its path names: below the deepest mapping or item a start of the path names, the rest of the path becoming keys; else a new item named by its first segment. A path that already holds a value is refused, since its own row changes it.
+- **The second tab is the badges** of the partition ([Badges](cv-badge.md#in-the-profile)).
+
+```yaml
+# in a document: the block of the profile, its mode Information
+param:
+  partition: playground    # the partition shown first
+  heightMax: 480           # px; the list scrolls past it
+  view: tree               # the view shown first: explorer (the default) | tree
+```
 
 ## Who writes it
 
-Everything goes through the object's api: the mode **Information** (`CvProfileInfo`) shows every value with its pattern, edits a value in place, removes one, and adds one at the place a path names (the value at that path; else below the deepest mapping or item a start of the path names, the rest of the path becoming keys; else a new item named by its first segment). The Japanese-style CV can write a value of the profile from its cell. Agents use the standard apis (react-doc: `main/doc_page_impl_obj_frontend.md#in-the-object-registry`).
+Everything goes through the object's api: the mode Information above changes, removes and adds values. The Japanese-style CV can write a value of the profile from its cell. Agents use the standard apis (react-doc: `main/doc_page_impl_obj_frontend.md#in-the-object-registry`).
 
 ## Files
 
 ```text
 comp-mdx/query/CvQuery.js        the information of a profile (leaves, mappings, entries, the index), queries, completion,
                                  entries, where a value goes
-comp-mdx/query/CvProfile.js      a profile read through its object's api, partitions
+comp-mdx/query/CvProfile.js      a profile read through its object's api, partitions; a profile from outside: what an
+                                 inner path names and completes
 comp-mdx/query/CvText.js         scripts, eras, ages
-comp-mdx/query/CvQuery.test.js   npm test; test/react-doc-resolve.js finds react-doc's asset-path for node
+comp-mdx/query/CvInfoExplore.js  the values walked: what lies next to a path, a group one item; what words find; pure
+comp-mdx/query/CvInfoTree.js     the values as a tree: folders by shared paths, levels in any order, the rows drawn; pure
+comp-mdx/query/CvQuery.test.js, CvInfoExplore.test.js, CvInfoTree.test.js   npm test; test/react-doc-resolve.js finds
+                                 react-doc's asset-path for node
+comp-mdx/profile/CvProfileInfo.jsx     the mode Information: its panel, tabs, tools, the choice of a view
+comp-mdx/profile/CvProfileExplore.jsx  the explorer: its path bar, its items, a group with its members
+comp-mdx/profile/CvProfileTree.jsx     the tree: its folders, the mark of a level in any order
+comp-mdx/profile/CvProfileRow.jsx      the rows both views share: a value, a value being added; the arrows between values
+comp-mdx/profile/cv-profile-highlight.js  the words found, marked in the rows
+comp-mdx/profile/CvProfileBadgeList.jsx  the tab of the badges
+comp-mdx/profile/CvProfileStore.js     what the panel shows and its writes into the profile
+comp-mdx/profile/CvProfile.css
 ```

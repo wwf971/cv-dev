@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import { observer } from 'mobx-react-lite';
 import { GripVertical, Plus } from 'lucide-react';
-import { EditSourceSurface } from '@wwf971/react-doc';
+import { CellEdit, CellValue } from '@wwf971/react-doc';
 import { cvYearEraGet } from '../query/CvText.js';
 import { CV_JP_ROW_FIELD_LIST, cvJpGenderIs } from './CvJpData.js';
 import './CvJp.css';
@@ -12,13 +12,18 @@ import './CvJp.css';
 // draw them read-only, a part at a time (CV_JP_STORE_READ). Each says where it may be cut
 // (data-page-break, data-page-text), which only pagination reads.
 
-// what the cells and rows need of the sheet while editing: the slash mode of their surfaces and
-// the writes, bound to the CV drawn
+// what the cells and rows need of the sheet: the cell of react-doc's cell edit layer its texts
+// are drawn and typed with (the tokens of a text: a query of the profile, a link, a view of an
+// object; react-doc: main/doc_page_impl_edit_cell.md), and the writes, bound to the CV drawn
 export const CvJpEditContext = createContext(null);
 
 // a surface typed in place: in the flow, as wide as the cell was (a line break makes it taller), or
 // floating over a piece inside a line (a year, a month), which keeps its box
-export function CvJpSurface({ text, width, offset, isFloat = false, anchorRef, ariaLabel, isFocusedInitial = true, slash, onTextChange, onCancel, onSubmit }) {
+//   cell   the cell of the sheet (CvJpEditContext): its surface offers the slash mode of its
+//          token kinds; absent (a field of a row): plain text
+//   textVersion, onSelectionChange   a text set by code (a selected part made a value of the
+//          profile), and what is selected in it
+export function CvJpSurface({ text, textVersion = 0, width, offset, isFloat = false, anchorRef, ariaLabel, isFocusedInitial = true, cell, onTextChange, onSelectionChange, onCancel, onSubmit }) {
 	return (
 		<span
 			ref={anchorRef}
@@ -27,15 +32,14 @@ export function CvJpSurface({ text, width, offset, isFloat = false, anchorRef, a
 				? { minWidth: width ? `${Math.ceil(width)}px` : undefined, top: `${offset?.top ?? 0}px`, left: `${offset?.left ?? 0}px` }
 				: { width: width ? `${width}px` : '100%' }}
 		>
-			<EditSourceSurface
-				tag="div"
-				kind="plain"
+			<CellEdit
+				cell={cell}
 				text={text}
-				slash={slash}
+				textVersion={textVersion}
 				isFocusedInitial={isFocusedInitial}
-				isTabInserted={false}
 				ariaLabel={ariaLabel}
 				onTextChange={onTextChange}
+				onSelectionChange={onSelectionChange}
 				onCancelRequest={onCancel}
 				onSubmitRequest={onSubmit}
 			/>
@@ -48,18 +52,20 @@ const CV_JP_SURFACE_WIDTH_MIN = 160;
 
 // one piece of text a click opens in place; the box it fills stays the same in both modes
 //   isMultiline   Enter is a line break (a paragraph); elsewhere Enter saves and Shift+Enter breaks
-export const CvJpCell = observer(function CvJpCell({ cell, store, as: Tag = 'span', className = '', isMultiline = false, children, ...rest }) {
+//   isImage       the cell is an image (the photo): a click opens its card only, and the cell stays
+//                 as drawn: there is no text to type in it
+export const CvJpCell = observer(function CvJpCell({ cell, store, as: Tag = 'span', className = '', isMultiline = false, isImage = false, children, ...rest }) {
 	const edit = useContext(CvJpEditContext);
 	const isMissing = cell.missingList.length > 0;
 	const isOpen = store.editor?.kind === 'cell' && store.editor.id === cell.id && !store.editor.isOffSheet;
 	// a piece inside a line, or a cell too narrow for a query to be read in it (a name, a day):
 	// the surface floats over it instead of wrapping into a tall column
-	const isFloat = isOpen && (Tag === 'span' || (store.editor.width ?? 0) < CV_JP_SURFACE_WIDTH_MIN);
+	const isFloat = isOpen && !isImage && (Tag === 'span' || (store.editor.width ?? 0) < CV_JP_SURFACE_WIDTH_MIN);
 	const onClick = store.isEditing && !isOpen ? (event) => {
 		event.stopPropagation();
-		store.cellOpen(cell, event.currentTarget, cell.leaf?.value ?? '', { isMultiline });
+		store.cellOpen(cell, event.currentTarget, cell.leaf?.value ?? '', { isMultiline, isImage });
 	} : undefined;
-	const onKeyDown = isOpen ? (event) => {
+	const onKeyDown = isOpen && !isImage ? (event) => {
 		// the surface and its slash menu take their keys first
 		if (event.defaultPrevented || event.nativeEvent?.isComposing) return;
 		if (event.key === 'Enter' && !event.shiftKey && !isMultiline) {
@@ -77,22 +83,24 @@ export const CvJpCell = observer(function CvJpCell({ cell, store, as: Tag = 'spa
 			data-float={isOpen && isFloat ? '' : undefined}
 			data-cv-jp-editor={isOpen ? '' : undefined}
 			data-missing={store.isEditing && isMissing && !isOpen ? '' : undefined}
-			title={store.isEditing && !isOpen ? (isMissing ? `nothing holds ${cell.missingList.join(', ')}` : cell.raw) : undefined}
+			title={store.isEditing && !isOpen ? (isImage ? 'Choose the photo' : isMissing ? `nothing holds ${cell.missingList.join(', ')}` : cell.raw) : undefined}
 			onClick={onClick}
 			onKeyDown={onKeyDown}
 		>
-			{!isOpen ? (children ?? cell.text) : (
+			{!isOpen || isImage ? (children ?? <CvJpCellText cell={cell} store={store} />) : (
 				<>
-					{isFloat ? <span className="doc-cv-jp-cell-hold" aria-hidden="true">{children ?? cell.text}</span> : null}
+					{isFloat ? <span className="doc-cv-jp-cell-hold" aria-hidden="true">{children ?? <CvJpCellText cell={cell} store={CV_JP_STORE_READ} />}</span> : null}
 					<CvJpSurface
 						key={cell.id}
 						text={store.draft}
+						textVersion={store.draftVersion}
+						onSelectionChange={store.selectionSet}
 						width={store.editor.width}
 						offset={store.editor.offset}
 						isFloat={isFloat}
 						anchorRef={isFloat ? store.anchorSet : undefined}
 						ariaLabel={`The text of the cell ${cell.id}`}
-						slash={edit?.slash}
+						cell={edit?.cell}
 						onTextChange={store.draftSet}
 						onCancel={store.editorClose}
 						onSubmit={() => edit?.cellSave()}
@@ -100,6 +108,41 @@ export const CvJpCell = observer(function CvJpCell({ cell, store, as: Tag = 'spa
 				</>
 			)}
 		</Tag>
+	);
+});
+
+// what a cell says, drawn: every token by its kind (a query as its value, a link as a link, a
+// badge as its image, an object by its view), on the sheet and on its pages alike. Without the
+// cell of a sheet around it (a piece drawn alone), and for a section of text on a page (cut
+// between the lines of its plain text), its plain text. While the sheet is edited, a token
+// with a card (a badge) is selected by a click and changed from the card beside it
+const CvJpCellText = observer(function CvJpCellText({ cell, store }) {
+	const edit = useContext(CvJpEditContext);
+	if (!edit?.cell || cell.isPlain) return cell.text;
+	return (
+		<CellValue
+			cell={edit.cell}
+			text={cell.raw}
+			isEditable={store.isEditing}
+			cellKey={`${edit.keyPrefix}:cell:${cell.id}`}
+			onTextChange={(text) => edit.cellTextWrite(cell, text)}
+		/>
+	);
+});
+
+// the text or the note of a row, drawn the same way: a row of a history is made of cells too
+const CvJpRowText = observer(function CvJpRowText({ group, row, name, store }) {
+	const edit = useContext(CvJpEditContext);
+	const text = String(row?.[name] ?? '');
+	if (!edit?.cell) return text;
+	return (
+		<CellValue
+			cell={edit.cell}
+			text={text}
+			isEditable={store.isEditing}
+			cellKey={`${edit.keyPrefix}:row:${group.id}:${row?.id}:${name}`}
+			onTextChange={(textNext) => edit.rowFieldWrite(group, row, name, textNext)}
+		/>
 	);
 });
 
@@ -198,7 +241,7 @@ export const CvJpBasic = observer(function CvJpBasic({ sheet, store }) {
 						</tbody>
 					</table>
 				</div>
-				<CvJpCell cell={cellPhoto} store={store} className="doc-cv-jp-photo" as="div">
+				<CvJpCell cell={cellPhoto} store={store} className="doc-cv-jp-photo" as="div" isImage>
 					{cellPhoto.text ? <img src={cellPhoto.text} alt="" className="doc-cv-jp-photo-image" /> : <CvJpPhotoPlaceholder />}
 				</CvJpCell>
 			</div>
@@ -214,7 +257,9 @@ export const CvJpBasic = observer(function CvJpBasic({ sheet, store }) {
 
 // a row of a history. In edit mode a click opens every field of it in place, the one clicked
 // focused; Tab and Shift+Tab go through them, Enter saves, Shift+Enter breaks a line, Escape
-// cancels. A grip in the margin drags it to another place in its group
+// cancels. A grip in the margin drags it to another place in its group. Its text and its note
+// are cells as the cells of the top are: they hold tokens (a badge beside a licence, a link),
+// typed with the same slash mode; the year and the month are plain
 export const CvJpRow = observer(function CvJpRow({ group, row, store }) {
 	const edit = useContext(CvJpEditContext);
 	const rowId = row?.id ?? `new:${group.id}`;
@@ -246,6 +291,7 @@ export const CvJpRow = observer(function CvJpRow({ group, row, store }) {
 				text={String(store.draftRow[name] ?? '')}
 				width={store.editor.widthByField?.[name]}
 				isFocusedInitial={store.editor.field === name}
+				cell={CV_JP_ROW_FIELD_CELL_LIST.includes(name) ? edit?.cell : undefined}
 				ariaLabel={`The ${name} of the row`}
 				onTextChange={(text) => store.draftRowSet({ [name]: text })}
 				onCancel={store.editorClose}
@@ -301,8 +347,8 @@ export const CvJpRow = observer(function CvJpRow({ group, row, store }) {
 				{field('year', <div>{row?.year}</div>)}
 			</td>
 			<td ref={anchorRef('month')} className="doc-cv-jp-time" data-field="month" onClick={open('month')} onFocus={focusTrack('month')}>{field('month', row?.month)}</td>
-			<td ref={anchorRef('text')} colSpan={group.isNote ? 1 : 2} className="doc-cv-jp-text" data-field="text" onClick={open('text')} onFocus={focusTrack('text')}>{field('text', row?.text)}</td>
-			{group.isNote ? <td ref={anchorRef('note')} className="doc-cv-jp-note" data-field="note" onClick={open('note')} onFocus={focusTrack('note')}>{field('note', row?.note)}</td> : null}
+			<td ref={anchorRef('text')} colSpan={group.isNote ? 1 : 2} className="doc-cv-jp-text" data-field="text" onClick={open('text')} onFocus={focusTrack('text')}>{field('text', row ? <CvJpRowText group={group} row={row} name="text" store={store} /> : null)}</td>
+			{group.isNote ? <td ref={anchorRef('note')} className="doc-cv-jp-note" data-field="note" onClick={open('note')} onFocus={focusTrack('note')}>{field('note', row ? <CvJpRowText group={group} row={row} name="note" store={store} /> : null)}</td> : null}
 		</tr>
 	);
 });
@@ -397,4 +443,7 @@ export const CvJpText = observer(function CvJpText({ section, store, fillHeight 
 // what the sections are drawn with where nothing is edited (the pages of a CV): a store that
 // is never editing
 export const CV_JP_STORE_READ = Object.freeze({ isEditing: false, editor: null, dragRow: null, dropTarget: null, draft: '', draftRow: {} });
+
+// the fields of a row that are cells: they hold tokens beside words
+const CV_JP_ROW_FIELD_CELL_LIST = ['text', 'note'];
 

@@ -1,0 +1,30 @@
+itemId: w612umql222
+name: ""
+lang: yaml
+contentType: text/yaml
+fileExt: yaml
+owner:
+  ref: frontend:w5pbeilkczg
+versionIdHead: w612umqksli
+isDeleted: false
+isLocked: false
+timeCreated: 20261113_22560068+09
+versionList:
+  - versionId: w612umqksli
+    versionIdPrevList: []
+    time: 20261113_22560068+09
+    note: a row of a history
+    size: 123
+    hash: 789820b4a45225e3dea46d1b98bdec623fb7cf28
+    isLocked: false
+    dependencyList: []
+eventList:
+  - eventType: create
+    time: 20261113_22560068+09
+    versionId: w612umqksli
+  - eventType: updateInPlace
+    time: 20261113_22581542+09
+    versionId: w612umqksli
+  - eventType: updateInPlace
+    time: 20261113_22584212+09
+    versionId: w612umqksli

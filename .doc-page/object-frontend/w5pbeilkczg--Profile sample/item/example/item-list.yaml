@@ -66,3 +66,80 @@ assetList:
     itemId: w5pbej7zhnk
     pathList:
       - /example/info/motivation
+  - key: badge-1
+    kind: badge
+    itemId: w612ump2nnd
+    name: AWS Certified Solutions Architect – Associate
+    pathList:
+      - /example/badge/aws/saa/v1
+  - key: badge-2
+    kind: badge
+    itemId: w612umpwjb3
+    name: AWS Certified Cloud Practitioner
+    pathList:
+      - /example/badge/aws/clf/v1
+  - key: info-14
+    kind: info
+    itemId: w612umql222
+    pathList:
+      - /example/info/license/aws-saa
+  - key: badge-15
+    kind: badge
+    itemId: w617fq2o2ay
+    name: AWS Certified AI Practitioner
+    pathList:
+      - /example/badge/aws/aif/v1
+  - key: badge-16
+    kind: badge
+    itemId: w617fq3w7sv
+    name: AWS Certified Developer – Associate
+    pathList:
+      - /example/badge/aws/dva/v1
+  - key: badge-17
+    kind: badge
+    itemId: w617fq68xe9
+    name: AWS Certified CloudOps Engineer – Associate
+    pathList:
+      - /example/badge/aws/soa/v1
+  - key: badge-18
+    kind: badge
+    itemId: w617fq9b77b
+    name: AWS Certified Data Engineer – Associate
+    pathList:
+      - /example/badge/aws/dea/v1
+  - key: badge-19
+    kind: badge
+    itemId: w617fqbkixl
+    name: AWS Certified Machine Learning Engineer – Associate
+    pathList:
+      - /example/badge/aws/mla/v1
+  - key: badge-20
+    kind: badge
+    itemId: w617fqcyp6w
+    name: AWS Certified Solutions Architect – Professional
+    pathList:
+      - /example/badge/aws/sap/v1
+  - key: badge-21
+    kind: badge
+    itemId: w617fqef9aw
+    name: AWS Certified DevOps Engineer – Professional
+    pathList:
+      - /example/badge/aws/dop/v1
+  - key: badge-22
+    kind: badge
+    itemId: w617fqf9r07
+    name: AWS Certified Generative AI Developer – Professional
+    pathList:
+      - /example/badge/aws/aip/v1
+  - key: badge-23
+    kind: badge
+    itemId: w617fqg16mc
+    name: AWS Certified Advanced Networking – Specialty
+    pathList:
+      - /example/badge/aws/ans/v1
+  - key: badge-24
+    kind: badge
+    itemId: w617fqhlgiu
+    name: AWS Certified Security – Specialty
+    pathList:
+      - /example/badge/aws/scs/v1

@@ -11,6 +11,9 @@ typeList:
     icon: user
     assetKindList:
       - { id: info, label: Information, langList: [yaml] }
+      # a badge: a certification badge, a logo, any small image a CV shows beside a line; one data
+      # item per badge, /{partition}/badge/aws/saa/v1, holding its name and its image (doc/cv-badge.md)
+      - { id: badge, label: Badge, langList: [yaml], groupPath: badge }
     partitionList: &partitionList
       - { id: example, label: Example, description: the made-up person of the demonstration }
       - { id: real, label: My data, description: your own data, isGitIgnored: true }
@@ -27,5 +30,8 @@ typeList:
       - { id: instance, label: CV, langList: [yaml], groupPath: instance }
     partitionList: *partitionList
     modeList:
-      - { id: sheet, label: Sheet, comp: CvJpSheet, isDefault: true, description: "one CV, edited in place" }
+      # pathParam: the mode shows one thing of the object, named by an inner path in its parameter
+      # "instance": what draws a reference such as frontend:{id}#/example/instance/sample as a block
+      # (react-doc: main/doc_page_impl_obj_frontend.md#things-inside-an-object-inner-paths)
+      - { id: sheet, label: Sheet, comp: CvJpSheet, isDefault: true, pathParam: instance, description: "one CV, edited in place" }
       - { id: list, label: CVs, comp: CvJpList, category: edit, description: "the CVs and templates, a new CV" }
