@@ -1,0 +1,1 @@
+var e=/\s+/g,t=/[\t\n\v\f\r ]+/g;function n(n,o){o?typeof o==`string`&&(o={style:o}):o={};let s=o.preserveLineEndings?r:i;return String(n).replace(o.style===`html`?t:e,o.trim?a(s):s)}function r(e){let t=/\r?\n|\r/.exec(e);return t?t[0]:` `}function i(){return` `}function a(e){return t;function t(t,n,r){return n===0||n+t.length===r.length?``:e(t)}}export{n as t};
