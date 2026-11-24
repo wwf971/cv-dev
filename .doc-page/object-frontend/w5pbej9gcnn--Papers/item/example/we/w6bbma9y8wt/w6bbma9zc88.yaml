@@ -1,0 +1,25 @@
+name: 職務経歴書（汎用）
+template: /example/template/we-jp-standard
+profile: frontend:w5pbeilkczg
+asOf: 2026-11-19
+sectionExtraList:
+  - id: mi5u0c4x7k
+    type: text
+  - id: education
+    type: education
+    title: 最 終 学 歴
+    list: edu
+sectionOrderList:
+  - head
+  - summary
+  - career
+  - skill
+  - mi5u0c4x7k
+  - license
+  - education
+  - pr
+valueByCell:
+  mi5u0c4x7k:title: 語学
+  mi5u0c4x7k: |-
+    【日本語】母語
+    【英語】ビジネスレベル（TOEFL iBT 100点）。英語の技術文書の読解と、海外拠点との週次の打ち合わせを担当

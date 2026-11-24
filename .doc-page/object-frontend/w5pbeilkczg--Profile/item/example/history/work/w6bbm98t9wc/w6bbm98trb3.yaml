@@ -1,0 +1,18 @@
+start:
+  year: 2022
+  month: 5
+end:
+  year: 2023
+  month: 3
+jp:
+  title: 公共図書館向け蔵書検索システムの新規開発
+  summary:
+    - 複数の図書館の蔵書を横断して検索できる Web システムを新規に開発。
+    - ・検索画面と予約機能の詳細設計、実装、単体テストを担当
+    - ・検索 API の応答時間を計測し、索引の見直しによって平均 1.8 秒から 0.4 秒に短縮
+  env:
+    - Java / Spring Boot
+    - PostgreSQL / AWS
+  role: 詳細設計・実装・単体テスト
+  team: 6名
+  phase: 詳細設計〜結合テスト

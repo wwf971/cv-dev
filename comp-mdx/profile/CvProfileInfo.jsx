@@ -15,7 +15,9 @@ import { useFindHighlight } from './cv-profile-highlight.js';
 import './CvProfile.css';
 
 // The personal information of a profile, a mode of its frontend object (doc/cv-query.md#the-mode-information).
-// One panel no taller than param.heightMax, whatever the profile holds:
+// One panel of one height, whatever the profile holds and whatever it shows (a tab, a view, a folder
+// walked, the answer of a query): what is under its head is a frame (.doc-cv-profile-stage) whose
+// list takes the room the tools leave:
 //
 //   [ Information 57 ][ Badges 12 ]                      Partition [ Playground ] kept out of git
 //   [+ Add a value]  View [ Explorer | Tree ]  [ find a value, or try a query               ]
@@ -30,10 +32,14 @@ import './CvProfile.css';
 // holding nothing yet (a playground after a clone) can be filled with a copy of another one.
 //
 //   param.partition   the partition shown first
-//   param.heightMax   the tallest the list of values (or badges) gets, in px (360); it scrolls past that
+//   param.heightMax   the tallest the list of values gets in the explorer, in px (360); it scrolls past
+//                     that. Below it the frame is as tall as the longer of the top level of the values
+//                     and the badges needs, so a small profile makes a small panel
 //   param.view        the view of the values shown first: explorer (the default) | tree
 const CV_PROFILE_HEIGHT_MAX = 360;
 const CV_PROFILE_HEIGHT_MIN = 120;
+// the fewest rows the frame has room for: a partition holding nothing still offers its copy there
+const CV_PROFILE_ROW_COUNT_MIN = 4;
 
 export const CvProfileInfo = observer(function CvProfileInfo({ data = {}, config = {} }) {
 	const service = config.objectFrontend;
@@ -84,8 +90,12 @@ export const CvProfileInfo = observer(function CvProfileInfo({ data = {}, config
 	// the explorer: what lies at the path walked, or what the words find
 	const explore = isExplore ? cvInfoExploreGet(info, store.pathList) : undefined;
 	const foundList = isExplore && find !== '' ? cvInfoFindListGet(info, find, leafShownList) : undefined;
-	// it is as tall as its top level needs, however short the folder shown: walking moves nothing
-	const exploreRowCount = isExplore ? cvInfoExploreGet(info, []).itemList.length : 0;
+	// the height of the frame, the same in both tabs and views: the tools, the path bar and a list as
+	// tall as the top level of the values or the badges needs (the longer), up to heightMax; walking,
+	// switching or finding moves nothing below the panel, the list scrolls inside
+	const listRowCount = Math.max(CV_PROFILE_ROW_COUNT_MIN, cvInfoExploreGet(info, []).itemList.length, badgeRead.badgeList.length);
+	const stageHeight = `calc(var(--doc-cv-profile-tool-height) + var(--doc-cv-profile-path-height) + min(${heightMax}px, ${listRowCount} * (var(--doc-cv-profile-row-height) + 1px)))`;
+	const problemList = isTabInfo ? read.problemList : badgeRead.problemList;
 	// the tree, and what the words leave of it
 	const root = isExplore ? undefined : cvInfoTreeBuild(info.leafList);
 	const rowList = isExplore ? [] : cvInfoTreeRowListGet(root, {
@@ -116,77 +126,84 @@ export const CvProfileInfo = observer(function CvProfileInfo({ data = {}, config
 				<span className="doc-cv-profile-muted" title={cvPartitionTitleGet(partition, 'Its data lies')}>{partition?.isGitIgnored ? 'kept out of git' : 'tracked by git'}</span>
 			</div>
 
-			{isTabInfo ? (
-				<div className="doc-cv-profile-tool">
-					{isEditShown ? (
-						<button
-							type="button"
-							className="doc-button"
-							disabled={isLocked || store.isSubmitting || (isExplore && find !== '')}
-							title={lockedReason || (isExplore ? `A new value ${pathWalked ? `in ${pathWalked}` : 'at the top level'}: where the explorer is` : 'A new value at the top level; the + of a folder adds one inside it')}
-							onClick={() => store.draftOpen(isExplore ? pathWalked : '')}
-						>
-							<Plus size={12} aria-hidden="true" /><span>Add a value</span>
-						</button>
-					) : null}
-					<span className="doc-cv-profile-view" role="group" aria-label="The view of the values">
-						<span className="doc-cv-profile-muted">View</span>
-						<span className="doc-cv-profile-segment-list">
-							{CV_PROFILE_VIEW_LIST.map((one) => (
-								<button key={one.id} type="button" className="doc-cv-profile-segment" aria-pressed={view === one.id} title={one.title} onClick={() => store.viewSet(one.id)}>{one.label}</button>
-							))}
-						</span>
-					</span>
-					<span className="doc-cv-profile-find">
-						<Search size={12} aria-hidden="true" />
-						<input aria-label="Find a value, or try a query" placeholder="Find a value, or try a query: name/first/jp/katakana" value={store.find} onChange={(event) => store.findSet(event.target.value)} onKeyDown={(event) => { if (event.key === 'Escape' && store.find !== '') { event.stopPropagation(); store.findSet(''); } }} />
-						{store.find !== '' ? <button type="button" className="doc-cv-profile-icon-button" aria-label="Clear" title="Clear" onClick={() => store.findSet('')}><X size={12} aria-hidden="true" /></button> : null}
-					</span>
-					{/* its room is kept in the explorer, which has no folders to open: the field stays as wide */}
-					<button type="button" className="doc-cv-profile-icon-button" data-hidden={isExplore ? '' : undefined} disabled={isExplore || folderPathList.length === 0 || find !== ''} aria-hidden={isExplore} aria-label={isAllOpen ? 'Close every folder' : 'Open every folder'} title={isAllOpen ? 'Close every folder' : 'Open every folder'} onClick={() => store.folderAllSet(folderPathList, !isAllOpen)}>
-						{isAllOpen ? <ChevronsDownUp size={13} aria-hidden="true" /> : <ChevronsUpDown size={13} aria-hidden="true" />}
-					</button>
-				</div>
-			) : (
-				<div className="doc-cv-profile-tool">
-					{isEditShown ? (
-						<button type="button" className="doc-button" disabled={isLocked || store.isSubmitting} title={lockedReason || 'A new badge of this partition'} onClick={store.badgeDraftOpen}>
-							<Plus size={12} aria-hidden="true" /><span>Add a badge</span>
-						</button>
-					) : null}
-					<span className="doc-cv-profile-muted">A CV shows a badge in a line as {'{{/badge/aws/saa}}'}: typed there as /badge.</span>
-				</div>
-			)}
-
-			{/* what a query typed reads: the answer a CV would get */}
-			{isTabInfo && isResolved ? (
-				<div className="doc-cv-profile-result">
-					<span className="doc-cv-profile-muted">{`{{${resolved.query}}}`} reads</span>
-					<span className="doc-cv-profile-result-value">{cvValueIsImage(resolved.value) ? '(an image)' : resolved.value}</span>
-					<span className="doc-cv-profile-muted">· {RESOLVED_BY_LABEL[resolved.by] ?? resolved.by}{resolved.alternativeList.length > 0 ? ` · the first of ${resolved.alternativeList.length + 1}: also ${resolved.alternativeList.slice(0, 3).map((leaf) => cvLeafQueryGet(leaf)).join(', ')}${resolved.alternativeList.length > 3 ? ', …' : ''}` : ''}</span>
-				</div>
-			) : null}
-			{store.message ? <p className="doc-cv-profile-problem" role="alert">{store.message}</p> : null}
-			{(isTabInfo ? read.problemList : badgeRead.problemList).map((problem) => <p key={problem} className="doc-cv-profile-problem">{problem}</p>)}
-
-			{isTabInfo && isExplore && !foundList && !isPartitionEmpty ? <CvProfilePathBar store={store} countLeaf={explore.countLeaf} /> : null}
-			<div ref={bodySet} className="doc-cv-profile-body" onScroll={(event) => store.scrollTopSet(event.currentTarget.scrollTop)} style={{ maxHeight: `${heightMax}px`, minHeight: isTabInfo && isExplore && !isPartitionEmpty ? `min(${heightMax}px, calc(${exploreRowCount} * (1.65rem + 1px)))` : undefined }}>
-				{isPartitionEmpty && !store.draft && !store.badgeDraft ? (
-					<div className="doc-cv-profile-empty">
-						<span className="doc-cv-profile-muted">This partition holds nothing yet.</span>
-						{isEditShown ? partitionFilledList.map((one) => (
-							<button key={one.id} type="button" className="doc-button" disabled={isLocked || store.isSubmitting} title={lockedReason || `Every value and badge of ${one.label}, copied into ${partition?.label ?? partitionId}`} onClick={() => store.partitionCopy(service, one.id, partitionId)}>
-								<Copy size={12} aria-hidden="true" /><span>Start from a copy of {one.label}</span>
+			<div className="doc-cv-profile-stage" style={{ height: stageHeight }}>
+				{isTabInfo ? (
+					<div className="doc-cv-profile-tool">
+						{isEditShown ? (
+							<button
+								type="button"
+								className="doc-button"
+								disabled={isLocked || store.isSubmitting || (isExplore && find !== '')}
+								title={lockedReason || (isExplore ? `A new value ${pathWalked ? `in ${pathWalked}` : 'at the top level'}: where the explorer is` : 'A new value at the top level; the + of a folder adds one inside it')}
+								onClick={() => store.draftOpen(isExplore ? pathWalked : '')}
+							>
+								<Plus size={12} aria-hidden="true" /><span>Add a value</span>
 							</button>
-						)) : null}
+						) : null}
+						<span className="doc-cv-profile-view" role="group" aria-label="The view of the values">
+							<span className="doc-cv-profile-muted">View</span>
+							<span className="doc-cv-profile-segment-list">
+								{CV_PROFILE_VIEW_LIST.map((one) => (
+									<button key={one.id} type="button" className="doc-cv-profile-segment" aria-pressed={view === one.id} title={one.title} onClick={() => store.viewSet(one.id)}>{one.label}</button>
+								))}
+							</span>
+						</span>
+						<span className="doc-cv-profile-find">
+							<Search size={12} aria-hidden="true" />
+							<input aria-label="Find a value, or try a query" placeholder="Find a value, or try a query: name/first/jp/katakana" value={store.find} onChange={(event) => store.findSet(event.target.value)} onKeyDown={(event) => { if (event.key === 'Escape' && store.find !== '') { event.stopPropagation(); store.findSet(''); } }} />
+							{store.find !== '' ? <button type="button" className="doc-cv-profile-icon-button" aria-label="Clear" title="Clear" onClick={() => store.findSet('')}><X size={12} aria-hidden="true" /></button> : null}
+						</span>
+						{/* its room is kept in the explorer, which has no folders to open: the field stays as wide */}
+						<button type="button" className="doc-cv-profile-icon-button" data-hidden={isExplore ? '' : undefined} disabled={isExplore || folderPathList.length === 0 || find !== ''} aria-hidden={isExplore} aria-label={isAllOpen ? 'Close every folder' : 'Open every folder'} title={isAllOpen ? 'Close every folder' : 'Open every folder'} onClick={() => store.folderAllSet(folderPathList, !isAllOpen)}>
+							{isAllOpen ? <ChevronsDownUp size={13} aria-hidden="true" /> : <ChevronsUpDown size={13} aria-hidden="true" />}
+						</button>
 					</div>
-				) : isTabInfo && isExplore ? (
-					<CvProfileExplore explore={explore} foundList={foundList} store={store} service={service} info={info} partitionId={partitionId} isEditShown={isEditShown} isLocked={isLocked} lockedReason={lockedReason} />
-				) : isTabInfo ? (
-					<CvProfileTree rowList={rowList} store={store} service={service} info={info} partitionId={partitionId} isEditShown={isEditShown} isLocked={isLocked} lockedReason={lockedReason} isFinding={find !== ''} />
 				) : (
-					<CvProfileBadgeList badgeList={badgeRead.badgeList} store={store} service={service} partitionId={partitionId} isEditShown={isEditShown} isLocked={isLocked} lockedReason={lockedReason} />
+					<div className="doc-cv-profile-tool">
+						{isEditShown ? (
+							<button type="button" className="doc-button" disabled={isLocked || store.isSubmitting} title={lockedReason || 'A new badge of this partition'} onClick={store.badgeDraftOpen}>
+								<Plus size={12} aria-hidden="true" /><span>Add a badge</span>
+							</button>
+						) : null}
+						<span className="doc-cv-profile-muted doc-cv-profile-hint" title="A CV shows a badge in a line as {{/badge/aws/saa}}: typed there as /badge.">A CV shows a badge in a line as {'{{/badge/aws/saa}}'}: typed there as /badge.</span>
+					</div>
 				)}
+
+				{/* what a query typed reads (the answer a CV would get), and what went wrong: they take
+				    their room from the list, at most part of the frame, scrolling past that */}
+				{(isTabInfo && isResolved) || store.message || problemList.length > 0 ? (
+					<div className="doc-cv-profile-notice-list">
+						{isTabInfo && isResolved ? (
+							<div className="doc-cv-profile-result">
+								<span className="doc-cv-profile-muted">{`{{${resolved.query}}}`} reads</span>
+								<span className="doc-cv-profile-result-value">{cvValueIsImage(resolved.value) ? '(an image)' : resolved.value}</span>
+								<span className="doc-cv-profile-muted">· {RESOLVED_BY_LABEL[resolved.by] ?? resolved.by}{resolved.alternativeList.length > 0 ? ` · the first of ${resolved.alternativeList.length + 1}: also ${resolved.alternativeList.slice(0, 3).map((leaf) => cvLeafQueryGet(leaf)).join(', ')}${resolved.alternativeList.length > 3 ? ', …' : ''}` : ''}</span>
+							</div>
+						) : null}
+						{store.message ? <p className="doc-cv-profile-problem" role="alert">{store.message}</p> : null}
+						{problemList.map((problem) => <p key={problem} className="doc-cv-profile-problem">{problem}</p>)}
+					</div>
+				) : null}
+
+				{isTabInfo && isExplore && !foundList && !isPartitionEmpty ? <CvProfilePathBar store={store} countLeaf={explore.countLeaf} /> : null}
+				<div ref={bodySet} className="doc-cv-profile-body" onScroll={(event) => store.scrollTopSet(event.currentTarget.scrollTop)}>
+					{isPartitionEmpty && !store.draft && !store.badgeDraft ? (
+						<div className="doc-cv-profile-empty">
+							<span className="doc-cv-profile-muted">This partition holds nothing yet.</span>
+							{isEditShown ? partitionFilledList.map((one) => (
+								<button key={one.id} type="button" className="doc-button" disabled={isLocked || store.isSubmitting} title={lockedReason || `Every value and badge of ${one.label}, copied into ${partition?.label ?? partitionId}`} onClick={() => store.partitionCopy(service, one.id, partitionId)}>
+									<Copy size={12} aria-hidden="true" /><span>Start from a copy of {one.label}</span>
+								</button>
+							)) : null}
+						</div>
+					) : isTabInfo && isExplore ? (
+						<CvProfileExplore explore={explore} foundList={foundList} store={store} service={service} info={info} partitionId={partitionId} isEditShown={isEditShown} isLocked={isLocked} lockedReason={lockedReason} />
+					) : isTabInfo ? (
+						<CvProfileTree rowList={rowList} store={store} service={service} info={info} partitionId={partitionId} isEditShown={isEditShown} isLocked={isLocked} lockedReason={lockedReason} isFinding={find !== ''} />
+					) : (
+						<CvProfileBadgeList badgeList={badgeRead.badgeList} store={store} service={service} partitionId={partitionId} isEditShown={isEditShown} isLocked={isLocked} lockedReason={lockedReason} />
+					)}
+				</div>
 			</div>
 		</div>
 	);

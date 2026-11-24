@@ -9,10 +9,16 @@ sidePanelById:
         children:
           - doc: ~cv/doc/cv-demo.md
           - doc: ~cv/doc/cv-query.md
+          - doc: ~cv/doc/cv-sheet.md
           - doc: ~cv/doc/cv-jp.md
+          - doc: ~cv/doc/we-jp.md
           - doc: ~cv/doc/cv-badge.md
           # the playground: a document git ignores, made from .doc-page/playground/cv.md; its item
           # stays while the document does not exist, and opens a page offering to create it
           - id: cv-playground
             text: Playground
             doc: ~cv/doc/cv.playground.md
+          # your own papers: the partition real, on a document git ignores too
+          - id: cv-real
+            text: My papers
+            doc: ~cv/doc/cv-real.playground.md

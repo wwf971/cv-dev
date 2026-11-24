@@ -1,0 +1,401 @@
+/* The Japanese-style work experience (doc/we-jp.md): what is its own on the paper of the sheet
+   (CvJp.css): its head and its career. It keeps the rules, the greys and the type of the CV, so
+   that the two papers of one person read as a pair; the sizes are px of an A4 sheet 794px wide. */
+
+/* ---------- the paper of this form ---------- */
+/* its titles are written without spaces (職務要約) and spaced here, so that a long one and a short
+   one are set alike */
+.doc-cv-jp-form-we .doc-cv-jp-title-cell {
+	letter-spacing: 0.25em;
+	text-indent: 0.25em;
+	word-spacing: 0;
+}
+
+/* a block of a work experience is read, not filled in by hand: a little denser than the box of a CV */
+.doc-cv-jp-form-we .doc-cv-jp-paragraph {
+	padding: 8px 12px !important;
+	font-size: 14px;
+	line-height: 1.65;
+}
+
+/* ---------- the head: the title, then the date and the name at the right ---------- */
+.doc-we-jp-head {
+	margin-bottom: 16px;
+}
+
+.doc-we-jp-title {
+	min-height: 34px;
+	font-size: 28px;
+	font-weight: 500;
+	line-height: 1.2;
+	text-align: center;
+	word-spacing: 6px;
+}
+
+.doc-we-jp-head-meta {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 3px;
+	margin-top: 4px;
+}
+
+.doc-we-jp-date {
+	min-width: 6em;
+	min-height: 1lh;
+	padding-right: 4px;
+	text-align: right;
+}
+
+/* 氏名 and the name: a fixed space between them, the rule under both as long as they are, so
+   the label stands where the length of the name puts it */
+.doc-we-jp-name {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 1em;
+	padding: 0 4px 2px;
+	border-bottom: 1px solid #000;
+}
+
+.doc-we-jp-name-label {
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.doc-we-jp-name-value {
+	min-width: 3em;
+	font-size: 16px;
+	font-weight: 500;
+	text-align: right;
+}
+
+/* ---------- the career: 期間, what was done, the facts beside it ---------- */
+.doc-we-jp-table-career {
+	margin-bottom: 18px;
+}
+
+.doc-we-jp-col-band {
+	width: 22px;
+}
+
+.doc-we-jp-col-period {
+	width: 98px;
+}
+
+.doc-we-jp-col-side {
+	width: 178px;
+}
+
+.doc-we-jp-table-career td.doc-we-jp-period-cell {
+	padding: 7px 4px;
+	vertical-align: top;
+	text-align: center;
+}
+
+/* a period of the career: one cell, drawn by the period token (CvJp.css: .doc-cv-period), in the
+   middle of its column. the token sets its dates in fixed columns measured in em, so every year
+   of the table stands under the one above it */
+.doc-we-jp-period {
+	min-height: 1lh;
+	font-size: 12.5px;
+	line-height: 1.25;
+	text-align: center;
+	white-space: nowrap;
+}
+
+/* ---------- an employer and its projects: one frame ----------
+   the line of an employer and the band down the left of its projects are one grey, with no rule
+   between them, so the grey reads as a frame open to the right: the rows inside it are that
+   employer's. the frame, a heavier rule above each employer, the heavier name and the numbers in
+   the band say the two levels; no tone darker than a heading's is needed */
+.doc-we-jp-row-employer td,
+.doc-we-jp-table-career td.doc-we-jp-band {
+	background: #f1f1f1;
+}
+
+.doc-we-jp-table-career .doc-we-jp-row-employer td {
+	border-top-width: 2px;
+}
+
+/* the band: the corner of the frame in the line of the employer, then a cell a project */
+.doc-we-jp-table-career td.doc-we-jp-band {
+	padding: 9px 0 0;
+	vertical-align: top;
+	text-align: center;
+	font-size: 11px;
+	font-weight: 700;
+	line-height: 1.2;
+	color: #333;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+/* no rule inside the frame: under the corner and between the cells of the band while it goes on,
+   and between the corner and the period of the employer */
+.doc-we-jp-table-career .doc-we-jp-row-employer td.doc-we-jp-band {
+	border-right: none;
+}
+
+.doc-we-jp-table-career .doc-we-jp-row-employer td.doc-we-jp-period-cell {
+	border-left: none;
+}
+
+.doc-we-jp-table-career td.doc-we-jp-band[data-open] {
+	border-bottom: none;
+}
+
+.doc-we-jp-table-career .doc-we-jp-row-project td.doc-we-jp-band,
+.doc-we-jp-table-career td.doc-we-jp-band[data-fill] {
+	border-top: none;
+}
+
+.doc-we-jp-table-career td.doc-we-jp-band[data-fill] {
+	padding: 0;
+}
+
+/* the line of an employer: its period and its name the heaviest text of the section */
+.doc-we-jp-row-employer .doc-we-jp-period {
+	font-weight: 700;
+}
+
+.doc-we-jp-table-career td.doc-we-jp-employer {
+	padding: 7px 10px;
+	vertical-align: middle;
+}
+
+.doc-we-jp-employer-line {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 1em;
+}
+
+.doc-we-jp-employer-name {
+	min-width: 4em;
+	font-size: 16px;
+	font-weight: 700;
+}
+
+.doc-we-jp-employment {
+	flex: none;
+	font-size: 13px;
+}
+
+/* the facts of the company: small, one after another, wrapping as the line fills */
+.doc-we-jp-fact-line {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1px 16px;
+	margin-top: 3px;
+	font-size: 12px;
+	line-height: 1.5;
+}
+
+.doc-we-jp-fact {
+	position: relative;
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.6em;
+	min-width: 0;
+}
+
+/* the tools of a fact while the sheet is edited: over its right end when the pointer is on it,
+   touching it, so the pointer reaches them without leaving the fact */
+.doc-we-jp-fact-tool {
+	position: absolute;
+	right: -4px;
+	bottom: calc(100% - 2px);
+	z-index: 4;
+	display: none;
+	gap: 1px;
+	padding: 1px;
+	background: #fff;
+	border: 1px solid #9bb7e0;
+	border-radius: 4px;
+	box-shadow: 0 1px 4px rgb(0 0 0 / 12%);
+}
+
+.doc-we-jp-fact:hover > .doc-we-jp-fact-tool,
+.doc-we-jp-fact-tool:focus-within {
+	display: inline-flex;
+}
+
+.doc-we-jp-fact-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 18px;
+	padding: 0;
+	color: #5b6b85;
+	background: transparent;
+	border: none;
+	border-radius: 3px;
+	cursor: pointer;
+}
+
+.doc-we-jp-fact-button:hover:not(:disabled) {
+	color: #1f4f96;
+	background: #e8f1ff;
+}
+
+.doc-we-jp-fact-button[data-danger]:hover:not(:disabled) {
+	color: #b3261e;
+	background: #fdecea;
+}
+
+.doc-we-jp-fact-button:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+/* a new fact: a small dashed chip at the end of the line, said in the words of the paper as
+   the places still to type are */
+.doc-we-jp-fact-add {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	padding: 0 6px;
+	font: inherit;
+	font-size: 11px;
+	color: #1f4f96;
+	background: transparent;
+	border: 1px dashed #9bb7e0;
+	border-radius: 3px;
+	cursor: pointer;
+}
+
+.doc-we-jp-fact-add:hover:not(:disabled) {
+	background: #e8f1ff;
+}
+
+.doc-we-jp-fact-add:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+/* a label of a fact: small and heavy, a little grey, so that the value is what is read */
+.doc-we-jp-fact-label {
+	flex: none;
+	font-size: 11px;
+	font-weight: 700;
+	color: #444;
+	letter-spacing: 0.04em;
+	white-space: nowrap;
+}
+
+/* a project: its title, what was done, and the facts beside it */
+.doc-we-jp-table-career td.doc-we-jp-project {
+	padding: 7px 10px 8px;
+	vertical-align: top;
+}
+
+.doc-we-jp-project-title {
+	min-height: 1lh;
+	font-weight: 700;
+	line-height: 1.45;
+}
+
+.doc-we-jp-project-text {
+	min-height: 1lh;
+	margin-top: 3px;
+	font-size: 13.5px;
+	line-height: 1.6;
+}
+
+/* a label line in the text of a project (【GitHub】https://…): its label as the labels of the
+   facts beside it are, small and a little grey, so a heading of the text (【…】 alone) stays the
+   one heavy thing above it. the column of the labels has a least width, so what they say starts
+   at one edge from one run of labels to the next */
+.doc-we-jp-project-text .doc-cv-jp-line-group {
+	grid-template-columns: minmax(3.8em, max-content) minmax(0, 1fr);
+	column-gap: 0.7em;
+	align-items: baseline;
+}
+
+.doc-we-jp-project-text .doc-cv-jp-line-label {
+	font-size: 11px;
+	color: #444;
+	letter-spacing: 0.04em;
+}
+
+.doc-we-jp-project-fact {
+	margin-top: 6px;
+}
+
+.doc-we-jp-project-fact .doc-we-jp-project-text {
+	margin-top: 0;
+}
+
+.doc-we-jp-table-career td.doc-we-jp-side {
+	padding: 7px 8px 8px;
+	vertical-align: top;
+	font-size: 12.5px;
+	line-height: 1.5;
+}
+
+.doc-we-jp-side-list {
+	display: grid;
+	grid-template-columns: max-content minmax(0, 1fr);
+	gap: 3px 9px;
+	align-items: baseline;
+}
+
+.doc-we-jp-side-value {
+	min-width: 0;
+	min-height: 1lh;
+}
+
+.doc-we-jp-row-empty td {
+	height: 35px;
+}
+
+/* ---------- while the sheet is edited ---------- */
+/* what floats at the edge of a cell then (the eye in the margin, the + after an employer) stands in
+   it: a cell is positioned only now, since a positioned cell is painted over the rules of the table,
+   its grey covering them in a printed PDF (CvJp.css, before .doc-cv-jp-row-grip) */
+.doc-cv-jp-paper[data-editing] .doc-we-jp-table-career td.doc-we-jp-period-cell,
+.doc-cv-jp-paper[data-editing] .doc-we-jp-table-career td.doc-we-jp-employer {
+	position: relative;
+}
+
+/* room at the end of an employer's line for the button adding a project */
+.doc-cv-jp-paper[data-editing] .doc-we-jp-table-career td.doc-we-jp-employer {
+	padding-right: 34px;
+}
+
+/* leaving an employer or a project out of this paper: in the left margin, as the grip of a row is */
+.doc-we-jp-item-hide {
+	position: absolute;
+	top: 6px;
+	left: -49px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	color: #5b6b85;
+	background: transparent;
+	border: none;
+	border-radius: 4px;
+	opacity: 0.5;
+	cursor: pointer;
+}
+
+.doc-we-jp-item-hide:hover {
+	color: #1f4f96;
+	background: #e8f1ff;
+	opacity: 1;
+}
+
+.doc-we-jp-table-career .doc-cv-jp-row-empty-note {
+	display: inline-block;
+	padding: 6px;
+}
+
+.doc-we-jp-table-career td[data-missing] {
+	outline: 1px dashed #d6453d;
+	outline-offset: -2px;
+	background: #fff3f2;
+}

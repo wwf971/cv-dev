@@ -4,4 +4,7 @@ name: cv
 description: >-
   Curricula vitae kept as data: personal information in one frontend object, read through
   order-free query paths, and CV templates and instances in another, drawn as a Japanese-style CV and edited in place.
-packageDependList: []
+# the path bar of the mode Papers is the path-based view of the switch layer of cloud-dev-vis
+# (comp-mdx/jp/CvJpList.jsx; its card-diagram-flexible-switch.md#a-path-based-view-anywhere)
+packageDependList:
+  - name: cloud-dev-vis

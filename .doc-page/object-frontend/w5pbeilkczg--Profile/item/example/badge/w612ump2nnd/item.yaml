@@ -1,0 +1,30 @@
+itemId: w612ump2nnd
+name: ""
+lang: yaml
+contentType: text/yaml
+fileExt: yaml
+owner:
+  ref: frontend:w5pbeilkczg
+versionIdHead: w612ump2q2u
+isDeleted: false
+isLocked: false
+timeCreated: 20261113_22560064+09
+versionList:
+  - versionId: w612ump2q2u
+    versionIdPrevList: []
+    time: 20261113_22560064+09
+    note: ""
+    size: 56516
+    hash: adfbca40ff71a9934afccbca89b672b2415ab6f6
+    isLocked: false
+    dependencyList: []
+eventList:
+  - eventType: create
+    time: 20261113_22560064+09
+    versionId: w612ump2q2u
+  - eventType: updateInPlace
+    time: 20261114_00272426+09
+    versionId: w612ump2q2u
+  - eventType: updateInPlace
+    time: 20261119_02163109+09
+    versionId: w612ump2q2u

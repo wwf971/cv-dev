@@ -1,0 +1,24 @@
+itemId: w6n6bk5vgq8
+name: ""
+lang: yaml
+contentType: text/yaml
+fileExt: yaml
+owner:
+  ref: frontend:w5pbej9gcnn
+versionIdHead: w6n6bk5x268
+isDeleted: false
+isLocked: false
+timeCreated: 20261124_23085805+09
+versionList:
+  - versionId: w6n6bk5x268
+    versionIdPrevList: []
+    time: 20261124_23085805+09
+    note: part of the frontend object Papers
+    size: 154
+    hash: f916c5711e55d87b29de1345b55e13833edbdc9f
+    isLocked: false
+    dependencyList: []
+eventList:
+  - eventType: create
+    time: 20261124_23085805+09
+    versionId: w6n6bk5x268

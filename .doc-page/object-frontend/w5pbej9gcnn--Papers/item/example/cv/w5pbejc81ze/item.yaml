@@ -1,0 +1,43 @@
+itemId: w5pbejc81ze
+name: ""
+lang: yaml
+contentType: text/yaml
+fileExt: yaml
+owner:
+  ref: frontend:w5pbej9gcnn
+versionIdHead: w5pbejc85af
+isDeleted: false
+isLocked: false
+timeCreated: 20261108_02170713+09
+versionList:
+  - versionId: w5pbejc85af
+    versionIdPrevList: []
+    time: 20261108_02170713+09
+    note: ""
+    size: 118
+    hash: 49a036c1d4c3ac6931343b3a6ffc3f8d77178c4f
+    isLocked: false
+    dependencyList: []
+eventList:
+  - eventType: create
+    time: 20261108_02170713+09
+    versionId: w5pbejc85af
+  - eventType: move
+    time: 20261108_07093400+09
+    placeFrom: ~cv:cv/.doc-page/object-frontend/w5pbej9gcnn--CV sample/item/instance
+    placeTo: ~cv:cv/.doc-page/object-frontend/w5pbej9gcnn--CV
+      sample/item/example/instance
+  - eventType: updateInPlace
+    time: 20261108_07093401+09
+    versionId: w5pbejc85af
+  - eventType: move
+    time: 20261119_01241567+09
+    placeFrom: ~cv:cv/.doc-page/object-frontend/w5pbej9gcnn--CV
+      sample/item/example/instance
+    placeTo: ~cv:cv/.doc-page/object-frontend/w5pbej9gcnn--CV sample/item/example/cv
+  - eventType: updateInPlace
+    time: 20261119_01241590+09
+    versionId: w5pbejc85af
+  - eventType: updateInPlace
+    time: 20261123_22510513+09
+    versionId: w5pbejc85af

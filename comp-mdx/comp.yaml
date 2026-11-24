@@ -10,3 +10,6 @@ compList:
   - tagName: CvJpList
     entry: ./cv-comp.js
     export: CvJpListDefine
+  - tagName: CvProfileValueView
+    entry: ./cv-comp.js
+    export: CvProfileValueViewDefine

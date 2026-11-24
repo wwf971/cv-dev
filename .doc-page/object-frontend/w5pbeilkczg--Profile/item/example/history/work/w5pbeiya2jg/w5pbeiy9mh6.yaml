@@ -1,0 +1,18 @@
+start:
+  year: 2021
+  month: 7
+  jp: サンプルロボティクス株式会社 アルゴリズム開発
+  en: Sample Robotics
+  note:
+    jp: インターンシップ
+    en: internship
+end:
+  year: 2021
+  month: 8
+jp:
+  name: サンプルロボティクス株式会社
+  employment: インターンシップ
+  fact:
+    business:
+      label: 事業内容
+      text: 物流倉庫向け搬送ロボットの開発

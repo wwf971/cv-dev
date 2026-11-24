@@ -3,7 +3,8 @@ import { CvJpList } from './jp/CvJpList.jsx';
 import { cvJpPagination } from './jp/CvJpPagination.jsx';
 import { CvJpSheet } from './jp/CvJpSheet.jsx';
 import { CvProfileInfo } from './profile/CvProfileInfo.jsx';
-import { cvProfileInnerComplete, cvProfileInnerResolve } from './query/CvProfile.js';
+import { CvProfileValueView } from './profile/CvProfileValuePanel.jsx';
+import { CV_PROFILE_VALUE_TYPE, cvProfileInnerComplete, cvProfileInnerResolve } from './query/CvProfile.js';
 
 // modes of a frontend object, never written as blocks themselves (doc/README.md)
 const modeDefine = (label, description) => ({ placementList: ['objectFrontend'], expose: { meta: { label, description, isNotInDoc: true } } });
@@ -26,6 +27,17 @@ export const CvProfileInfoDefine = compDefine(CvProfileInfo, {
 });
 // the sheet can be laid out on pages (react-doc: main/doc_page_impl_pagination.md): its flow
 // and pieces (jp/CvJpPagination.jsx), which its view Pages hands to PageFlow
-const sheetDefine = modeDefine('CV: Japanese style', 'One CV drawn in Japanese style, edited in place, laid out on pages');
+const sheetDefine = modeDefine('CV: a Japanese-style paper', 'One CV (cv-jp) or work experience (we-jp) drawn in Japanese style, edited in place, laid out on pages');
 export const CvJpSheetDefine = compDefine(CvJpSheet, { ...sheetDefine, expose: { ...sheetDefine.expose, pagination: cvJpPagination } });
-export const CvJpListDefine = compDefine(CvJpList, modeDefine('CV: the CVs and templates', 'The CVs of the object, and a new one from a template'));
+export const CvJpListDefine = compDefine(CvJpList, modeDefine('CV: the papers and templates', 'The CVs, the work experiences and the templates of the object, and a new paper of a form'));
+
+// a value of a profile where a token names it, in any cell of any page: the view of its type in the
+// context panel of react-doc's object registry, so its card shows it and types it in place
+// (react-doc: main/doc_page_impl_edit_cell.md#the-card-of-a-token)
+export const CvProfileValueViewDefine = compDefine(CvProfileValueView, {
+	placementList: ['objectView'],
+	expose: {
+		meta: { label: 'CV: a value of a profile', description: 'A value of a profile, typed in place where a token names it', isNotInDoc: true },
+		objectView: { typeList: [CV_PROFILE_VALUE_TYPE], contextList: ['panel'], priority: 0 },
+	},
+});

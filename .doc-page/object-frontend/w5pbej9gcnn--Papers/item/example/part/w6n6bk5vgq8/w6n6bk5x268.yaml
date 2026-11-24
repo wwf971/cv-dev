@@ -1,0 +1,7 @@
+name: 本人希望記入欄
+form: cv
+section:
+  type: text
+  title: 本 人 希 望 記 入 欄
+  text: 貴社の規定に従います。
+  heightMin: 80

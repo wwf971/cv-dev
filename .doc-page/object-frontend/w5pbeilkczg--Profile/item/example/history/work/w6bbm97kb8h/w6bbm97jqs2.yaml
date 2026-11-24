@@ -1,0 +1,12 @@
+start:
+  year: 2021
+  month: 7
+end:
+  year: 2021
+  month: 8
+jp:
+  title: 搬送ロボットの経路探索アルゴリズムの評価
+  summary: シミュレーター上で複数の経路探索手法を実装し、処理時間と経路の長さを比較して報告書にまとめた。
+  env: Python / ROS
+  role: 実装・評価
+  team: 4名

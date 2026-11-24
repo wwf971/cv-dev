@@ -9,29 +9,237 @@ typeList:
     label: Profile
     description: personal information, read through query paths whose words may come in any order
     icon: user
-    assetKindList:
-      - { id: info, label: Information, langList: [yaml] }
+    # the kinds of its data items, declared here for any type to hold (cv.profile.info, cv.profile.badge;
+    # react-doc: main/doc_page_impl_type.md#kinds-of-data-items). a write that does not fit is refused
+    kindList:
+      # values of one subject, each a key path inside the item (doc/cv-query.md#how-the-information-is-stored):
+      # any tree of mappings, lists and plain values; a mapping with a year is a dated entry, its year,
+      # month and day numbers (or a text, while it is typed)
+      - id: info
+        label: Information
+        content:
+          form: data
+          langList: [yaml]
+          schema:
+            $ref: "#/$defs/value"
+            $defs:
+              value:
+                anyOf:
+                  - { type: [string, number, boolean, "null"] }
+                  - { type: array, items: { $ref: "#/$defs/value" } }
+                  - { $ref: "#/$defs/entry" }
+                  - { type: object, not: { required: [year] }, additionalProperties: { $ref: "#/$defs/value" } }
+              entry:
+                type: object
+                required: [year]
+                properties:
+                  year: { anyOf: [{ type: integer, minimum: 1000, maximum: 9999 }, { type: string }] }
+                  month: { anyOf: [{ type: integer, minimum: 1, maximum: 12 }, { type: string }] }
+                  day: { anyOf: [{ type: integer, minimum: 1, maximum: 31 }, { type: string }] }
+                additionalProperties: { $ref: "#/$defs/value" }
       # a badge: a certification badge, a logo, any small image a CV shows beside a line; one data
       # item per badge, /{partition}/badge/aws/saa/v1, holding its name and its image (doc/cv-badge.md)
-      - { id: badge, label: Badge, langList: [yaml], groupPath: badge }
+      - id: badge
+        label: Badge
+        content:
+          form: data
+          langList: [yaml]
+          schema:
+            type: object
+            properties:
+              name: { type: string }
+              # the text under it where a paper asks for the badge's own: a line under another
+              caption: { type: string }
+              issuer: { type: string }
+              url: { type: string }
+              # kept as text: an image scaled down (data:image/…), or where one is
+              image: { type: string, pattern: "^(data:image/|https?://|$)" }
+        groupPath: badge
     partitionList: &partitionList
       - { id: example, label: Example, description: the made-up person of the demonstration }
       - { id: real, label: My data, description: your own data, isGitIgnored: true }
       - { id: playground, label: Playground, description: anything tried out, isGitIgnored: true }
     modeList:
       - { id: info, label: Information, comp: CvProfileInfo, category: edit, isDefault: true, description: every value with its query path }
-  # templates and CVs of the Japanese form (doc/cv-jp.md)
+  # the Japanese-style forms drawn from a profile (doc/cv-sheet.md): the CV (cv-jp, doc/cv-jp.md) and the
+  # work experience (we-jp, doc/we-jp.md). one object holds the papers of both forms and their templates
   - id: cv.jp
-    label: Japanese-style CV
-    description: templates and instances of the Japanese-style CV, reading a profile
+    label: Japanese-style forms
+    description: templates, CVs (cv-jp) and work experiences (we-jp) of the Japanese style, reading a profile
     icon: file-text
-    assetKindList:
-      - { id: template, label: Template, langList: [yaml], groupPath: template }
-      - { id: instance, label: CV, langList: [yaml], groupPath: instance }
+    # its kinds (cv.jp.template, cv.jp.cv, cv.jp.we): what doc/cv-sheet.md#the-data says, as a schema. a key
+    # left out is read as the form's default, so none is required
+    kindList:
+      # what a form looks like: its sections. form: the form it is a template of (cv, the default; we)
+      - id: template
+        label: Template
+        content:
+          form: data
+          langList: [yaml]
+          schema:
+            type: object
+            properties:
+              name: { type: string }
+              form: { enum: [cv, we] }
+              # whether the years the form draws itself (the rows of a history, the periods of a career)
+              # have their Japanese era above them; absent: the form's way (cv yes, we no)
+              isEra: { type: boolean }
+              sectionList: { type: array, items: { $ref: "#/$defs/section" } }
+              cellById: { $ref: "#/$defs/textById" }
+              # how the text of a cell stands in its box, by its id; absent: as the form draws it
+              alignByCell: &alignByCell { type: object, additionalProperties: { enum: [left, center, right] } }
+            $defs:
+              # a part of a form (doc/cv-sheet.md#parts): in a template, in a paper of its own, in a part template
+              section: &cvJpSection
+                type: object
+                properties:
+                  id: { type: string }
+                  type: { enum: [basic, head, history, career, text, closing, education] }
+                  title: { type: string }
+                  isNote: { type: boolean }
+                  # the top of a CV (type basic): false draws it without a photo, the form the whole width;
+                  # its optional rows (在留資格・在留期限, 国籍, GitHub・ホームページ): drawn when filled (auto),
+                  # always or never (doc/cv-sheet.md#the-options-of-a-part)
+                  isPhoto: { type: boolean }
+                  rowVisa: &rowShown { enum: [auto, always, never] }
+                  rowNationality: *rowShown
+                  rowLink: *rowShown
+                  # 最終学歴 (type education): whether it has a column of the degree; list: where the
+                  # educations of the profile are (edu, the default)
+                  isDegree: { type: boolean }
+                  # a history: its groups, each the dated entries of a query (edu/jp)
+                  groupList:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        title: { type: string }
+                        list: { type: string }
+                        isNote: { type: boolean }
+                  # a block (type text): what it says, the least height of its free area in px, whether
+                  # its paragraphs start with an indent. a closing: its line (text)
+                  text: { type: string }
+                  heightMin: { type: number, minimum: 0 }
+                  isIndent: { type: boolean }
+                  # a career: the folder of the employers in the profile (work), the folder of an
+                  # employer's projects (project), the language of their values (jp), the order, and the
+                  # facts drawn of a project (those of an employer are its own entries in the profile:
+                  # work/{employer}/jp/fact/{id}/label, text)
+                  list: { type: string }
+                  projectFolder: { type: string }
+                  lang: { type: string }
+                  isNewestFirst: { type: boolean }
+                  projectFactList: { type: array, items: { $ref: "#/$defs/fact" } }
+              # a fact of a project: the key of its value under the language
+              # (work/{employer}/project/{project}/jp/{id}), its label on the form, and where it
+              # stands: beside the text (side), or under it (main)
+              fact: &cvJpFact
+                type: object
+                required: [id]
+                properties:
+                  id: { type: string }
+                  label: { type: string }
+                  place: { enum: [side, main] }
+              textById: { type: object, additionalProperties: { type: [string, number, boolean, "null"] } }
+        groupPath: template
+      # a paper of a form: a template, a profile, and what differs. the two kinds hold one shape
+      - id: cv
+        label: CV
+        description: a Japanese-style CV (cv-jp)
+        content:
+          form: data
+          langList: [yaml]
+          schema: &paperSchema
+            type: object
+            properties:
+              name: { type: string }
+              # its template by its whole path, a template of any partition
+              template: { type: string, pattern: "^(/|$)" }
+              profile: { type: string, pattern: "^(frontend:|$)" }
+              asOf: { type: string, pattern: "^(\\d{4}-\\d{1,2}-\\d{1,2})?$" }
+              # the era above the years, for this paper; absent: its template's way
+              isEra: { type: boolean }
+              valueByCell: { type: object, additionalProperties: { type: [string, number, boolean, "null"] } }
+              # how the text of a cell stands in its box, where this paper differs from its template
+              alignByCell: *alignByCell
+              # the options of a part, for this paper, by the id of the part (doc/cv-sheet.md#the-options-of-a-part)
+              optionBySection: { type: object, additionalProperties: { type: object } }
+              rowExtraByGroup:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id: { type: string }
+                      year: { type: [integer, string] }
+                      month: { type: [integer, string] }
+                      text: { type: string }
+                      note: { type: string }
+              rowHiddenByGroup: { type: object, additionalProperties: { type: array, items: { type: string } } }
+              rowOrderByGroup: { type: object, additionalProperties: { type: array, items: { type: string } } }
+              # parts only this paper has, each a whole section made of a part template (doc/cv-sheet.md#parts),
+              # the parts of its template it leaves out, and its own order of them all
+              sectionExtraList: { type: array, items: *cvJpSection }
+              sectionHiddenList: { type: array, items: { type: string } }
+              sectionOrderList: { type: array, items: { type: string } }
+            $defs:
+              fact: *cvJpFact
+        groupPath: cv
+      - id: we
+        label: Work experience
+        description: a Japanese-style work experience (we-jp)
+        content:
+          form: data
+          langList: [yaml]
+          schema: *paperSchema
+        groupPath: we
+      # a part template: one part of a form, offered when a part is added to a paper beside the form's
+      # own (doc/cv-sheet.md#parts); /{partition}/part/{name}
+      - id: part
+        label: Part template
+        description: one part of a form (a block, a history of its own), offered when a part is added to a paper
+        content:
+          form: data
+          langList: [yaml]
+          schema:
+            type: object
+            required: [section]
+            properties:
+              name: { type: string }
+              form: { enum: [cv, we] }
+              section: *cvJpSection
+            $defs:
+              fact: *cvJpFact
+        groupPath: part
+      # how the table of the mode Papers is shown (comp-mdx/jp/CvJpPaperTable.js, doc/cv-sheet.md#the-table-of-papers):
+      # one line a row or wrapped, and its columns in order, each with its width and whether it is hidden
+      - id: view
+        label: Table view
+        description: how the table of the papers is shown
+        content:
+          form: data
+          langList: [yaml]
+          schema:
+            type: object
+            properties:
+              name: { type: string }
+              lineMode: { enum: [wrap, line] }
+              columnList:
+                type: array
+                items:
+                  type: object
+                  required: [id]
+                  properties:
+                    id: { enum: [name, path, form, template, profile, asOf, partition] }
+                    width: { type: number, minimum: 0 }
+                    isHidden: { type: boolean }
+        groupPath: view
     partitionList: *partitionList
     modeList:
       # pathParam: the mode shows one thing of the object, named by an inner path in its parameter
-      # "instance": what draws a reference such as frontend:{id}#/example/instance/sample as a block
+      # "instance": what draws a reference such as frontend:{id}#/example/we/general as a block
       # (react-doc: main/doc_page_impl_obj_frontend.md#things-inside-an-object-inner-paths)
-      - { id: sheet, label: Sheet, comp: CvJpSheet, isDefault: true, pathParam: instance, description: "one CV, edited in place" }
-      - { id: list, label: CVs, comp: CvJpList, category: edit, description: "the CVs and templates, a new CV" }
+      - { id: sheet, label: Sheet, comp: CvJpSheet, isDefault: true, pathParam: instance, description: "one CV or work experience, edited in place" }
+      - { id: list, label: Papers, comp: CvJpList, category: edit, description: "the CVs, the work experiences and the templates; a new paper" }

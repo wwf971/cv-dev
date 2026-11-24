@@ -8,6 +8,9 @@ node_modules/
 *.bak
 *.tmp
 *.playground.md
+# the template of the playground document of your own papers (My papers, .doc-page/playground.yaml): it
+# points at the partition real, so it stays on this machine with that partition
+/.doc-page/playground/cv-real.md
 **/.doc-page/service-kernel.yaml
 **/.doc-page/service-backup/
 **/.doc-page/service-infra/

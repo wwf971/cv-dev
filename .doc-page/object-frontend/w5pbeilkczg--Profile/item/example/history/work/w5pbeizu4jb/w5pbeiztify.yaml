@@ -1,0 +1,24 @@
+start:
+  year: 2022
+  month: 4
+  jp: サンプルシステムズ株式会社 入社
+  en: Joined Sample Systems
+  note:
+    jp: 現在に至る
+    en: to the present
+jp:
+  name: サンプルシステムズ株式会社
+  employment: 正社員
+  fact:
+    business:
+      label: 事業内容
+      text: 業務システムの受託開発、クラウド導入支援
+    capital:
+      label: 資本金
+      text: 1億円
+    employee:
+      label: 従業員数
+      text: 300名
+    listing:
+      label: 上場
+      text: 非上場

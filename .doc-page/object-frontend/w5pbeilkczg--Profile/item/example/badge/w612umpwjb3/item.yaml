@@ -1,0 +1,30 @@
+itemId: w612umpwjb3
+name: ""
+lang: yaml
+contentType: text/yaml
+fileExt: yaml
+owner:
+  ref: frontend:w5pbeilkczg
+versionIdHead: w612umpwz27
+isDeleted: false
+isLocked: false
+timeCreated: 20261113_22560066+09
+versionList:
+  - versionId: w612umpwz27
+    versionIdPrevList: []
+    time: 20261113_22560066+09
+    note: ""
+    size: 54341
+    hash: 44981ca5fb3a33a51c15339efa79f90a32f43793
+    isLocked: false
+    dependencyList: []
+eventList:
+  - eventType: create
+    time: 20261113_22560066+09
+    versionId: w612umpwz27
+  - eventType: updateInPlace
+    time: 20261114_00272423+09
+    versionId: w612umpwz27
+  - eventType: updateInPlace
+    time: 20261119_02163102+09
+    versionId: w612umpwz27

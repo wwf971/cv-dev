@@ -6,3 +6,9 @@ playgroundList:
     description: A profile and a CV of the partition playground, to edit, break and start over, without touching the example.
     doc: ~cv/doc/cv.playground.md
     template: ./playground/cv.md
+  # your own data: the partition real of the two objects, on a document git ignores as it does the partition
+  - id: cv-real
+    title: My papers
+    description: Your own profile, CV and work experience, in the partition real, which git ignores.
+    doc: ~cv/doc/cv-real.playground.md
+    template: ./playground/cv-real.md

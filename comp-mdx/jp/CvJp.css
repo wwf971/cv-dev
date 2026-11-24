@@ -1,6 +1,9 @@
-/* The Japanese-style CV (doc/cv-jp.md). The paper is white with black rules in every theme of the
-   page, as it is printed; what floats over it for editing follows the page. The sizes are those
-   of the common form, in px of an A4 sheet 794px wide. */
+/* The sheet of the Japanese-style forms (doc/cv-sheet.md) and the top of the CV (doc/cv-jp.md);
+   what is the work experience's own is WeJp.css. The paper is white with black rules in every
+   theme of the page, as it is printed; what floats over it for editing follows the page. The sizes
+   are those of the common form, in px of an A4 sheet 794px wide. Whatever scrolls up and down here
+   (the papers panel, a list or a preview of an editor) keeps the wheel at its ends
+   (overscroll-behavior-y: contain), so the page moves only where nothing under the pointer can scroll. */
 .doc-cv-jp {
 	position: relative;
 	margin: 1rem 0;
@@ -77,6 +80,11 @@
 	align-items: flex-end;
 	height: 42px;
 	width: calc(100% - 160px);
+}
+
+/* a top without a photo: the date stands at the right edge of the form, as wide as the paper */
+.doc-cv-jp-basic[data-photo='none'] .doc-cv-jp-head {
+	width: 100%;
 }
 
 .doc-cv-jp-title {
@@ -181,6 +189,15 @@
 .doc-cv-jp-table-form td.doc-cv-jp-value-center {
 	padding-left: 4px;
 	text-align: center;
+}
+
+/* a centered value set to stand left or right: the padding of the values beside it */
+.doc-cv-jp-table-form td.doc-cv-jp-value-center[data-align='left'] {
+	padding-left: 10px;
+}
+
+.doc-cv-jp-table-form td.doc-cv-jp-value-center[data-align='right'] {
+	padding-right: 10px;
 }
 
 .doc-cv-jp-table-link {
@@ -294,6 +311,53 @@
 	line-height: 1.4;
 }
 
+/* 最終学歴 (CvJpSection.jsx CvJpEducation): 年月, the school, its status, the degree */
+.doc-cv-jp-table-education {
+	margin-bottom: 18px;
+}
+
+.doc-cv-jp-col-edu-date {
+	width: 16%;
+}
+
+.doc-cv-jp-col-edu-status {
+	width: 14%;
+}
+
+.doc-cv-jp-col-edu-degree {
+	width: 24%;
+}
+
+/* the names of its columns: under the title, lighter than it */
+.doc-cv-jp-table-education .doc-cv-jp-row-label td {
+	height: 28px;
+	padding: 2px 4px;
+	background: #f8f8f8;
+	font-size: 13px;
+	font-weight: 600;
+	text-align: center;
+	word-spacing: 0.4em;
+}
+
+.doc-cv-jp-table-education .doc-cv-jp-row-education td {
+	height: 35px;
+	padding: 6px;
+}
+
+.doc-cv-jp-table-education td.doc-cv-jp-edu-date,
+.doc-cv-jp-table-education td.doc-cv-jp-edu-status {
+	text-align: center;
+}
+
+.doc-cv-jp-table-education td.doc-cv-jp-edu-school,
+.doc-cv-jp-table-education td.doc-cv-jp-edu-degree {
+	padding-left: 10px;
+}
+
+.doc-cv-jp-table-education[data-cut-below] {
+	margin-bottom: 0;
+}
+
 /* the history: 年, 月, the text, and sometimes 備考 */
 .doc-cv-jp-table-history,
 .doc-cv-jp-table-text {
@@ -310,7 +374,6 @@
 
 .doc-cv-jp-row-head td,
 .doc-cv-jp-row-group td {
-	position: relative;
 	height: 35px;
 	padding: 4px;
 	background: #f8f8f8;
@@ -333,15 +396,250 @@
 	text-align: center;
 }
 
+/* the free area of a block: as tall as what it says, or as its section asks (heightMin, the box
+   of a paper form) */
 .doc-cv-jp-paragraph {
 	display: table-cell;
-	min-height: 120px;
-	height: 120px;
+	height: 44px;
 	padding: 6px 10px !important;
 	vertical-align: top !important;
 	font-size: 15px;
 	line-height: 1.7;
-	text-indent: 2em;
+}
+
+/* ---------- the lines of a block (doc/cv-sheet.md#blocks) ---------- */
+.doc-cv-jp-line {
+	display: block;
+	min-height: 1lh;
+}
+
+.doc-cv-jp-paragraph[data-indent] .doc-cv-jp-line[data-kind="text"] {
+	text-indent: 1em;
+}
+
+.doc-cv-jp-line[data-kind="blank"] {
+	min-height: 0;
+	height: 0.55em;
+}
+
+.doc-cv-jp-line[data-kind="heading"] {
+	font-weight: 700;
+}
+
+/* an item of a list: its lines go on under its text, not under its mark */
+.doc-cv-jp-line[data-kind="bullet"] {
+	display: flex;
+	gap: 0.2em;
+}
+
+.doc-cv-jp-line-mark {
+	flex: none;
+	min-width: 1em;
+	white-space: nowrap;
+}
+
+.doc-cv-jp-line-body {
+	flex: 1;
+	min-width: 0;
+}
+
+/* labels one under another: a column as wide as the widest of them, what they say beside it */
+.doc-cv-jp-line-group {
+	display: grid;
+	grid-template-columns: max-content minmax(0, 1fr);
+	column-gap: 1.1em;
+}
+
+.doc-cv-jp-line-label {
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.doc-cv-jp-line-value {
+	min-width: 0;
+}
+
+/* ---------- a year with its era above it (cv-era-cell.jsx) ----------
+   the box stands on the line by its year, so the text around it keeps its line, and the era
+   rises above it in the small type of the form */
+.doc-cv-era-year {
+	display: inline-block;
+	vertical-align: baseline;
+	text-align: center;
+	text-indent: 0;
+	line-height: 1.2;
+}
+
+.doc-cv-era-year-era {
+	display: block;
+	min-height: 11px;
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 1;
+	white-space: nowrap;
+}
+
+.doc-cv-era-year-year {
+	display: block;
+}
+
+/* ---------- a period (cv-period-cell.jsx) ----------
+   its start, a short vertical line, its end: a grid of fixed columns, year | 年 | month | 月, so the two
+   years stand one under the other and the months end at one edge. measured in em: as wide in
+   a heavier type as in a lighter one */
+.doc-cv-period {
+	display: inline-grid;
+	grid-template-columns: 2.3em 1em 1.2em 1em;
+	align-items: baseline;
+	justify-items: center;
+	vertical-align: top;
+	font-variant-numeric: tabular-nums;
+	line-height: 1.25;
+	text-align: center;
+	text-indent: 0;
+	white-space: nowrap;
+}
+
+.doc-cv-period-month {
+	justify-self: end;
+}
+
+/* between the two dates: a short line from the one down to the other, in the middle of the
+   date. it says what 〜 says in a line of text; drawn, not a character, so it is as thin
+   and as straight on paper as the rules of the form */
+.doc-cv-period-mark {
+	grid-column: 1 / -1;
+	align-self: center;
+	display: block;
+	width: 0;
+	height: 1em;
+	margin: 0.2em 0 0.26em;
+	border-left: 1px solid currentColor;
+}
+
+.doc-cv-period-now {
+	grid-column: 1 / -1;
+}
+
+/* a year with its era above it, in a period: the era a little smaller than on a row of a history */
+.doc-cv-period .doc-cv-era-year-era {
+	min-height: 0.8em;
+	font-size: 0.8em;
+}
+
+/* the dates of a period in the card of its cell: a number a field */
+.doc-cv-jp-editor-date-label {
+	min-width: 2.6em;
+}
+
+.doc-cv-jp-editor-number {
+	min-width: 2.4em;
+	padding: 0 0.3em;
+	text-align: right;
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+/* a value a query is made of (the last name of a whole name): its path, then the value typed in place */
+.doc-cv-jp-editor-part-path {
+	flex: none;
+	min-width: 11em;
+}
+
+.doc-cv-jp-editor-part {
+	flex: 1;
+	min-width: 6em;
+	padding: 0 0.3em;
+	color: var(--color-fd-foreground);
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+/* the switch of the bar: what it switches, then its two ways */
+.doc-cv-jp-bar-switch {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-size: 0.75rem;
+	white-space: nowrap;
+}
+
+/* the line closing a paper: 以上, at the right under the last section */
+.doc-cv-jp-closing {
+	min-height: 1lh;
+	margin-top: -4px;
+	padding-right: 6px;
+	text-align: right;
+}
+
+/* ---------- a section of the sheet, and what it offers while the sheet is edited ---------- */
+.doc-cv-jp-section {
+	position: relative;
+}
+
+/* in the right margin of the paper: nothing of the sheet moves for it */
+.doc-cv-jp-section-tool {
+	position: absolute;
+	top: 0;
+	right: -32px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	opacity: 0.45;
+	transition: opacity 0.12s;
+}
+
+/* a paper with no part, while it is edited: a place to add the first (CvJpPart.jsx) */
+.doc-cv-jp-part-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.6rem;
+	min-height: 160px;
+	font-size: 0.8rem;
+	border: 1px dashed #9bb7e0;
+	border-radius: 4px;
+}
+
+/* a section of one line (the line closing the paper): its buttons stand up from its foot, inside the paper */
+.doc-cv-jp-section[data-section-type="closing"] > .doc-cv-jp-section-tool {
+	top: auto;
+	bottom: 0;
+}
+
+.doc-cv-jp-section:hover > .doc-cv-jp-section-tool,
+.doc-cv-jp-section-tool:focus-within {
+	opacity: 1;
+}
+
+.doc-cv-jp-section-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 20px;
+	padding: 0;
+	color: #1f4f96;
+	background: #fff;
+	border: 1px solid #9bb7e0;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.doc-cv-jp-section-button:hover:not(:disabled) {
+	background: #e8f1ff;
+}
+
+.doc-cv-jp-section-button:disabled {
+	color: #a9b4c4;
+	border-color: #d5dbe5;
+	cursor: default;
+}
+
+/* an empty cell while the sheet is edited: what it is for, to click on */
+.doc-cv-jp-cell-placeholder {
+	color: #9aa3b0;
+	font-weight: 400;
+	text-indent: 0;
 }
 
 /* in-place editing: an outline over what can be clicked; nothing takes room */
@@ -364,6 +662,18 @@
 .doc-cv-jp-paper .doc-cv-jp-cell[data-missing] {
 	outline-color: #d6453d;
 	background: #fff3f2;
+}
+
+/* a history whose query reads no entry, while the sheet is edited */
+.doc-cv-jp-paper .doc-cv-jp-row-empty td[data-missing] {
+	outline: 1px dashed #d6453d;
+	outline-offset: -2px;
+	background: #fff3f2;
+}
+
+.doc-cv-jp-row-empty-note {
+	color: #b3261e;
+	font-size: 0.72rem;
 }
 
 .doc-cv-jp-row-add {
@@ -395,6 +705,12 @@
 	cursor: text;
 }
 
+/* a cell opened in the flow that is no cell of a table has no padding: its text reaches its
+   edges, so its frame is drawn around it, not inside, and the caret at an end stays clear of it */
+.doc-cv-jp-paper :not(td, th).doc-cv-jp-cell[data-open]:not([data-float]) {
+	outline-offset: 3px;
+}
+
 .doc-cv-jp-surface-box {
 	box-sizing: border-box;
 	display: block;
@@ -421,6 +737,9 @@
 	visibility: hidden;
 }
 
+/* room at both ends of the text, taken back at the left so the text stays where the cell drew
+   it: the caret at the end of a text stands inside the frame, not on its outline, where it
+   could not be seen (a text set to the right always ends at the edge) */
 .doc-cv-jp-surface-float {
 	position: absolute;
 	top: 0;
@@ -428,15 +747,25 @@
 	z-index: 5;
 	width: max-content;
 	max-width: 360px;
+	margin-left: -5px;
+	padding: 0 5px;
 	background: #e8f1ff;
 	outline: 1px solid #1f4f96;
 	box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
 }
 
-/* the order of the rows: a grip in the margin of the paper, a line where the row would go */
-.doc-cv-jp-row td[data-field="year"] {
+/* A cell is positioned only while the sheet is edited, for what floats at its edge then (the + of a
+   heading, the grip of a row, CvJpRowAdd): Chrome paints a positioned cell, its background with it,
+   after the rules of the table, so a grey cell covers its own rules. On a screen the pixels hide
+   it; a printed PDF shows them thinner, and a rule half covered as a step (doc/cv-sheet.md#the-look).
+   Read and printed, no cell is positioned */
+.doc-cv-jp-paper[data-editing] .doc-cv-jp-row-head td,
+.doc-cv-jp-paper[data-editing] .doc-cv-jp-row-group td,
+.doc-cv-jp-paper[data-editing] .doc-cv-jp-row td[data-field="year"] {
 	position: relative;
 }
+
+/* the order of the rows: a grip in the margin of the paper, a line where the row would go */
 
 .doc-cv-jp-row-grip {
 	position: absolute;
@@ -491,9 +820,127 @@
 	box-shadow: 0 6px 24px rgb(0 0 0 / 18%);
 }
 
+/* the tools of an open cell, floating above its right end: nothing of the sheet moves for them. a
+   small bar of the page's buttons (Save, Cancel), as the bar of an editor has them */
+.doc-cv-jp-tool-float {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 31;
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.2rem;
+	font-size: 0.75rem;
+	white-space: nowrap;
+	background: var(--color-fd-popover, var(--color-fd-background));
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.35rem;
+	box-shadow: 0 2px 8px rgb(15 23 42 / 10%);
+}
+
+.doc-cv-jp-tool-group {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+/* how the text of the open cell stands in its box: three buttons, the way it stands now pressed */
+.doc-cv-jp-tool-align {
+	display: inline-flex;
+	gap: 1px;
+	margin-right: 0.15rem;
+}
+
+.doc-cv-jp-tool-align .doc-button {
+	padding-inline: 0.3rem;
+}
+
+.doc-cv-jp-tool-align .doc-button[aria-pressed='true'] {
+	color: var(--color-fd-primary);
+	background: var(--color-fd-accent);
+	border-color: var(--color-fd-primary);
+}
+
+.doc-cv-jp-tool-message {
+	max-width: 24rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* where the open row is kept, said before its buttons: the profile or only this paper */
+.doc-cv-jp-tool-where {
+	padding: 0 0.3rem;
+	font-size: 0.7rem;
+}
+
+/* the name of the paper in the bar of its sheet, typed in place while the sheet is edited */
+.doc-cv-jp-bar-name {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.35rem;
+	min-width: 0;
+	font-size: 0.8rem;
+}
+
+/* a box as the choice of the paper has, where that choice stands while the sheet is not edited */
+.doc-cv-jp-bar-name .doc-cv-paper-name-field {
+	display: inline-block;
+	box-sizing: border-box;
+	min-width: 12rem;
+	max-width: 20rem;
+	padding: 0.2rem 0.4rem;
+	overflow: hidden;
+	white-space: nowrap;
+	vertical-align: middle;
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.375rem;
+	/* the box says it can be typed: no underline of an inline value in it */
+	text-decoration: none;
+}
+
+.doc-cv-jp-bar-name .doc-cv-paper-name-field:focus {
+	border-color: var(--color-fd-primary);
+	outline: none;
+}
+
+/* in a row of the table: the name typed where it was read, one line */
+.doc-cv-papers-table .doc-cv-paper-name-field {
+	display: inline-block;
+	min-width: 6rem;
+	max-width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+	vertical-align: bottom;
+}
+
+.doc-cv-jp-bar-message {
+	max-width: 18rem;
+	overflow: hidden;
+	font-size: 0.75rem;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* undo and redo of what was changed here: two small buttons, what cannot be undone said beside them */
+.doc-cv-undo-redo {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.2rem;
+}
+
+.doc-cv-undo-redo-message {
+	max-width: 16rem;
+	overflow: hidden;
+	font-size: 0.75rem;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
 .doc-cv-jp-editor-head {
 	display: flex;
 	justify-content: space-between;
+	align-items: center;
 	gap: 0.5rem;
 	font-weight: 600;
 }
@@ -538,6 +985,7 @@
 	gap: 0.15rem;
 	max-height: 13rem;
 	overflow-y: auto;
+	overscroll-behavior-y: contain;
 	padding: 0.3rem;
 	border: 1px solid var(--color-fd-border);
 	border-radius: 0.375rem;
@@ -586,6 +1034,7 @@
 .doc-cv-jp-editor-preview {
 	max-height: 6rem;
 	overflow-y: auto;
+	overscroll-behavior-y: contain;
 	padding: 0.25rem 0.4rem;
 	white-space: pre-wrap;
 	background: var(--color-fd-muted);
@@ -641,6 +1090,7 @@
 	min-width: 12rem;
 	max-height: 16rem;
 	overflow-y: auto;
+	overscroll-behavior-y: contain;
 	padding: 0.25rem;
 	font-size: 0.8rem;
 	background: var(--color-fd-popover, var(--color-fd-background));
@@ -663,38 +1113,515 @@
 	background: var(--color-fd-accent);
 }
 
-/* the modes that are lists */
-.doc-cv-list {
-	margin: 1rem 0;
-	font-size: 0.85rem;
+/* a section left out: drawing it again, and deleting a block of the paper's own */
+.doc-cv-jp-field-row {
+	display: flex;
+	align-items: center;
 }
 
-.doc-cv-list table {
-	width: 100%;
-	margin: 0.4rem 0 0.9rem;
-	border-collapse: collapse;
+.doc-cv-jp-field-row > .doc-cv-jp-field-item:first-child {
+	flex: 1;
 }
 
-.doc-cv-list th,
-.doc-cv-list td {
-	padding: 0.25rem 0.5rem;
-	text-align: left;
-	vertical-align: top;
-	border-bottom: 1px solid var(--color-fd-border);
-}
-
-.doc-cv-list th {
-	font-weight: 500;
+.doc-cv-jp-field-item[data-icon] {
+	display: inline-flex;
+	padding: 0.3rem;
 	color: var(--color-fd-muted-foreground);
 }
 
-.doc-cv-list h4 {
-	margin: 0.8rem 0 0.2rem;
+/* the mode Papers (CvJpList.jsx): a path bar over a panel of one height, whatever it shows (a folder's
+   table, a paper's sheet), which scrolls inside it. The bar is the path-based view's of cloud-dev-vis
+   (PathNavBar.css); the table is react-comp-misc's FolderView, drawn here in the page's colors and
+   type (doc/cv-sheet.md#the-table-of-papers). */
+.doc-cv-papers {
+	display: flex;
+	flex-direction: column;
+	margin: 1rem 0;
 	font-size: 0.85rem;
-	font-weight: 600;
+	background: var(--color-fd-background);
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.5rem;
+	overflow: hidden;
 }
 
+.doc-cv-papers-git {
+	font-size: 0.78rem;
+	white-space: nowrap;
+}
 
+.doc-cv-papers-body {
+	flex: none;
+	box-sizing: border-box;
+	overflow: hidden;
+}
+
+/* a paper, the gallery of parts, a part: the panel scrolls it */
+.doc-cv-papers-body[data-place="paper"],
+.doc-cv-papers-body[data-place="parts"],
+.doc-cv-papers-body[data-place="part"] {
+	padding: 0 0.75rem;
+	overflow: auto;
+	overscroll-behavior-y: contain;
+}
+
+/* ---------- the gallery of parts (CvJpPartGallery.jsx) ---------- */
+.doc-cv-part-gallery {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	padding: 0.6rem 0 1rem;
+}
+
+.doc-cv-part-gallery-note {
+	margin: 0;
+	font-size: 0.78rem;
+}
+
+.doc-cv-part-gallery-heading {
+	margin: 0 0 0.5rem;
+	font-size: 0.85rem;
+	font-weight: 650;
+}
+
+.doc-cv-part-gallery-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+	gap: 0.75rem;
+}
+
+/* a tile: the part drawn small on a strip of its paper, its name and where it comes from under it */
+.doc-cv-part-tile {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	min-width: 0;
+	padding: 0.5rem;
+	text-align: left;
+	cursor: pointer;
+	background: var(--color-fd-card, var(--color-fd-background));
+	border: 1px solid var(--color-fd-border);
+	border-radius: 6px;
+}
+
+.doc-cv-part-tile:hover,
+.doc-cv-part-tile:focus-visible {
+	border-color: var(--color-fd-primary);
+	outline: none;
+}
+
+.doc-cv-part-tile-preview {
+	display: flex;
+	justify-content: center;
+	height: 9.5rem;
+	overflow: hidden;
+	pointer-events: none;
+	background: #fff;
+	border: 1px solid var(--color-fd-border);
+	border-radius: 3px;
+}
+
+/* the paper at a scale that fits the narrowest tile (794px * 0.27, within 15rem less its padding),
+   centred in a wider one: a part shows whole as far as the strip goes */
+.doc-cv-part-tile-preview > .doc-cv-jp-paper {
+	flex: none;
+	zoom: 0.27;
+	min-height: 0;
+	border: 0;
+}
+
+.doc-cv-part-tile-label {
+	overflow: hidden;
+	font-size: 0.82rem;
+	font-weight: 600;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.doc-cv-part-tile-sub {
+	overflow: hidden;
+	font-size: 0.72rem;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* one part at the top of a page: a page of A4, the part where a paper starting with it draws it */
+.doc-cv-part-page {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.6rem 0 1rem;
+}
+
+.doc-cv-part-page-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.5rem;
+	font-size: 0.8rem;
+}
+
+.doc-cv-part-paper[data-page] {
+	aspect-ratio: 210 / 297;
+	height: auto;
+}
+
+/* a paper's sheet: its bar (Pages…, Edit) stays at the top of the panel while the paper scrolls */
+.doc-cv-papers-body > .doc-cv-jp {
+	margin: 0 0 0.75rem;
+}
+
+.doc-cv-papers-body > .doc-cv-jp > .doc-cv-jp-bar {
+	position: sticky;
+	top: 0;
+	z-index: 6;
+	max-width: none;
+	margin: 0 -0.75rem 0.5rem;
+	padding: 0.35rem 0.75rem;
+	background: var(--color-fd-background);
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+/* a folder: the tools, a new paper while the document is edited, and the table taking the rest */
+.doc-cv-papers-overview {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.doc-cv-papers-overview > * {
+	flex: none;
+}
+
+/* ---------- the tools of the table, as the profile panel's ---------- */
+.doc-cv-papers-tools {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	min-height: 2.4rem;
+	padding: 0.3rem 0.75rem;
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+.doc-cv-papers-find {
+	display: flex;
+	flex: 0 1 15rem;
+	align-items: center;
+	gap: 0.3rem;
+	min-width: 7rem;
+	padding: 0 0.4rem;
+	color: var(--color-fd-muted-foreground);
+	background: var(--color-fd-background);
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.3rem;
+}
+
+.doc-cv-papers-find:focus-within {
+	border-color: var(--color-fd-muted-foreground);
+}
+
+.doc-cv-papers-find input {
+	flex: 1;
+	min-width: 0;
+	padding: 0.2rem 0;
+	font: inherit;
+	color: var(--color-fd-foreground);
+	background: transparent;
+	border: none;
+	outline: none;
+}
+
+.doc-cv-papers-segment-list {
+	display: inline-flex;
+	flex: none;
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.3rem;
+	overflow: hidden;
+}
+
+/* the choice made is marked by its ground, never by a heavier font: its width stays */
+.doc-cv-papers-segment {
+	padding: 0.15rem 0.5rem;
+	font: inherit;
+	color: var(--color-fd-muted-foreground);
+	white-space: nowrap;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+}
+
+.doc-cv-papers-segment + .doc-cv-papers-segment {
+	border-left: 1px solid var(--color-fd-border);
+}
+
+.doc-cv-papers-segment:hover {
+	color: var(--color-fd-foreground);
+}
+
+.doc-cv-papers-segment[aria-pressed="true"] {
+	color: var(--color-fd-foreground);
+	background: color-mix(in srgb, var(--color-fd-border) 70%, transparent);
+}
+
+.doc-cv-papers-tool-button {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	gap: 0.3rem;
+	padding: 0.15rem 0.5rem;
+	font: inherit;
+	color: var(--color-fd-muted-foreground);
+	white-space: nowrap;
+	background: transparent;
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.3rem;
+	cursor: pointer;
+}
+
+.doc-cv-papers-tool-button:hover,
+.doc-cv-papers-tool-button[aria-expanded="true"] {
+	color: var(--color-fd-foreground);
+	background: color-mix(in srgb, var(--color-fd-border) 45%, transparent);
+}
+
+.doc-cv-papers-icon-button {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	padding: 0.2rem;
+	color: var(--color-fd-muted-foreground);
+	background: transparent;
+	border: none;
+	border-radius: 0.25rem;
+	cursor: pointer;
+}
+
+.doc-cv-papers-icon-button:hover:not(:disabled) {
+	color: var(--color-fd-foreground);
+	background: color-mix(in srgb, var(--color-fd-border) 60%, transparent);
+}
+
+.doc-cv-papers-icon-button:disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+
+.doc-cv-papers-space {
+	flex: 1;
+}
+
+/* whether the view shown is the one kept: one line, cut when narrow (its whole words in its title) */
+.doc-cv-papers-view-state {
+	display: inline-flex;
+	flex: 0 1 auto;
+	align-items: center;
+	gap: 0.35rem;
+	min-width: 0;
+	overflow: hidden;
+	font-size: 0.78rem;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* the menu of the columns */
+.doc-cv-papers-menu-wrap {
+	display: inline-flex;
+	flex: none;
+}
+
+.doc-cv-papers-menu {
+	display: grid;
+	gap: 0.1rem;
+	min-width: 15rem;
+	padding: 0.35rem;
+	font-family: ui-sans-serif, system-ui, sans-serif;
+	font-size: 0.8rem;
+	line-height: 1.35;
+	color: var(--color-fd-foreground);
+	background: var(--color-fd-background);
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.4rem;
+	box-shadow: 0 6px 20px rgb(15 23 42 / 16%);
+}
+
+.doc-cv-papers-menu-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto auto;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.1rem 0.2rem;
+	border-radius: 0.3rem;
+}
+
+.doc-cv-papers-menu-row:hover {
+	background: color-mix(in srgb, var(--color-fd-border) 40%, transparent);
+}
+
+.doc-cv-papers-menu-row > label {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	cursor: pointer;
+}
+
+.doc-cv-papers-menu-width {
+	font-size: 0.72rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.doc-cv-papers-menu-foot {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: 0.2rem;
+	padding-top: 0.35rem;
+	border-top: 1px solid var(--color-fd-border);
+}
+
+/* a new paper, while the document is edited: one line under the tools */
+.doc-cv-papers-new {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	min-height: 2.4rem;
+	padding: 0.3rem 0.75rem;
+	overflow-x: auto;
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+.doc-cv-papers-new input,
+.doc-cv-papers-new select {
+	flex: 1 1 10rem;
+	min-width: 8rem;
+	padding: 0.2rem 0.4rem;
+	font: inherit;
+	color: inherit;
+	background: var(--color-fd-background);
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.3rem;
+}
+
+.doc-cv-papers-new select {
+	flex: 0 0 auto;
+	min-width: 0;
+}
+
+.doc-cv-papers-new > .doc-button,
+.doc-cv-papers-new > .doc-error {
+	flex: none;
+	white-space: nowrap;
+}
+
+/* ---------- the table: FolderView of react-comp-misc in the page's look ---------- */
+.doc-cv-papers-overview > .doc-cv-papers-table {
+	position: relative;
+	flex: 1 1 0;
+	min-height: 0;
+}
+
+.doc-cv-papers-table .folder-view-container {
+	border: 0;
+	border-radius: 0;
+}
+
+/* the table scrolls inside its height and keeps the wheel at its ends */
+.doc-cv-papers-table .folder-view-switcher-content.has-body-height {
+	overscroll-behavior-y: contain;
+}
+
+/* the head stays on top while the rows scroll: its ground is opaque */
+.doc-cv-papers-table .folder-header {
+	font-size: inherit;
+	font-weight: 500;
+	color: var(--color-fd-muted-foreground);
+	background: color-mix(in srgb, var(--color-fd-muted) 55%, var(--color-fd-background));
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+.doc-cv-papers-table .folder-header-cell {
+	padding: 0.3rem 0.5rem;
+	border-right: 1px solid color-mix(in srgb, var(--color-fd-border) 70%, transparent);
+}
+
+.doc-cv-papers-table .folder-header-resize-handle:hover,
+.doc-cv-papers-table .folder-header-resize-handle:active {
+	background: color-mix(in srgb, var(--color-fd-primary, #2563eb) 25%, transparent);
+}
+
+.doc-cv-papers-table .folder-col-resize-indicator,
+.doc-cv-papers-table .folder-header-separator-indicator {
+	background: var(--color-fd-primary, #2563eb);
+}
+
+.doc-cv-papers-table .folder-body {
+	font-size: inherit;
+	line-height: 1.5;
+}
+
+/* rows ruled as the page's tables are; their words can be selected and copied */
+.doc-cv-papers-table .folder-body .folder-body-row {
+	border-right: 0;
+	border-bottom: 1px solid color-mix(in srgb, var(--color-fd-border) 70%, transparent);
+	user-select: text;
+	cursor: default;
+}
+
+.doc-cv-papers-table .folder-body.selection-none .folder-body-row:hover {
+	background: color-mix(in srgb, var(--color-fd-muted, #8881) 55%, transparent);
+}
+
+.doc-cv-papers-table .folder-body-cell {
+	padding: 0.3rem 0.5rem;
+	border-right: 0;
+}
+
+/* one line a row is the table's own way (cut, its whole text in a tooltip); wrapped, a cell's text
+   breaks into lines, a path only before a "/", and the cells of a row start at its top */
+.doc-cv-papers-table[data-line="wrap"] .folder-body-cell {
+	align-items: flex-start;
+}
+
+.doc-cv-papers-table[data-line="wrap"] .folder-body-cell-content {
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+/* the heading of a part (CVs (3)) and a part holding nothing: their words run over the empty cells
+   beside them, on one line */
+.doc-cv-papers-table .folder-body .doc-cv-papers-row-part,
+.doc-cv-papers-table .folder-body .doc-cv-papers-row-empty {
+	background: transparent;
+}
+
+.doc-cv-papers-table .folder-body.selection-none .doc-cv-papers-row-part:hover,
+.doc-cv-papers-table .folder-body.selection-none .doc-cv-papers-row-empty:hover {
+	background: transparent;
+}
+
+.doc-cv-papers-table .doc-cv-papers-row-part .folder-body-cell,
+.doc-cv-papers-table .doc-cv-papers-row-empty .folder-body-cell,
+.doc-cv-papers-table .doc-cv-papers-row-part .folder-body-cell-content,
+.doc-cv-papers-table .doc-cv-papers-row-empty .folder-body-cell-content {
+	overflow: visible;
+	white-space: nowrap;
+}
+
+.doc-cv-papers-table .doc-cv-papers-row-part .folder-body-cell {
+	padding-top: 0.75rem;
+}
+
+.doc-cv-papers-part-title {
+	font-weight: 600;
+	color: var(--color-fd-foreground);
+}
+
+.doc-cv-papers-none {
+	margin: 0;
+	padding: 0.75rem;
+}
+
+.doc-cv-papers-nowrap {
+	white-space: nowrap;
+}
 
 .doc-cv-list-muted {
 	color: var(--color-fd-muted-foreground);
@@ -745,7 +1672,8 @@
 	font-size: 0.85em;
 }
 
-/* the text of a cell not on the sheet (an optional row not drawn), typed in the card */
+/* the text of a cell not on the sheet (an optional row not drawn), and the value of the profile a
+   cell reads, typed in the card */
 .doc-cv-jp-editor-surface .doc-edit-surface {
 	min-height: 2.2em;
 	padding: 0.3rem 0.45rem;
@@ -753,6 +1681,16 @@
 	background: var(--color-fd-background);
 	border: 1px solid var(--color-fd-border);
 	border-radius: 0.375rem;
+}
+
+/* a value of several lines scrolls inside the card past a few of them */
+.doc-cv-jp-editor-surface[data-value] .doc-edit-surface {
+	min-height: 1.9em;
+	max-height: 11rem;
+	overflow-y: auto;
+	overscroll-behavior-y: contain;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
 }
 
 /* a CV laid out on pages (CvJpPagination.jsx): the content of a page is the paper without its
@@ -770,10 +1708,6 @@
 	margin-bottom: 0;
 }
 
-.doc-cv-jp-paragraph[data-continued] {
-	text-indent: 0;
-}
-
 .doc-cv-jp-fill {
 	display: block;
 }
@@ -784,12 +1718,18 @@
 	padding: 0;
 }
 
+/* under a row cut inside (its badges going on on the next page) the fill is that row going on: the
+   rule between them is hidden (hidden wins over the row's own bottom rule in collapsed borders) */
+.doc-cv-jp-table .doc-cv-jp-row-fill[data-goes-on] td {
+	border-top-style: hidden;
+}
+
 /* the pages of a CV, as previewed */
 .doc-cv-jp-pages {
 	padding: 0.5rem 0 1rem;
 }
 
-/* ---------- the pages, in their dialog (doc/cv-jp.md#pages) ---------- */
+/* ---------- the pages, in their dialog (doc/cv-sheet.md#pages) ---------- */
 /* wide enough for an A4 sheet with air around it, most of the window high */
 .doc-cv-jp-pages-popup {
 	width: min(58rem, 94vw);
@@ -807,12 +1747,41 @@
 	margin: 0 auto;
 }
 
+.doc-cv-jp-pages-note {
+	font-size: 0.75rem;
+	white-space: nowrap;
+}
+
 .doc-cv-jp-pages-bar {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.4rem;
 	margin-right: 0.5rem;
 	font-size: 0.8rem;
+}
+
+/* the title of the PDF, typed in the bar of the pages: a box as a field, one line */
+.doc-cv-jp-pages-title {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	min-width: 0;
+}
+
+/* the field in its own look (react-doc's cell field: a dashed frame while it can be typed), one line wide enough for a title */
+.doc-cv-jp-pages-title > :last-child {
+	display: inline-block;
+	box-sizing: border-box;
+	min-width: 12rem;
+	max-width: 22rem;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	vertical-align: middle;
+}
+
+.doc-cv-jp-pages-title > .doc-cv-jp-pages-title-read {
+	color: var(--color-fd-muted-foreground);
 }
 
 /* ---------- an image given to a CV: a photo, the image of a badge (CvJpImagePick) ---------- */
@@ -842,12 +1811,29 @@
 	margin: 0;
 }
 
-.doc-cv-badge-box[data-size="s"] .doc-cv-badge {
-	height: 18px;
+/* a badge with text under it: a tile, the image over its lines. tiles one after another in a line
+   stand as a grid, each as wide as the wider of its image and its text */
+.doc-cv-badge-tile {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 3px;
+	margin: 3px 14px 3px 0;
+	vertical-align: top;
+	text-indent: 0;
 }
 
-.doc-cv-badge-box[data-size="l"] .doc-cv-badge {
-	height: 46px;
+.doc-cv-badge-caption {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	font-size: 10.5px;
+	line-height: 1.3;
+	white-space: nowrap;
+}
+
+.doc-cv-badge-caption-line:first-child {
+	font-weight: 700;
 }
 
 .doc-cv-badge-name {
@@ -918,6 +1904,27 @@
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.4rem;
+}
+
+/* a height typed, and lines of text typed a line a field */
+.doc-cv-badge-card-number {
+	min-width: 2.2em;
+	padding: 0 0.3em;
+	text-align: right;
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+.doc-cv-badge-card-line-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+
+.doc-cv-badge-card-text {
+	display: block;
+	min-height: 1.35em;
+	padding: 0 0.3em;
+	border-bottom: 1px solid var(--color-fd-border);
 }
 
 /* the badges of a profile, in its mode Information */

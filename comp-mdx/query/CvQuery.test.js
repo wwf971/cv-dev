@@ -230,7 +230,7 @@ test('/query lists what is below the folder typed, a segment at a time, with the
 });
 
 test('a brace token of another kind is not a query', () => {
-	// {{@…}} is a token of react-doc's cell edit layer (a view of an object): text here
+	// {{@…}} is a token of react-doc's cell editing kit (a view of an object): text here
 	const expanded = cvTextExpand(info, '{{name/jp/first}} {{@frontend:w5j7#/book/dune}}', {});
 	assert.equal(expanded.text, '太郎 {{@frontend:w5j7#/book/dune}}');
 	assert.deepEqual(expanded.missingList, []);
@@ -280,4 +280,77 @@ test('a profile seen from outside: an inner path is a partition and a query', as
 	const profileLoading = { ...profile, assetDataGet: () => ({ status: 'loading' }) };
 	assert.equal(cvProfileInnerResolve(profileLoading, 'example/name/jp/first').status, 'loading');
 	assert.equal(cvProfileInnerComplete(profileLoading, 'example/name/').status, 'loading');
+});
+
+test('a year with its era: a year written out, or a date of the profile, which stays one query of its year', async () => {
+	const { cvEraRead, cvEraResolve, cvEraSlashItemListGet, cvInfoBuild: infoBuild, cvTextExpand: textExpand } = await import('./CvQuery.js');
+	const infoEra = infoBuild([
+		{ key: 'birth', pathList: ['/info/birth'], data: { year: 2000, month: 1, day: 1 } },
+		{ key: 'edu', pathList: ['/info/edu/x'], data: { start: { year: 2019, month: 4, jp: '入学' }, end: { year: 2019, month: 5 } } },
+	]);
+	// what a token names: a year written out (its month decides the era), or a date by its path
+	assert.deepEqual(cvEraRead('2019/5'), { kind: 'literal', year: '2019', month: '5' });
+	assert.deepEqual(cvEraRead('2019-05'), { kind: 'literal', year: '2019', month: '5' });
+	assert.deepEqual(cvEraRead('2019'), { kind: 'literal', year: '2019', month: '' });
+	assert.deepEqual(cvEraRead('edu/x/start/year'), { kind: 'path', path: 'edu/x/start' });
+	assert.equal(cvEraRead('12ab'), undefined);
+	assert.equal(cvEraRead(''), undefined);
+	const eraOf = (body) => { const one = cvEraResolve(infoEra, cvEraRead(body)); return [one.status, one.era, one.year]; };
+	assert.deepEqual(eraOf('2019/4'), ['found', '平成31', '2019']);
+	assert.deepEqual(eraOf('edu/x/end'), ['found', '令和元', '2019']);
+	assert.deepEqual(eraOf('birth'), ['found', '平成12', '2000']);
+	assert.deepEqual(eraOf('nothing'), ['missing', '', '']);
+	// in a text: its plain text is the year; kept as written where its token draws it
+	const literal = textExpand(infoEra, '取得 {{era:2019/5}}年');
+	assert.deepEqual([literal.text, literal.textKept, literal.missingList], ['取得 2019年', '取得 {{era:2019/5}}年', []]);
+	// a cell holding a date of the profile alone is one query of its year: changed in the profile as any other
+	const one = textExpand(infoEra, '{{era:edu/x/start}}');
+	assert.deepEqual([one.text, one.query, one.leaf.keyPath.join('.')], ['2019', 'edu/x/start/year', 'start.year']);
+	assert.deepEqual(textExpand(infoEra, '{{era:edu/y/start}}').missingList, ['edu/y/start/year']);
+	// what follows "|" is how a token is drawn in its place, never part of a query
+	assert.equal(textExpand(infoEra, '{{birth/year|anything}}').text, '2000');
+	// /era: a year typed, or the dates of the profile whose path holds what is typed
+	assert.deepEqual(cvEraSlashItemListGet(infoEra, '2019/4').map((item) => [item.kind, item.body, item.detail]), [['literal', '2019/4', '平成31 over 2019 (month 4)']]);
+	assert.deepEqual(cvEraSlashItemListGet(infoEra, 'edu').map((item) => item.body), ['edu/x/start', 'edu/x/end']);
+	assert.deepEqual(cvEraSlashItemListGet(infoEra, '').map((item) => item.body), ['birth', 'edu/x/start', 'edu/x/end']);
+});
+
+test('a key a profile uses for its own values is no spelling of a format: title reads the title as it is written', async () => {
+	const { cvInfoBuild: infoBuild, cvQueryResolve: queryResolve, cvQueryParse: queryParse } = await import('./CvQuery.js');
+	const infoProject = infoBuild([{ key: 'p', pathList: ['/info/work/acme/project/tool'], data: { jp: { summary: 'first in the data', title: 'AIを活用したシステム' } } }]);
+	const resolved = queryResolve(infoProject, 'work/acme/project/tool/jp/title');
+	// the value at that key, not the first value below jp put through a format
+	assert.deepEqual([resolved.value, resolved.leaf.keyPath.join('.'), resolved.by], ['AIを活用したシステム', 'jp.title', 'stored']);
+	assert.deepEqual(queryParse('work/acme/jp/title').formatList, []);
+	assert.deepEqual(queryParse('name/en/first/capitalize').formatList, ['uppercase-first']);
+});
+
+test('a period: a folder of the profile with a start, two dates, or dates written out', async () => {
+	const { cvPeriodRead, cvPeriodResolve, cvPeriodSlashItemListGet, cvInfoBuild: infoBuild, cvTextExpand: textExpand } = await import('./CvQuery.js');
+	const infoWork = infoBuild([
+		{ key: 'e', pathList: ['/info/work/acme'], data: { start: { year: 2026, month: 4 }, jp: { name: 'Acme' } } },
+		{ key: 'p', pathList: ['/info/work/acme/project/tool'], data: { start: { year: 2019, month: 4 }, end: { year: 2019, month: 5 } } },
+		{ key: 'o', pathList: ['/info/work/acme/project/other'], data: { jp: { title: 'other' } } },
+	]);
+	// what a token names
+	assert.deepEqual(cvPeriodRead('work/acme'), { start: { kind: 'path', path: 'work/acme/start' }, end: { kind: 'path', path: 'work/acme/end' }, folder: 'work/acme' });
+	assert.deepEqual(cvPeriodRead('2026/5~2026/10'), { start: { kind: 'literal', year: '2026', month: '5' }, end: { kind: 'literal', year: '2026', month: '10' } });
+	assert.deepEqual(cvPeriodRead('2026/5〜'), { start: { kind: 'literal', year: '2026', month: '5' }, end: undefined });
+	assert.equal(cvPeriodRead('~2026'), undefined);
+	// what it reads: no end is 現在, no date at all is nothing
+	const textOf = (body) => { const one = cvPeriodResolve(infoWork, cvPeriodRead(body)); return [one.text, one.isNow, one.isTimeless]; };
+	assert.deepEqual(textOf('work/acme'), ['2026年4月〜現在', true, false]);
+	assert.deepEqual(textOf('work/acme/project/tool'), ['2019年4月〜2019年5月', false, false]);
+	assert.deepEqual(textOf('work/acme/project/other'), ['', true, true]);
+	assert.deepEqual(textOf('work/acme/start~2027'), ['2026年4月〜2027年', false, false]);
+	// its dates carry their era: the months of 2019 decide it
+	const resolved = cvPeriodResolve(infoWork, cvPeriodRead('work/acme/project/tool'));
+	assert.deepEqual([resolved.start.era, resolved.end.era], ['平成31', '令和元']);
+	// in a text: said as one text, kept as written where its token draws it, never a missing query
+	const expanded = textExpand(infoWork, '在籍 {{period:work/acme|era}}');
+	assert.deepEqual([expanded.text, expanded.textKept, expanded.missingList, expanded.period], ['在籍 2026年4月〜現在', '在籍 {{period:work/acme|era}}', [], undefined]);
+	assert.equal(textExpand(infoWork, '{{period:work/acme}}').period.folder, 'work/acme');
+	// /period: a period typed, or the folders of the profile holding a start
+	assert.deepEqual(cvPeriodSlashItemListGet(infoWork, '').map((item) => [item.body, item.detail]), [['work/acme', '2026年4月〜現在'], ['work/acme/project/tool', '2019年4月〜2019年5月']]);
+	assert.deepEqual(cvPeriodSlashItemListGet(infoWork, '2026/5~2026/10').map((item) => [item.kind, item.detail]), [['literal', '2026年5月〜2026年10月']]);
 });

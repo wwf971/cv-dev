@@ -72,3 +72,31 @@ test('a new badge: its place, its name, an image of its own until one is given',
 	// the stand-in holds the letters of the name and nothing of an issuer's artwork
 	assert.ok(decodeURIComponent(cvBadgePlaceholderBuild('AWS SAA')).includes('>SAA<'));
 });
+
+test('a badge the profile lists and the store lacks is said', () => {
+	const read = cvBadgeRead({
+		assetList: (kind) => [{ key: 'b1', kind: 'badge', status: 'deleted', pathList: ['/example/badge/aws/saa/v1'] }].filter((asset) => asset.kind === kind),
+		assetDataGet: () => ({ status: 'done', data: {} }),
+	}, 'example');
+	assert.equal(read.badgeList.length, 0);
+	assert.match(read.problemList[0], /^\/example\/badge\/aws\/saa\/v1: listed by the profile, and deleted/);
+});
+
+test('how a badge is drawn in one place: any height, and text under it', async () => {
+	const { cvBadgeSizeGet, cvBadgeSizeParamGet, cvBadgeCaptionEncode, cvBadgeCaptionDecode, cvBadgeCaptionLineListGet } = await import('./CvBadge.js');
+	// a size is a name, or a number of px; the default is larger with text under the badge
+	assert.deepEqual([cvBadgeSizeGet('s'), cvBadgeSizeGet('L'), cvBadgeSizeGet('64'), cvBadgeSizeGet(72.4), cvBadgeSizeGet(undefined), cvBadgeSizeGet('odd'), cvBadgeSizeGet(undefined, true)], [18, 46, 64, 72, 30, 30, 60]);
+	assert.deepEqual([cvBadgeSizeGet(2), cvBadgeSizeGet(5000)], [10, 300]);
+	// written back: the name of a named height, the number of any other, nothing for the default
+	assert.deepEqual([cvBadgeSizeParamGet(46), cvBadgeSizeParamGet('64'), cvBadgeSizeParamGet(30), cvBadgeSizeParamGet(60, true), cvBadgeSizeParamGet(30, true)], ['l', '64', undefined, undefined, 'm']);
+	// text under it: lines in one parameter, without the marks a parameter cannot hold
+	const caption = cvBadgeCaptionEncode(['AWS SAP', ' 2026/01 ~ 2026/04 ', '', 'a,b|c']);
+	assert.equal(caption, 'AWS SAP\\n2026/01 ~ 2026/04\\na，b｜c');
+	assert.deepEqual(cvBadgeCaptionDecode(caption), ['AWS SAP', '2026/01 ~ 2026/04', 'a，b｜c']);
+	// none, the badge's own (its name while it has none), or this place's
+	const badge = { name: 'AWS Certified Solutions Architect – Associate', caption: 'AWS SAA\n2023.06' };
+	assert.deepEqual(cvBadgeCaptionLineListGet({}, badge), []);
+	assert.deepEqual(cvBadgeCaptionLineListGet({ caption: true }, badge), ['AWS SAA', '2023.06']);
+	assert.deepEqual(cvBadgeCaptionLineListGet({ caption: true }, { name: 'A badge' }), ['A badge']);
+	assert.deepEqual(cvBadgeCaptionLineListGet({ caption }, badge), ['AWS SAP', '2026/01 ~ 2026/04', 'a，b｜c']);
+});

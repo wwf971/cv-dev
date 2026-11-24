@@ -1,5 +1,5 @@
 import { assetPathIndexBelowList, assetPathIndexBuild, assetPathIndexComplete, assetPathIndexGet, assetPathIndexNodeGet, assetPathSplit } from '@wwf971/react-doc/asset-path';
-import { cvPathInPartition, cvPathSplit } from './CvProfile.js';
+import { cvAssetStatusText, cvKindNameOf, cvPathInPartition, cvPathSplit } from './CvProfile.js';
 
 // The badges of a profile (doc/cv-badge.md): a certification badge, a logo, any small image a
 // CV shows beside a line. A badge is a data item of the profile of the kind "badge", one item
@@ -13,18 +13,24 @@ import { cvPathInPartition, cvPathSplit } from './CvProfile.js';
 // /badge/aws/saa and shows the version the profile lists first. This module is pure: it
 // reads a profile through the api of a mode, and knows no form of CV.
 export const CV_KIND_BADGE = 'badge';
+// the kind of a badge, declared by cv.profile: read in whatever object holds it, by its name there
+export const CV_KIND_ID_BADGE = 'cv.profile.badge';
 export const CV_BADGE_FOLDER = 'badge';
 
 // the badges of a profile in a partition, as its object says now:
 //   { badgeList, index, countLoading, countAll, problemList }
-//   a badge: { key, path, name, issuer, url, image, pathFull }   path: below /badge, aws/saa/v1
+//   a badge: { key, path, name, caption, issuer, url, image, pathFull }   path: below /badge, aws/saa/v1
 export function cvBadgeRead(profile, partition = '') {
 	const badgeList = [];
 	const problemList = [];
 	let countLoading = 0;
-	const assetList = profile.assetList(CV_KIND_BADGE)
-		.filter((asset) => asset.status === 'found')
+	const kindName = cvKindNameOf(profile, CV_KIND_ID_BADGE, CV_KIND_BADGE);
+	const assetListListed = (kindName ? profile.assetList(kindName) : [])
 		.filter((asset) => cvPathSplit(asset.pathList?.[0]).partition === partition);
+	for (const asset of assetListListed) {
+		if (asset.status !== 'found') problemList.push(`${asset.pathList?.[0] ?? asset.key}: ${cvAssetStatusText(asset.status)}, the badge is not read`);
+	}
+	const assetList = assetListListed.filter((asset) => asset.status === 'found');
 	for (const asset of assetList) {
 		const path = cvBadgePathOf(asset.pathList?.[0]);
 		if (!path) {
@@ -46,6 +52,7 @@ export function cvBadgeRead(profile, partition = '') {
 			path,
 			pathFull: asset.pathList[0],
 			name: String(data.name ?? asset.name ?? ''),
+			caption: typeof data.caption === 'string' ? data.caption : '',
 			issuer: String(data.issuer ?? ''),
 			url: String(data.url ?? ''),
 			image: String(data.image ?? ''),
@@ -116,10 +123,11 @@ export function cvBadgePathIsValid(path) {
 }
 
 // a new badge of a profile: what its object's api creates (assetCreate)
-export function cvBadgeCreateInput(partition, pathInput, data = {}) {
+// kindName: the name the profile holds the kind under (cvKindNameOf)
+export function cvBadgeCreateInput(partition, pathInput, data = {}, kindName = CV_KIND_BADGE) {
 	const path = cvBadgePathNormalize(pathInput);
 	return {
-		kind: CV_KIND_BADGE,
+		kind: kindName,
 		name: String(data.name ?? cvBadgeLabelOf(path)),
 		pathList: [cvPathInPartition(partition, `/${CV_BADGE_FOLDER}/${path}`)],
 		...(partition ? { partition } : {}),
@@ -147,4 +155,59 @@ export function cvBadgePlaceholderBuild(label) {
 
 function xmlEscape(text) {
 	return String(text).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[char]));
+}
+
+// ---------- how a badge is drawn in one place: the parameters of its token ----------
+
+// the height of a badge by the names of its sizes, in px; any other height is written as a number
+export const CV_BADGE_SIZE_BY_NAME = { s: 18, m: 30, l: 46 };
+export const CV_BADGE_SIZE_DEFAULT = 'm';
+// the height of a badge with text under it, when its token names none: large enough to read
+export const CV_BADGE_SIZE_CAPTION = 60;
+export const CV_BADGE_SIZE_MIN = 10;
+export const CV_BADGE_SIZE_MAX = 300;
+
+// the height in px of a badge whose token says size (s, m, l, or a number of px: size=64)
+export function cvBadgeSizeGet(size, isCaption = false) {
+	const text = String(size ?? '').trim().toLowerCase();
+	if (CV_BADGE_SIZE_BY_NAME[text] !== undefined) return CV_BADGE_SIZE_BY_NAME[text];
+	const px = Number.parseFloat(text);
+	if (Number.isFinite(px) && px > 0) return Math.min(CV_BADGE_SIZE_MAX, Math.max(CV_BADGE_SIZE_MIN, Math.round(px)));
+	return isCaption ? CV_BADGE_SIZE_CAPTION : CV_BADGE_SIZE_BY_NAME[CV_BADGE_SIZE_DEFAULT];
+}
+
+// the size as its token writes it: the name of a named height, else the number; undefined for the default
+export function cvBadgeSizeParamGet(px, isCaption = false) {
+	const height = cvBadgeSizeGet(px, isCaption);
+	if (height === cvBadgeSizeGet(undefined, isCaption)) return undefined;
+	const name = Object.keys(CV_BADGE_SIZE_BY_NAME).find((one) => CV_BADGE_SIZE_BY_NAME[one] === height);
+	return name ?? String(height);
+}
+
+// the text under a badge, a line under another, as a parameter of its token keeps it: one line of
+// text, its lines parted by "\n" as written (a backslash and an n), since a token is never broken
+// over lines. the marks a parameter cannot hold (, | { }) are written in their full width
+const CAPTION_LINE_MARK = '\\n';
+const CAPTION_CHAR_SAFE = { ',': '，', '|': '｜', '{': '｛', '}': '｝' };
+
+export function cvBadgeCaptionEncode(lineList) {
+	return (lineList ?? []).map((line) => String(line ?? '').replace(/\r?\n/g, ' ').replace(/[,|{}]/g, (char) => CAPTION_CHAR_SAFE[char]).trim())
+		.filter((line) => line !== '').join(CAPTION_LINE_MARK);
+}
+
+export function cvBadgeCaptionDecode(text) {
+	return String(text ?? '').split(CAPTION_LINE_MARK).map((line) => line.trim()).filter((line) => line !== '');
+}
+
+// the lines under a badge in one place (param: the parameters of its token):
+//   no caption     none: the badge stands in the line as an image
+//   caption        the badge's own, kept in the profile for every paper (badge.caption, a line a
+//                  line), else its name
+//   caption=…      this place's own
+export function cvBadgeCaptionLineListGet(param, badge) {
+	const caption = param?.caption;
+	if (caption === undefined || caption === null || caption === false || caption === '') return [];
+	if (caption !== true) return cvBadgeCaptionDecode(caption);
+	const own = String(badge?.caption ?? '').split('\n').map((line) => line.trim()).filter((line) => line !== '');
+	return own.length > 0 ? own : [String(badge?.name ?? '')].filter((line) => line !== '');
 }

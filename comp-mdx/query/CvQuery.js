@@ -22,13 +22,15 @@ import { cvAgeGet, cvHiraganaToKatakana, cvKanaToRomaji, cvKatakanaToHiragana, c
 // says what the default is. A word that no leaf holds may be derived: another script (katakana
 // from hiragana, in place), the era or age of a date, a name joined from its parts.
 
-// other spellings of a segment, in the data and in a query: a vocabulary, not a pattern
+// other spellings of a segment, in the data and in a query: a vocabulary, not a pattern. a word
+// a profile is likely to use as a key of its own is no spelling of anything: "title" is the title
+// of a project, never a format
 const CV_SEGMENT_ALIAS = {
 	ja: 'jp', japanese: 'jp', english: 'en',
 	family: 'last', surname: 'last', given: 'first',
 	furigana: 'hiragana', kana: 'hiragana', ふりがな: 'hiragana', フリガナ: 'katakana',
 	romanji: 'romaji', romnaji: 'romaji', roman: 'romaji', katanaka: 'katakana',
-	upper: 'uppercase-all', uppercase: 'uppercase-all', capitalize: 'uppercase-first', title: 'uppercase-first',
+	upper: 'uppercase-all', uppercase: 'uppercase-all', capitalize: 'uppercase-first',
 	lower: 'lowercase-all', lowercase: 'lowercase-all',
 };
 
@@ -285,16 +287,30 @@ export function cvQuerySlashItemListGet(info, param, context = {}, limit = 40) {
 
 // a text of a cell: literal, or holding queries in {{ }}: "{{birth/month}}月{{birth/day}}日". a
 // brace token whose body starts with a sigil ({{@frontend:…}}: a view of an object, a token
-// kind of react-doc's cell edit layer) is not a query and stays text here
+// kind of react-doc's cell editing kit) is not a query and stays text here. what follows "|" is
+// how the token is drawn in its place (its parameters), never part of the query.
+// a year with its era ({{era:birth}}, {{era:2019/5}}: #a-year-with-its-era) reads a year:
+//   of a date of the profile   a query of its year (isEra), so that the cell holding it alone
+//                              is one query, changed in the profile as any other
+//   written out                kind era: nothing is read
+// both keep how they are written (raw), which is what draws the era.
+// a period ({{period:work/x}}, {{period:2026/5~2026/10}}: #a-period) is kind period: what it reads
+// is its two dates, said as one text (2026年5月〜2026年10月), and it too keeps how it is written
 export function cvTextParse(text) {
 	const partList = [];
 	const pattern = /\{\{([^{}]*)\}\}/g;
 	const source = String(text ?? '');
 	let indexLast = 0;
 	for (const match of source.matchAll(pattern)) {
-		if (CV_TOKEN_SIGIL_REGEX.test(match[1].trim())) continue;
+		const body = match[1].split('|')[0].trim();
+		const era = body.startsWith(CV_ERA_SIGIL) ? cvEraRead(body.slice(CV_ERA_SIGIL.length)) : undefined;
+		const period = body.startsWith(CV_PERIOD_SIGIL) ? cvPeriodRead(body.slice(CV_PERIOD_SIGIL.length)) : undefined;
+		if (!era && !period && (CV_TOKEN_SIGIL_REGEX.test(body) || body.startsWith(CV_ERA_SIGIL) || body.startsWith(CV_PERIOD_SIGIL))) continue;
 		if (match.index > indexLast) partList.push({ kind: 'text', text: source.slice(indexLast, match.index) });
-		partList.push({ kind: 'query', query: match[1].trim() });
+		if (period) partList.push({ kind: 'period', raw: match[0], period });
+		else if (era?.kind === 'literal') partList.push({ kind: 'era', raw: match[0], year: era.year });
+		else if (era) partList.push({ kind: 'query', query: `${era.path}/year`, raw: match[0], isEra: true });
+		else partList.push({ kind: 'query', query: body });
 		indexLast = match.index + match[0].length;
 	}
 	if (indexLast < source.length) partList.push({ kind: 'text', text: source.slice(indexLast) });
@@ -305,17 +321,143 @@ export function cvTextParse(text) {
 // "/" a data item of the profile named by its path: a badge, {{/badge/aws/saa}})
 const CV_TOKEN_SIGIL_REGEX = /^[@#!$%^&*~/]/;
 
-// { text, partList, missingList, leaf }: leaf when the whole text is one query read from one leaf
+// { text, textKept, partList, missingList, leaf, period }: leaf when the whole text is one query read from one leaf
+//   text       every query as the value it reads
+//   textKept   the same, a year with its era and a period kept as written: what is drawn of them is their token
+//   period     when the whole text is one period: what it names and reads (cvPeriodRead, cvPeriodResolve), so that
+//              a card changes its dates in the profile
 export function cvTextExpand(info, text, context = {}) {
-	const partList = cvTextParse(text).map((part) => (part.kind === 'query' ? { ...part, resolved: cvQueryResolve(info, part.query, context) } : part));
+	const partList = cvTextParse(text).map((part) => {
+		if (part.kind === 'query') return { ...part, resolved: cvQueryResolve(info, part.query, context) };
+		if (part.kind === 'period') return { ...part, resolved: cvPeriodResolve(info, part.period, context) };
+		return part;
+	});
 	const queryList = partList.filter((part) => part.kind === 'query');
+	const partText = (part) => (part.kind === 'query' ? part.resolved.value : part.kind === 'era' ? part.year : part.kind === 'period' ? part.resolved.text : part.text);
 	return {
-		text: partList.map((part) => (part.kind === 'query' ? part.resolved.value : part.text)).join(''),
+		text: partList.map(partText).join(''),
+		textKept: partList.map((part) => (part.raw !== undefined ? part.raw : partText(part))).join(''),
+		period: partList.length === 1 && partList[0].kind === 'period' ? { ...partList[0].period, resolved: partList[0].resolved } : undefined,
 		partList,
 		missingList: queryList.filter((part) => part.resolved.status !== 'found').map((part) => part.query),
 		leaf: partList.length === 1 && queryList.length === 1 ? queryList[0].resolved.leaf : undefined,
 		query: partList.length === 1 && queryList.length === 1 ? queryList[0].query : '',
 	};
+}
+
+// ---------- a year with its era ----------
+
+// the sigil of the token drawing a year with its Japanese era above it (jp/cv-era-cell.jsx):
+//   {{era:2019/5}}                    a year written out, with the month deciding its era (2019/5: 令和元)
+//   {{era:birth}}  {{era:edu/bachelor/start}}   a date of the profile: a mapping with a year
+export const CV_ERA_SIGIL = 'era:';
+
+// what the body of such a token names: { kind: 'literal', year, month } for a year written out
+// (2019, 2019/5, 2019-05, 2019.5), { kind: 'path', path } for a date of the profile (a path ending
+// with year names the date holding it); undefined for neither
+export function cvEraRead(bodyInput) {
+	const body = String(bodyInput ?? '').trim();
+	const literal = /^(\d{4})(?:[/.\-](\d{1,2}))?$/.exec(body);
+	if (literal) return { kind: 'literal', year: literal[1], month: literal[2] ? String(Number(literal[2])) : '' };
+	if (/^\d/.test(body)) return undefined;
+	const { segmentList } = cvQueryParse(body);
+	if (segmentList[segmentList.length - 1] === 'year') segmentList.pop();
+	return segmentList.length > 0 ? { kind: 'path', path: segmentList.join('/') } : undefined;
+}
+
+// the year and the era such a token draws: { status: found | missing, year, month, era }
+export function cvEraResolve(info, era, context = {}) {
+	if (!era) return { status: 'missing', year: '', month: '', era: '' };
+	if (era.kind === 'literal') return { status: 'found', year: era.year, month: era.month, era: cvYearEraGet(era.year, era.month) };
+	const year = info ? cvQueryResolve(info, `${era.path}/year`, context) : undefined;
+	if (year?.status !== 'found') return { status: 'missing', year: '', month: '', era: '' };
+	const month = assetPathIndexGet(info.index, [...cvQueryParse(era.path).segmentList, 'month'])?.value ?? '';
+	return { status: 'found', year: String(year.value), month: String(month), era: cvYearEraGet(year.value, month) };
+}
+
+// the items of /era for what is typed (a slash action's itemListGet): a year written out when it
+// is one, then the dates of the profile whose path holds what is typed, each with what it draws
+// -> [{ id, kind: 'literal' | 'date', label, detail, body }]   body: what the token names
+export function cvEraSlashItemListGet(info, param, limit = 40) {
+	const text = String(param ?? '').trim().toLowerCase();
+	const itemList = [];
+	const literal = cvEraRead(text);
+	const detailGet = (year, month) => `${cvYearEraGet(year, month) || 'no era'} over ${year}${month ? ` (month ${month})` : ''}`;
+	if (literal?.kind === 'literal') itemList.push({ id: `literal:${text}`, kind: 'literal', label: text, detail: detailGet(literal.year, literal.month), body: text });
+	for (const entry of info?.entryList ?? []) {
+		const path = assetPathJoin(entry.pathList[0] ?? []);
+		if (path === '' || (text !== '' && !path.toLowerCase().includes(text))) continue;
+		itemList.push({ id: `date:${path}`, kind: 'date', label: path, detail: detailGet(entry.value.year, entry.value.month), body: path });
+	}
+	return itemList.slice(0, limit);
+}
+
+// ---------- a period ----------
+
+// the sigil of the token drawing a period, its start over a vertical line over its end (jp/cv-period-cell.jsx):
+//   {{period:work/sample-systems}}             a folder of the profile holding start and end
+//   {{period:edu/bachelor/start~edu/bachelor/end}}   two dates of the profile
+//   {{period:2026/5~2026/10}}  {{period:2026/5~}}    dates written out; no end: to the present
+export const CV_PERIOD_SIGIL = 'period:';
+// what a period says in the place of its end while it has none
+export const CV_PERIOD_NOW = '現在';
+const PERIOD_MARK_REGEX = /[~〜～]/;
+
+// what the body of such a token names: { start, end, folder? }, each date as cvEraRead says it
+// (a year written out, or a date of the profile); end undefined: to the present. folder: the
+// path holding start and end, for the short form. undefined for a body naming no start
+export function cvPeriodRead(bodyInput) {
+	const body = String(bodyInput ?? '').trim();
+	if (body === '') return undefined;
+	if (!PERIOD_MARK_REGEX.test(body)) {
+		// a year written out alone is a period of one date going on; a path is a folder
+		const one = cvEraRead(body);
+		if (!one) return undefined;
+		if (one.kind === 'literal') return { start: one, end: undefined };
+		return { start: { kind: 'path', path: `${one.path}/start` }, end: { kind: 'path', path: `${one.path}/end` }, folder: one.path };
+	}
+	const [startText, endText = ''] = body.split(PERIOD_MARK_REGEX);
+	const start = cvEraRead(startText);
+	if (!start) return undefined;
+	const endTrimmed = endText.trim();
+	const end = endTrimmed === '' || endTrimmed === 'now' || endTrimmed === CV_PERIOD_NOW ? undefined : cvEraRead(endTrimmed);
+	return { start, end };
+}
+
+// a date as a period says it: 2026年5月 (a year alone: 2026年)
+function periodDateText(date) {
+	return date.status === 'found' ? `${date.year}年${date.month !== '' ? `${date.month}月` : ''}` : '';
+}
+
+// what a period reads: { start, end, isNow, isTimeless, text }
+//   start, end   each { status, year, month, era } (cvEraResolve)
+//   isNow        it has no end: it goes on to the present
+//   isTimeless   it has no start either: nothing is drawn of it (a folder holding no date)
+//   text         its plain text: 2026年5月〜2026年10月, 2026年5月〜現在, '' when timeless
+export function cvPeriodResolve(info, period, context = {}) {
+	const start = cvEraResolve(info, period?.start, context);
+	const end = cvEraResolve(info, period?.end, context);
+	const isNow = end.status !== 'found';
+	const isTimeless = start.status !== 'found' && isNow;
+	return { start, end, isNow, isTimeless, text: isTimeless ? '' : `${periodDateText(start)}〜${isNow ? CV_PERIOD_NOW : periodDateText(end)}` };
+}
+
+// the items of /period for what is typed: a period written out when it is one, then the folders
+// of the profile holding a start whose path holds what is typed, each with what it draws
+// -> [{ id, kind: 'literal' | 'folder', label, detail, body }]
+export function cvPeriodSlashItemListGet(info, param, limit = 40) {
+	const text = String(param ?? '').trim().toLowerCase();
+	const itemList = [];
+	const typed = /^\d/.test(text) ? cvPeriodRead(text) : undefined;
+	if (typed) itemList.push({ id: `literal:${text}`, kind: 'literal', label: text, detail: cvPeriodResolve(info, typed).text, body: text });
+	for (const entry of info?.entryList ?? []) {
+		const pathList = entry.pathList[0] ?? [];
+		if (pathList[pathList.length - 1] !== 'start' || pathList.length < 2) continue;
+		const folder = assetPathJoin(pathList.slice(0, -1));
+		if (text !== '' && !folder.toLowerCase().includes(text)) continue;
+		itemList.push({ id: `folder:${folder}`, kind: 'folder', label: folder, detail: cvPeriodResolve(info, cvPeriodRead(folder)).text, body: folder });
+	}
+	return itemList.slice(0, limit);
 }
 
 // ---------- dated entries ----------

@@ -18,7 +18,7 @@ The grammar of the paths is react-doc's **asset paths** (react-doc: `main/doc_pa
 
 ## How the information is stored
 
-A profile is a frontend object whose data items have the kind `info`, in partitions ([Partitions](README.md#partitions)). An item is a small yaml file holding the values of one subject; each value is a key path inside it, not an item of its own, since a value is too small to be versioned, locked and listed by itself:
+A profile is a frontend object whose data items have the kind `cv.profile.info` (`info` in a `cv.profile`; [Kinds](README.md#kinds)), in partitions ([Partitions](README.md#partitions)). An item is a small yaml file holding the values of one subject; each value is a key path inside it, not an item of its own, since a value is too small to be versioned, locked and listed by itself:
 
 ```yaml
 # the data item at /example/info/name
@@ -88,7 +88,7 @@ Rule 3 is how an author chooses a default: `name/jp/first` is the kanji because 
 
 A stored value always wins over a derived one, so a name with an unusual reading is written once by hand. A format before the end of a query is a segment like any other (and matches nothing): `name/jp/first/romaji/uppercase-all`, not `uppercase-all/name/…`.
 
-**Spellings.** Several spellings are one segment: `ja`, `japanese` = `jp`; `english` = `en`; `family`, `surname` = `last`; `given` = `first`; `furigana`, `kana` = `hiragana`; `upper` = `uppercase-all`, `lower` = `lowercase-all`, `capitalize` = `uppercase-first`. Case does not matter. Spellings are a vocabulary of the package, in the data and in a query alike, not alternatives of a pattern: a choice `[jp, ja]` would make each spelling a path of its own.
+**Spellings.** Several spellings are one segment: `ja`, `japanese` = `jp`; `english` = `en`; `family`, `surname` = `last`; `given` = `first`; `furigana`, `kana` = `hiragana`; `upper` = `uppercase-all`, `lower` = `lowercase-all`, `capitalize` = `uppercase-first`. Case does not matter. Spellings are a vocabulary of the package, in the data and in a query alike, not alternatives of a pattern: a choice `[jp, ja]` would make each spelling a path of its own. A word a profile is likely to use as a key of its own is no spelling: `title` is the title of a project, not a format.
 
 ## Dated entries
 
@@ -104,11 +104,30 @@ end:
   note: { jp: 備考の文 }
 ```
 
-A query for a list, `edu/jp`, answers every entry whose path it starts along, in order of time (`cvEntryListResolve`): it runs along `edu/bachelor/start` as far as it can (`edu`), and what is left (`jp`) chooses the text inside each entry, a key path of the entry starting so. An entry holding nothing chosen is left out (`work/en` lists the entries with an English text or note); a note in no language (`note: 現在に至る`) is the note of every language. `edu/bachelor/jp` lists the two entries of the bachelor, `edu/bachelor/start/jp` one. The parts of an entry stay ordinary leaves too: `edu/bachelor/start/year`, `edu/bachelor/start/era`.
+A query for a list, `edu/jp`, answers every entry whose path it starts along, in order of time (`cvEntryListResolve`): it runs along `edu/bachelor/start` as far as it can (`edu`), and what is left (`jp`) chooses the text inside each entry, a key path of the entry starting so. An entry holding nothing chosen is left out (`work/en` lists the entries with an English text or note; the period of a project, `work/sample-systems/project/inventory/start`, is dated and holds no text, so `work/jp` does not list it); a note in no language (`note: 現在に至る`) is the note of every language. `edu/bachelor/jp` lists the two entries of the bachelor, `edu/bachelor/start/jp` one. The parts of an entry stay ordinary leaves too: `edu/bachelor/start/year`, `edu/bachelor/start/era`.
+
+### An education
+
+An education keeps, beside its dated start and end, three plain facts a paper may say of it briefly (the part 最終学歴 of a work experience, [we-jp.md#最終学歴](we-jp.md#最終学歴)): the school, its status, the degree.
+
+```yaml
+# /example/info/edu/master
+school: { jp: サンプル大学大学院 情報理工学系研究科 }
+status: 修了                      # 卒業, 卒業見込み, 修了, 修了見込み, 中退, 在学中, 単位取得満期退学
+degree: { jp: 修士（情報理工学） }
+start: { year: 2020, month: 4, jp: … }
+end: { year: 2022, month: 3, jp: … }
+```
+
+`status` is one word: 卒業 for a school, 修了 for a graduate course, with 見込み while it is not yet done, 中退, 在学中, 単位取得満期退学. The card of its value offers these as buttons (`cvProfileValueChoiceListGet`, `profile/cv-profile-value.js`), and anything else may be typed. The history of a CV still reads the text of the end (`end/jp`); these keys are what is said where an education is told in one line.
+
+## Folders as a list
+
+A path with values below it is a **folder**, and the folders below a path are a list a form may draw without anyone writing that list down: the career of a work experience is the folders below `work` (the employers), each with the folders below its `project` ([The career](we-jp.md#the-career)). What a form reads of each is then an ordinary query, `work/sample-systems/jp/name`. So a thing with several values of its own (an employer, a project) is a folder, usually one data item; a thing that is one dated line (a degree, a licence) is an entry.
 
 ## In a text
 
-A text of a CV's cell is words, with queries in double braces wherever wanted. A text without braces is hard-coded, so both are one mechanism:
+A text of a cell of a paper is words, with queries in double braces wherever wanted. A text without braces is hard-coded, so both are one mechanism:
 
 ```text
 {{name/jp/first/kanji}}
@@ -116,7 +135,7 @@ A text of a CV's cell is words, with queries in double braces wherever wanted. A
 東京都千代田区
 ```
 
-A query in braces is the CV's kind of **token** in react-doc's cell edit layer, beside the kinds every cell has, a link and a view of an object ([The cells](cv-jp.md#the-cells)); a brace token starting with a sigil (`{{@…}}`) is one of those and not a query.
+A query in braces is the sheet's kind of **token** in react-doc's cell editing kit, beside the kinds every cell has, a link and a view of an object ([The cells](cv-sheet.md#the-cells)); a brace token starting with a sigil (`{{@…}}`) is one of those and not a query. Three more are the sheet's own and read the profile too: a badge (`{{/badge/aws/saa}}`), a year with its era above it (`{{era:birth}}`, [A year with its era](cv-sheet.md#a-year-with-its-era)), which is the query of that year drawn another way, and a period (`{{period:work/sample-systems}}`, [A period](cv-sheet.md#a-period)), which reads the two dates of a folder.
 
 While a cell is edited, the query at the caret completes once `{{` is typed (or `/query`): the segments that can follow what is typed (in every order a group allows), with how many values lie below each, and the values themselves, each with the query reaching it the way it was typed.
 
@@ -177,7 +196,7 @@ The **tree** draws every level under the one above it, by the canonical paths: `
 
 ### In both
 
-- **Its height is limited.** The list scrolls inside the panel past `param.heightMax` pixels (360). The explorer is as tall as its top level needs, whatever folder it shows, so walking moves nothing below it.
+- **Its height is limited, and it is one height.** The list scrolls inside the panel past `param.heightMax` pixels (360). Below that the panel is as tall as the longer of the top level of the values and the list of badges needs, whatever it shows: switching the tab or the view, walking into a folder or typing a query moves nothing below it. Under the head is one frame; the answer of a query takes its room from the list. A list with a scrollbar keeps the wheel at its ends: scrolling past its top or bottom does not move the page.
 - **The order is the order of the data**, since the first value below a path is what a query of that path answers with.
 - **It stays where it was.** The tab, the view, the path walked, the folders opened, the words typed and how far the list is scrolled are the block's, not the mount's (react-doc: `main/doc_page_impl_mdx_comp_state.md#stores-kept-across-mounts`): the document entering or leaving edit mode mounts the panel again, and it is found as it was left.
 - **One field finds and tries.** Words typed leave the values whose path or text holds them all, **each word marked where a row says it** (in a name, a path, a value, also one that can be edited; `cv-profile-highlight.js`, ranges given to the browser's highlight registry, so no row is drawn differently for it). `/` parts words as a space does, so a query finds what it names in whatever order its segments are. The tree keeps their folders, open; the explorer lists them with the folder each lies in, a click on which goes there. A query that reads something also says what a CV would get and how (`{{name/first/jp/katakana}} reads タロウ · written in another script of the value stored`), and the values it reads from stay listed.
@@ -186,17 +205,23 @@ The **tree** draws every level under the one above it, by the canonical paths: `
 - **A value is added where it will be.** **Add a value** at the top of the panel adds where the explorer is (in the tree: at the top level, and the **+** of a folder adds inside it). It opens a row at that place, the first of its folder: its name (one segment, or several, `jp/floor`), then its value; Enter goes on and adds, Esc gives up. It goes to the place its path names: below the deepest mapping or item a start of the path names, the rest of the path becoming keys; else a new item named by its first segment. A path that already holds a value is refused, since its own row changes it.
 - **The second tab is the badges** of the partition ([Badges](cv-badge.md#in-the-profile)).
 
+## A value where it is named
+
+A value of the profile is changed where something names it, not only in this panel. **Its card** (`profile/CvProfileValuePanel.jsx`) shows what a query reads and types it in place, with **Save** and **Cancel** under it (`cv-value-edit.jsx`; Enter, or leaving the field, saves too, Esc puts it back): one value kept (saved by Save or Enter, it closes the card: the work is done, and a click on the token opens it again), each value a composite one is made of (a whole name, katakana read off hiragana), or, when nothing holds the path, a place to type one, added where the path names it (`cv-profile-value.js`: a whole number stays a number when the value was one; a text is kept as typed). It says where the value is kept, the partition, and that every paper of it reads it.
+
+It is the card of two tokens alike: a query in a cell of a paper (`{{address/jp/postal}}`, marked while the cell is typed: [Editing in place](cv-sheet.md#editing-in-place)), and a token naming the value from any cell of any page, by react-doc's object registry (`{{@frontend:{profile}#example/address/jp/postal}}`). For the second, the profile answers a type of its own for its values (`cv.profile.value`, the `typeId` of `cvProfileInnerResolve`) and exposes the card as the view of that type in the context `panel` (`CvProfileValueView`, react-doc: `main/doc_page_impl_edit_cell.md#the-card-of-a-token`). A value is changed there only while the document is edited and the profile can be written; otherwise the card reads, and says why.
+
 ```yaml
 # in a document: the block of the profile, its mode Information
 param:
   partition: playground    # the partition shown first
-  heightMax: 480           # px; the list scrolls past it
+  heightMax: 480           # px; the list scrolls past it, in every tab and view
   view: tree               # the view shown first: explorer (the default) | tree
 ```
 
 ## Who writes it
 
-Everything goes through the object's api: the mode Information above changes, removes and adds values. The Japanese-style CV can write a value of the profile from its cell. Agents use the standard apis (react-doc: `main/doc_page_impl_obj_frontend.md#in-the-object-registry`).
+Everything goes through the object's api: the mode Information above changes, removes and adds values. A sheet writes a value of the profile from the card of a cell, and makes a new employer or project of a career ([Japanese-style work experience](we-jp.md#editing-it)). Agents use the standard apis (react-doc: `main/doc_page_impl_obj_frontend.md#in-the-object-registry`).
 
 ## Files
 

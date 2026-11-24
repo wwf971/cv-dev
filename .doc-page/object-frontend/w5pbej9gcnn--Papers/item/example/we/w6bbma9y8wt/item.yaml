@@ -1,0 +1,30 @@
+itemId: w6bbma9y8wt
+name: ""
+lang: yaml
+contentType: text/yaml
+fileExt: yaml
+owner:
+  ref: frontend:w5pbej9gcnn
+versionIdHead: w6bbma9zc88
+isDeleted: false
+isLocked: false
+timeCreated: 20261119_01251235+09
+versionList:
+  - versionId: w6bbma9zc88
+    versionIdPrevList: []
+    time: 20261119_01251235+09
+    note: ""
+    size: 596
+    hash: fc919ea0517441c5c466bdd9a060ef172b4ce0bd
+    isLocked: false
+    dependencyList: []
+eventList:
+  - eventType: create
+    time: 20261119_01251235+09
+    versionId: w6bbma9zc88
+  - eventType: updateInPlace
+    time: 20261123_22510581+09
+    versionId: w6bbma9zc88
+  - eventType: updateInPlace
+    time: 20261125_00561064+09
+    versionId: w6bbma9zc88

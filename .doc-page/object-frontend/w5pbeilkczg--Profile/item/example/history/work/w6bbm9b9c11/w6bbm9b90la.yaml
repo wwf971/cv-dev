@@ -1,0 +1,15 @@
+start:
+  year: 2024
+  month: 10
+jp:
+  title: 社内ナレッジ共有サイトの開発・運用
+  summary:
+    - 社内の技術情報を集約するサイトを企画し、開発から運用までを担当。
+    - ・全文検索とタグ付けの仕組みを設計・実装
+    - ・GitHub Actions による自動テストとデプロイを整備
+  env:
+    - Python / Django
+    - Docker / GitHub Actions
+  role: リーダー
+  team: 3名
+  phase: 企画〜運用

@@ -4,6 +4,27 @@ import { cvInfoBuild, cvQueryResolve, cvQuerySlashItemListGet } from './CvQuery.
 // through the object's api: { info, countLoading, countAll, problemList }.
 // virtual: values no item holds (the date a CV is written at).
 export const CV_KIND_INFO = 'info';
+// the kind of the information, a type of the registry declared by cv.profile (type.yaml; react-doc:
+// main/doc_page_impl_type.md#kinds-of-data-items): what a CV reads is items of this kind, in whatever
+// object holds them and under whatever name its type gives the kind ("info" in a cv.profile)
+export const CV_KIND_ID_INFO = 'cv.profile.info';
+// the type of a value of a profile in react-doc's object registry, below frontend.inner
+export const CV_PROFILE_VALUE_TYPE = 'cv.profile.value';
+
+// the name an object holds a kind under: the name its type gives the kind kindId (kindList of its
+// api); nameDefault when its type says nothing of its kinds (it holds anything); undefined when it
+// holds no such kind
+export function cvKindNameOf(object, kindId, nameDefault) {
+	const kindList = object?.kindList;
+	if (!Array.isArray(kindList)) return nameDefault;
+	return kindList.find((one) => one.kindId === kindId)?.id;
+}
+
+// the items of information of a profile: of the kind cv.profile.info, by the name it holds it under
+function cvInfoAssetListGet(profile) {
+	const name = cvKindNameOf(profile, CV_KIND_ID_INFO, CV_KIND_INFO);
+	return name ? profile.assetList(name) : [];
+}
 
 // The partitions of the data (doc/README.md#partitions): folders of the item folder, example/,
 // real/, playground/, each holding its items and their item list, declared by the types of the
@@ -11,7 +32,7 @@ export const CV_KIND_INFO = 'info';
 // of git takes its items and their records along. A CV reads the profile of its own partition. A
 // path without a partition (/info/name) is of the partition ''.
 export const CV_PARTITION_EXAMPLE = 'example';
-const CV_KIND_FOLDER_LIST = ['info', 'template', 'instance'];
+const CV_KIND_FOLDER_LIST = ['info', 'badge', 'template', 'cv', 'we'];
 
 // { partition, pathInPartition }: /example/info/name -> { partition: 'example', pathInPartition: '/info/name' }
 export function cvPathSplit(path) {
@@ -47,9 +68,13 @@ export function cvProfileRead(profile, virtual = {}, partition = undefined) {
 	const sourceList = [];
 	const problemList = [];
 	let countLoading = 0;
-	const assetList = profile.assetList(CV_KIND_INFO)
-		.filter((asset) => asset.status === 'found')
+	const assetListListed = cvInfoAssetListGet(profile)
 		.filter((asset) => partition === undefined || cvPathSplit(asset.pathList?.[0]).partition === partition);
+	// an item the profile lists and the asset store lacks: its values are not read, and said so
+	for (const asset of assetListListed) {
+		if (asset.status !== 'found') problemList.push(`${asset.pathList?.[0] ?? asset.key}: ${cvAssetStatusText(asset.status)}, its values are not read`);
+	}
+	const assetList = assetListListed.filter((asset) => asset.status === 'found');
 	for (const asset of assetList) {
 		const read = profile.assetDataGet(asset.key);
 		if (read.status === 'loading') {
@@ -68,10 +93,27 @@ export function cvProfileRead(profile, virtual = {}, partition = undefined) {
 	return { info, countLoading, countAll: assetList.length, problemList: [...problemList, ...info.problemList] };
 }
 
+// why an object cannot be read as a profile ('' when it can): its type holds no item of the kind
+// cv.profile.info. any type holding the kind is read alike, cv.profile or another one
+export function cvProfileHoldProblemGet(object) {
+	if (cvKindNameOf(object, CV_KIND_ID_INFO, CV_KIND_INFO)) return '';
+	const kindText = (object?.kindList ?? []).map((one) => one.id).join(', ') || 'nothing';
+	return `holds no item of the kind ${CV_KIND_ID_INFO} (its type ${object?.object?.typeId ?? ''} holds ${kindText})`;
+}
+
+// why an asset the object lists cannot be read (its status, react-doc:
+// main/doc_page_impl_obj_frontend.md#naming-and-finding-the-assets)
+export function cvAssetStatusText(status) {
+	if (status === 'deleted') return 'listed by the profile, and deleted';
+	if (status === 'missing') return 'listed by the profile, and gone from the asset store';
+	return `listed by the profile, and ${status}`;
+}
+
 // a new item of the profile in a partition: its path, and the partition the layer places it in
 // (place: cvLeafPlaceGet)
-export function cvInfoCreateInput(partition, place, data) {
-	return { kind: CV_KIND_INFO, pathList: [cvPathInPartition(partition, place.pathNew)], ...(partition ? { partition } : {}), data };
+// kindName: the name the profile holds the kind under (cvKindNameOf)
+export function cvInfoCreateInput(partition, place, data, kindName = CV_KIND_INFO) {
+	return { kind: kindName, pathList: [cvPathInPartition(partition, place.pathNew)], ...(partition ? { partition } : {}), data };
 }
 
 // the query path of a leaf: its canonical path, groups in the order the data writes them
@@ -103,7 +145,7 @@ export function cvProfileInnerSplit(profile, path) {
 	const text = String(path ?? '').trim().replace(/^\/+/, '');
 	const indexSlash = text.indexOf('/');
 	const first = indexSlash < 0 ? text : text.slice(0, indexSlash);
-	const partitionList = cvPartitionListGet(profile, profile.assetList(CV_KIND_INFO)).map((one) => one.id).filter(Boolean);
+	const partitionList = cvPartitionListGet(profile, cvInfoAssetListGet(profile)).map((one) => one.id).filter(Boolean);
 	if (indexSlash < 0 || !partitionList.includes(first)) return { partition: '', query: text };
 	return { partition: first, query: text.slice(indexSlash + 1) };
 }
@@ -123,6 +165,9 @@ export function cvProfileInnerResolve(profile, path, dateNow = new Date()) {
 		label: query,
 		detail: partition ? `a value of the partition ${partition}` : 'a value of the profile',
 		kind: 'value',
+		// a type of its own below frontend.inner: its card where a token names it is
+		// CvProfileValueView (react-doc: main/doc_page_impl_obj_frontend.md#things-inside-an-object-inner-paths)
+		typeId: CV_PROFILE_VALUE_TYPE,
 		// an image kept as text is not drawn as text: the name of the value stands for it
 		...(value.startsWith('data:') ? {} : { text: value }),
 		message: '',
@@ -134,7 +179,7 @@ export function cvProfileInnerResolve(profile, path, dateNow = new Date()) {
 export function cvProfileInnerComplete(profile, text, dateNow = new Date()) {
 	const typed = String(text ?? '').trim().replace(/^\/+/, '');
 	// the partitions holding information: one declared and still empty has nothing to walk into
-	const assetList = profile.assetList(CV_KIND_INFO);
+	const assetList = cvInfoAssetListGet(profile);
 	const partitionFilledSet = new Set(assetList.map((asset) => cvPathSplit(asset.pathList?.[0]).partition));
 	const partitionList = cvPartitionListGet(profile, assetList).filter((one) => one.id && partitionFilledSet.has(one.id));
 	const { partition, query } = cvProfileInnerSplit(profile, typed);

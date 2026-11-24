@@ -1,0 +1,24 @@
+itemId: w6bbm98t9wc
+name: ""
+lang: yaml
+contentType: text/yaml
+fileExt: yaml
+owner:
+  ref: frontend:w5pbeilkczg
+versionIdHead: w6bbm98trb3
+isDeleted: false
+isLocked: false
+timeCreated: 20261119_01251140+09
+versionList:
+  - versionId: w6bbm98trb3
+    versionIdPrevList: []
+    time: 20261119_01251140+09
+    note: info of the frontend object Profile sample
+    size: 609
+    hash: 0fa059af769ca3c9a46308fa92dd5a24968bce76
+    isLocked: false
+    dependencyList: []
+eventList:
+  - eventType: create
+    time: 20261119_01251140+09
+    versionId: w6bbm98trb3

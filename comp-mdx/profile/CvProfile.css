@@ -1,7 +1,14 @@
-/* The mode Information of a profile (CvProfileInfo.jsx): one tight panel, its head, its tools,
-   and a list of rows no taller than the height it is given (param.heightMax), scrolling inside.
-   Rows are a line high; what is said twice elsewhere on the page (a path, a count) is small. */
+/* The mode Information of a profile (CvProfileInfo.jsx): one tight panel, its head, and under it a
+   frame of one height in every tab and view (its tools, a path bar, a list scrolling inside), the list
+   no taller than the height it is given (param.heightMax). Rows are a line high; what is said twice
+   elsewhere on the page (a path, a count) is small. The heights below are what the frame is made of
+   (CvProfileInfo.jsx adds them up), so its parts keep to them. What scrolls inside it keeps the wheel
+   at its ends (overscroll-behavior-y: contain): the page moves only where nothing under the pointer
+   can scroll. */
 .doc-cv-profile {
+	--doc-cv-profile-tool-height: 2.3rem;
+	--doc-cv-profile-path-height: 1.8rem;
+	--doc-cv-profile-row-height: 1.65rem;
 	display: flex;
 	flex-direction: column;
 	margin: 0.8rem 0;
@@ -82,9 +89,17 @@
 	display: flex;
 	align-items: center;
 	gap: 0.4rem;
-	min-height: 2rem;
+	min-height: var(--doc-cv-profile-tool-height);
 	padding: 0.3rem 0.5rem;
 	border-bottom: 1px solid var(--color-fd-border);
+}
+
+/* a line said in the tools stays one line: the frame is not made taller by a narrow page */
+.doc-cv-profile-hint {
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .doc-cv-profile-find {
@@ -143,9 +158,30 @@
 	background-color: rgb(250 204 21 / 45%);
 }
 
-/* ---------- the rows ---------- */
-.doc-cv-profile-body {
+/* ---------- the frame under the head: one height in every tab and view ---------- */
+.doc-cv-profile-stage {
+	display: flex;
+	flex: none;
+	flex-direction: column;
+}
+
+.doc-cv-profile-stage > * {
+	flex: none;
+}
+
+/* the answer of a query and the problems take their room from the list, never all of it */
+.doc-cv-profile-stage > .doc-cv-profile-notice-list {
+	max-height: 45%;
 	overflow: auto;
+	overscroll-behavior-y: contain;
+}
+
+/* ---------- the rows ---------- */
+.doc-cv-profile-stage > .doc-cv-profile-body {
+	flex: 1 1 0;
+	min-height: 0;
+	overflow: auto;
+	overscroll-behavior-y: contain;
 }
 
 .doc-cv-profile-empty {
@@ -163,7 +199,7 @@
 	grid-template-columns: minmax(7.5rem, 34%) minmax(0, 1fr) auto;
 	align-items: center;
 	column-gap: 0.5rem;
-	min-height: 1.65rem;
+	min-height: var(--doc-cv-profile-row-height);
 	padding: 0 0.3rem 0 0.5rem;
 }
 
@@ -385,7 +421,7 @@
 	display: flex;
 	align-items: center;
 	gap: 0.3rem;
-	min-height: 1.8rem;
+	min-height: var(--doc-cv-profile-path-height);
 	padding: 0.1rem 0.6rem 0.1rem 0.3rem;
 	border-bottom: 1px solid var(--color-fd-border);
 }
@@ -539,4 +575,133 @@
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.3rem;
+}
+
+/* ---------- a value where something names it (CvProfileValuePanel.jsx): the card of a query in a
+   cell, the panel of react-doc's object registry ---------- */
+.doc-cv-value-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	font-size: 0.8rem;
+	line-height: 1.4;
+}
+
+.doc-cv-value-panel-path {
+	font-size: 0.75rem;
+	color: var(--color-fd-muted-foreground);
+}
+
+/* the value, typed in place: the look of a field, so it reads as something to type in */
+.doc-cv-value-panel-value {
+	display: block;
+	min-height: 1.6rem;
+	padding: 0.2rem 0.45rem;
+	font-size: 0.85rem;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	background: var(--color-fd-background);
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.3rem;
+}
+
+.doc-cv-value-panel-value:focus-within,
+.doc-cv-value-panel-value:focus {
+	border-color: var(--color-fd-muted-foreground);
+	outline: none;
+}
+
+.doc-cv-value-panel-value[data-readonly] {
+	background: transparent;
+	border-style: dashed;
+}
+
+.doc-cv-value-panel-lines {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 0.3rem;
+}
+
+.doc-cv-value-panel-lines > .doc-cv-value-panel-value {
+	align-self: stretch;
+}
+
+.doc-cv-value-panel-read {
+	overflow-wrap: anywhere;
+}
+
+/* a value made of others, or a date: a row each, its path then its field */
+.doc-cv-value-panel-part {
+	display: grid;
+	grid-template-columns: minmax(0, 9rem) minmax(0, 1fr);
+	align-items: center;
+	gap: 0.4rem;
+}
+
+.doc-cv-value-panel-part-path {
+	overflow: hidden;
+	font-size: 0.72rem;
+	color: var(--color-fd-muted-foreground);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.doc-cv-value-panel-date {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.doc-cv-value-panel-number {
+	display: inline-block;
+	min-width: 3.2em;
+	padding: 0.1rem 0.35rem;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+	background: var(--color-fd-background);
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.3rem;
+}
+
+.doc-cv-value-panel-number[data-readonly] {
+	background: transparent;
+	border-style: dashed;
+}
+
+.doc-cv-value-panel-missing {
+	margin: 0;
+	color: var(--color-fd-error, #c0392b);
+}
+
+.doc-cv-value-panel-note,
+.doc-cv-value-panel-where {
+	margin: 0;
+	font-size: 0.72rem;
+}
+
+/* Save and Cancel of a value typed in a card (cv-value-edit.jsx): at the right, under the field */
+.doc-cv-value-panel-actions {
+	display: flex;
+	justify-content: flex-end;
+}
+
+/* the common values of a value (the status of an education): small buttons in a row, wrapping */
+.doc-cv-value-panel-choices {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+}
+
+.doc-cv-value-panel-choices .doc-button[aria-pressed='true'] {
+	color: var(--color-fd-primary);
+	border-color: var(--color-fd-primary);
+	background: var(--color-fd-accent);
+}
+
+.doc-cv-save-cancel {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
 }

@@ -1,0 +1,36 @@
+itemId: w5pbeiya2jg
+name: ""
+lang: yaml
+contentType: text/yaml
+fileExt: yaml
+owner:
+  ref: frontend:w5pbeilkczg
+versionIdHead: w5pbeiy9mh6
+isDeleted: false
+isLocked: false
+timeCreated: 20261108_02170677+09
+versionList:
+  - versionId: w5pbeiy9mh6
+    versionIdPrevList: []
+    time: 20261108_02170677+09
+    note: ""
+    size: 416
+    hash: b13d505f194a7c87c2476f90649ead4f1d30b2d1
+    isLocked: false
+    dependencyList: []
+eventList:
+  - eventType: create
+    time: 20261108_02170677+09
+    versionId: w5pbeiy9mh6
+  - eventType: move
+    time: 20261108_07093392+09
+    placeFrom: ~cv:cv/.doc-page/object-frontend/w5pbeilkczg--Profile
+      sample/item/history/work
+    placeTo: ~cv:cv/.doc-page/object-frontend/w5pbeilkczg--Profile
+      sample/item/example/history/work
+  - eventType: updateInPlace
+    time: 20261119_01251131+09
+    versionId: w5pbeiy9mh6
+  - eventType: updateInPlace
+    time: 20261119_04131795+09
+    versionId: w5pbeiy9mh6

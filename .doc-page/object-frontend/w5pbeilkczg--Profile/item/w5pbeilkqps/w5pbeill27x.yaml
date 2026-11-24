@@ -1,0 +1,6 @@
+name: Profile
+type: cv.profile
+description: "the personal information of a person, a partition each: the
+  made-up person of the demonstration (example), your own (real), what is tried
+  out (playground)"
+metadata: {}

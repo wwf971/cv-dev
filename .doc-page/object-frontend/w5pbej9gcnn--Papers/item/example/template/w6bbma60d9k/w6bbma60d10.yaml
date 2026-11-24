@@ -1,0 +1,33 @@
+name: 職務経歴書 標準様式
+form: we
+sectionList:
+  - id: head
+    type: head
+    title: 職 務 経 歴 書
+  - id: summary
+    type: text
+    title: 職務要約
+    text: "{{summary/jp}}"
+  - id: career
+    type: career
+    title: 職務経歴
+    list: work
+  - id: skill
+    type: text
+    title: 活かせる経験・知識・技術
+    text: "{{skill/jp}}"
+  - id: license
+    type: history
+    title: 資格
+    isNote: true
+    groupList:
+      - id: license
+        list: license/jp
+        isNote: true
+  - id: pr
+    type: text
+    title: 自己PR
+    text: "{{pr/jp}}"
+  - id: closing
+    type: closing
+    text: 以上

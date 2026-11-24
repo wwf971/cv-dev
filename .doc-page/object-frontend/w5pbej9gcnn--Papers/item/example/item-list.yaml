@@ -1,0 +1,39 @@
+# the assets of the frontend object lying in this folder and below, down to a folder with an
+# item-list.yaml of its own: written by the page (doc_page_impl_obj_frontend.md#the-item-lists)
+assetList:
+  - key: template-1
+    kind: template
+    itemId: w5pbejan114
+    name: 履歴書 標準様式
+    pathList:
+      - /example/template/cv-jp-standard
+  - key: instance-1
+    kind: cv
+    itemId: w5pbejc81ze
+    name: 履歴書（汎用）
+    pathList:
+      - /example/cv/general
+  - key: instance-2
+    kind: cv
+    itemId: w5pbejcv2ma
+    name: 履歴書（外資系企業向け）
+    pathList:
+      - /example/cv/foreign-affiliated
+  - key: template-2
+    kind: template
+    itemId: w6bbma60d9k
+    name: 職務経歴書 標準様式
+    pathList:
+      - /example/template/we-jp-standard
+  - key: we-1
+    kind: we
+    itemId: w6bbma9y8wt
+    name: 職務経歴書（汎用）
+    pathList:
+      - /example/we/general
+  - key: part-1
+    kind: part
+    itemId: w6n6bk5vgq8
+    name: 本人希望記入欄
+    pathList:
+      - /example/part/wish
