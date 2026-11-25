@@ -18,6 +18,7 @@ frontend object: a profile (type cv.profile)        frontend object: the papers 
 - [The sheet](cv-sheet.md): what both forms share: templates, papers, sections, blocks (a title line and a free area, made freely), cells, editing in place, pages.
 - [Japanese-style CV](cv-jp.md) and [Japanese-style work experience](we-jp.md): what is each form's own. The work experience draws a career read off the folders of the profile.
 - [Badges](cv-badge.md): a certification badge of the profile shown in a line of a paper, at any size, alone or as a grid with text under each, and changed where it stands.
+- [The portals](cv-portal.md): the papers as an app of their own in the whole window, in two looks over one state: a desk in Material UI, and an archive room in 3D.
 
 Two objects on purpose: the same person has many papers, of several forms, and a profile can be copied without any of them. Each is a self-contained folder (react-doc: `main/doc_page_impl_obj_frontend.md#the-folder-of-an-object`). The papers of both forms are in **one** object: they read one profile, share their templates' sections, and are listed and drawn by the same two modes.
 
@@ -69,7 +70,7 @@ What a data item of the package is, is declared in `type.yaml` as a **kind**, a 
 
 | kind | held as | what an item is |
 | --- | --- | --- |
-| `cv.profile.info` | `info` in a profile | the values of one subject: a tree of mappings, lists and plain values, a mapping with a `year` a dated entry ([Query paths](cv-query.md#how-the-information-is-stored)) |
+| `cv.profile.info` | `info` in a profile | the values of one subject: a tree of mappings, lists and plain values, a mapping with a `year` a dated entry ([Query paths](cv-query.md#how-the-information-is-stored)), a mapping holding `$version` one value kept with its versions ([Versions of a value](cv-query.md#versions-of-a-value)) |
 | `cv.profile.badge` | `badge` in a profile | `{ name, caption?, issuer?, url?, image }` ([Badges](cv-badge.md)) |
 | `cv.jp.template` | `template` in a papers object | `{ name, form, isEra?, sectionList, cellById }`, a section of the type basic, head, history, career, text or closing ([The sheet](cv-sheet.md#the-data)) |
 | `cv.jp.cv` | `cv` in a papers object | a CV: `{ name, template, profile, asOf, isEra?, valueByCell, rowExtraByGroup, rowHiddenByGroup, rowOrderByGroup, sectionExtraList, sectionHiddenList, sectionOrderList }` |
@@ -85,7 +86,7 @@ What a data item of the package is, is declared in `type.yaml` as a **kind**, a 
 
 ```text
 cv/
-├── doc-package.yaml, package.json
+├── doc-package.yaml, package.json   package.json: what the portals are drawn with (npm install)
 ├── type.yaml           the types cv.profile and cv.jp, with their modes and the kinds of their data items (schemas)
 ├── doc/                README.md, cv-demo.md, cv-query.md, cv-sheet.md, cv-jp.md, we-jp.md, cv-badge.md;
 │                       cv.playground.md (ignored by git)
@@ -102,6 +103,8 @@ cv/
     ├── profile/        CvProfileInfo.jsx: the mode "information" of a profile, a panel of limited height; its two
     │                   views of the values (CvProfileExplore.jsx, CvProfileTree.jsx, their rows CvProfileRow.jsx),
     │                   its badges (CvProfileBadgeList.jsx), CvProfileStore.js, CvProfile.css
+    ├── portal/         the portals of a papers object (cv-portal.md): archive/ (the state both draw), desk/
+    │                   (Material UI), room/ (three.js)
     └── jp/             the Japanese-style forms. CvJp*: the sheet both forms share, and the top of the CV;
                         WeJp*: what is the work experience's own (cv-sheet.md#files).
                         CvJpData.js (templates, papers, forms, the sheet as data), WeJpData.js (the career),

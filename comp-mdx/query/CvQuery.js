@@ -21,6 +21,10 @@ import { cvAgeGet, cvHiraganaToKatakana, cvKanaToRomaji, cvKatakanaToHiragana, c
 // at its path, or else the first leaf below it in the order of the data, which is how an author
 // says what the default is. A word that no leaf holds may be derived: another script (katakana
 // from hiragana, in place), the era or age of a date, a name joined from its parts.
+//
+// A value may be kept with versions (doc/cv-query.md#versions-of-a-value): one of them is its
+// head, which a query reads; "@" and a version at the end of a query reads that version
+// whatever the head is (pr/jp@2). A value written plainly is its version 1.
 
 // other spellings of a segment, in the data and in a query: a vocabulary, not a pattern. a word
 // a profile is likely to use as a key of its own is no spelling of anything: "title" is the title
@@ -59,6 +63,78 @@ function scalarIs(value) {
 	return value !== null && value !== undefined && typeof value !== 'object';
 }
 
+// what a leaf holds: a plain value, or a list of them (several lines)
+function leafRawIs(value) {
+	return scalarIs(value) || (Array.isArray(value) && value.every(scalarIs));
+}
+
+// ---------- a value kept with versions ----------
+//
+// In the data a value is written plainly (kanji: 太郎), or, once it has more than one version,
+// as a mapping holding them under one reserved key:
+//
+//   kanji:
+//     $version:
+//       head: 2                       the version a query reads when it names none
+//       versionList:
+//         - { id: 1, value: 太郎, time: 20261120_21041000+09 }
+//         - { id: 2, value: 太朗, time: 20261125_10123300+09, note: the registered spelling }
+//
+// The key starts with "$", which no segment of a path does, so it is never a level of a path.
+// A version's id is a number given in order, never used again; a plain value is the short form
+// of one version, id 1, which is its head.
+export const CV_VERSION_KEY = '$version';
+// the word naming the head where a version is named: name/jp/first@head is name/jp/first
+export const CV_VERSION_HEAD = 'head';
+// what parts a query from the version it names
+export const CV_VERSION_MARK = '@';
+
+export function cvVersionedIs(value) {
+	return mappingIs(value) && mappingIs(value[CV_VERSION_KEY]) && Array.isArray(value[CV_VERSION_KEY].versionList);
+}
+
+// the versions of a value as the data says them: { head, versionList: [{ id, raw, time, note }] }.
+// read defensively: an entry without a whole id or a value is left out, an id met twice keeps
+// its first, a head naming no version is the last one. none left: undefined
+function versionedRead(value) {
+	const idSet = new Set();
+	const versionList = [];
+	for (const one of value[CV_VERSION_KEY].versionList) {
+		const id = Number(one?.id);
+		if (!mappingIs(one) || !Number.isInteger(id) || id < 1 || idSet.has(id) || !leafRawIs(one.value)) continue;
+		idSet.add(id);
+		versionList.push({ id, raw: one.value, time: typeof one.time === 'string' ? one.time : '', note: typeof one.note === 'string' ? one.note : '' });
+	}
+	if (versionList.length === 0) return undefined;
+	const head = Number(value[CV_VERSION_KEY].head);
+	return { head: idSet.has(head) ? head : versionList[versionList.length - 1].id, versionList };
+}
+
+// a plain value, or the head of one kept with versions: what a reader of the data that knows
+// no versions is handed (the year of a dated entry)
+export function cvValueHeadGet(value) {
+	if (!cvVersionedIs(value)) return value;
+	const versioned = versionedRead(value);
+	return versioned?.versionList.find((one) => one.id === versioned.head)?.raw;
+}
+
+function leafTextOf(raw) {
+	return Array.isArray(raw) ? raw.join('\n') : String(raw);
+}
+
+// the versions of a leaf, oldest first: [{ id, value, isList, time, note, isHead }]. a leaf
+// written plainly has one, id 1, its head
+export function cvLeafVersionListGet(leaf) {
+	if (!leaf) return [];
+	if (!leaf.version) return [{ id: 1, value: leaf.value, isList: leaf.isList === true, time: '', note: '', isHead: true }];
+	return leaf.version.versionList.map((one) => ({ ...one, isHead: one.id === leaf.version.head }));
+}
+
+// the id of the head of a leaf
+export function cvLeafHeadIdGet(leaf) {
+	return leaf?.version?.head ?? 1;
+}
+
 // the pattern of a key of the data, a piece of a path: "jp", "{jp/last/}" (keys below it),
 // "{en, last}" (a value), "[en, english]". a key that is no pattern (a "{" not closed, "{jp/last}")
 // is the key as it is, one segment, and reported
@@ -87,7 +163,9 @@ function itemNodeGet(source, problemList) {
 // the information of a profile from its data items, each { key, pathList, data } (pathList: its
 // paths in its partition, /info/name; query/CvProfile.js takes the partition off). virtual:
 // values no item holds, { date: { ... } }, which can be read and not written.
-//   leafList     every value: { node, pathText, path, value, assetKey, keyPath, keyNodeList, isList }
+//   leafList     every value: { node, pathText, path, value, assetKey, keyPath, keyNodeList, isList, version? }
+//                value: what its head says; version: { head, versionList: [{ id, value, isList, time, note }] }
+//                of a value kept with versions (cvLeafVersionListGet reads either)
 //   mappingList  every mapping and item, where a new value may go: { node, assetKey, keyPath }
 //   entryList    every dated entry (a mapping with a year): { node, value, assetKey, keyPath, pathList }
 //   index        the leaves by their paths (asset path index), problemList
@@ -97,9 +175,21 @@ export function cvInfoBuild(sourceList, virtual = {}) {
 	const entryList = [];
 	const problemList = [];
 	const walk = (value, node, keyPath, keyNodeList, source) => {
-		if (scalarIs(value) || (Array.isArray(value) && value.every(scalarIs))) {
+		if (leafRawIs(value)) {
 			const isList = Array.isArray(value);
-			leafList.push({ node, pathText: assetPathText(node), value: isList ? value.join('\n') : String(value), assetKey: source.key, keyPath, keyNodeList, isList });
+			leafList.push({ node, pathText: assetPathText(node), value: leafTextOf(value), assetKey: source.key, keyPath, keyNodeList, isList });
+			return;
+		}
+		// a value kept with versions: one leaf, what its head says, its versions beside it
+		if (cvVersionedIs(value)) {
+			const versioned = versionedRead(value);
+			if (!versioned) {
+				problemList.push(`${source.label ?? source.key}: ${assetPathText(node)} is kept with versions, and none of them can be read`);
+				return;
+			}
+			const versionList = versioned.versionList.map((one) => ({ id: one.id, value: leafTextOf(one.raw), isList: Array.isArray(one.raw), time: one.time, note: one.note }));
+			const head = versionList.find((one) => one.id === versioned.head);
+			leafList.push({ node, pathText: assetPathText(node), value: head.value, assetKey: source.key, keyPath, keyNodeList, isList: head.isList, version: { head: versioned.head, versionList } });
 			return;
 		}
 		if (Array.isArray(value)) {
@@ -108,7 +198,11 @@ export function cvInfoBuild(sourceList, virtual = {}) {
 		}
 		if (!mappingIs(value)) return;
 		if (keyPath.length > 0) mappingList.push({ node, assetKey: source.key, keyPath });
-		if (value.year !== undefined) entryList.push({ node, value, assetKey: source.key, keyPath, pathList: assetPathExpand(node).pathList });
+		// a dated entry: its numbers as their heads say them, for whoever reads the entry itself
+		if (value.year !== undefined) {
+			const valueHead = { ...value, year: cvValueHeadGet(value.year), month: cvValueHeadGet(value.month), day: cvValueHeadGet(value.day) };
+			entryList.push({ node, value: valueHead, assetKey: source.key, keyPath, pathList: assetPathExpand(node).pathList });
+		}
 		for (const key of Object.keys(value)) {
 			const keyNode = keyNodeGet(key, problemList, source.label ?? source.key);
 			walk(value[key], assetPathConcat(node, keyNode), [...keyPath, key], [...keyNodeList, keyNode], source);
@@ -126,10 +220,12 @@ export function cvInfoBuild(sourceList, virtual = {}) {
 	return { leafList, mappingList, entryList, index, problemList: [...problemList, ...index.problemList] };
 }
 
-// a query: its path, then its modifiers (formats, a derivation), each a segment at the end:
-//   { segmentList, formatList, derive, text }  (text: its canonical spelling)
+// a query: its path, then its modifiers (formats, a derivation), each a segment at the end, then
+// "@" and the version it reads when it names one (pr/jp@2; none, or @head: the head):
+//   { segmentList, formatList, derive, version, text }  (text: its canonical spelling)
 export function cvQueryParse(text) {
-	const segmentList = String(text ?? '').split('/').map(cvSegmentNormalize).filter(Boolean);
+	const { path, version } = cvQueryVersionSplit(text);
+	const segmentList = path.split('/').map(cvSegmentNormalize).filter(Boolean);
 	const formatList = [];
 	let derive = '';
 	while (segmentList.length > 0) {
@@ -138,7 +234,24 @@ export function cvQueryParse(text) {
 		else if (CV_DERIVE_LIST.includes(last) && !derive) derive = segmentList.pop();
 		else break;
 	}
-	return { segmentList, formatList, derive, text: [...segmentList, ...(derive ? [derive] : []), ...formatList].join('/') };
+	return { segmentList, formatList, derive, version, text: `${[...segmentList, ...(derive ? [derive] : []), ...formatList].join('/')}${version ? `${CV_VERSION_MARK}${version}` : ''}` };
+}
+
+// a query parted from the version it names: { path, version } (version '' for none and for
+// @head, both reading the head; isVersionTyped: an "@" stands in it, a version being typed)
+export function cvQueryVersionSplit(text) {
+	const source = String(text ?? '');
+	const index = source.lastIndexOf(CV_VERSION_MARK);
+	if (index < 0) return { path: source, version: '', isVersionTyped: false };
+	const version = source.slice(index + 1).trim().toLowerCase();
+	return { path: source.slice(0, index), version: version === CV_VERSION_HEAD ? '' : version, isVersionTyped: true };
+}
+
+// a query with the version it reads set: (pr/jp@1, 3) -> pr/jp@3; none, or head: the head (pr/jp)
+export function cvQueryVersionSet(text, version) {
+	const { path } = cvQueryVersionSplit(text);
+	const versionText = version === undefined || version === null ? '' : String(version).trim().toLowerCase();
+	return versionText === '' || versionText === CV_VERSION_HEAD ? path : `${path}${CV_VERSION_MARK}${versionText}`;
 }
 
 // the leaf at a path, else the first below it in the order of the data
@@ -166,26 +279,38 @@ function deriveResolve(info, parsed, dateNow) {
 	return value === '' ? undefined : value;
 }
 
-// { status: found | missing, value, leaf?, leafList, by, alternativeList, message, query }
+// { status: found | missing, value, leaf?, leafList, by, alternativeList, version?, message, query }
 //   by              how the value was come by: stored, script, derive, join
 //   leaf            the one leaf the value is read from (absent when joined): what an editor writes
 //   alternativeList what the same query could also mean: the other leaves below its path
+//   version         of a value read from one leaf: { id, isHead, isPinned, count }: the version
+//                   read, whether it is the head, whether the query names it (pr/jp@2: pinned,
+//                   it reads that version whatever the head becomes), how many the leaf has
 export function cvQueryResolve(info, text, context = {}) {
 	const parsed = cvQueryParse(text);
 	const { segmentList } = parsed;
 	const dateNow = context.dateNow ?? new Date();
-	const answer = (value, by, leaf, leafList, alternativeList = []) => ({
-		status: 'found', value: formatApply(value, parsed.formatList), by, leaf, leafList, alternativeList, message: '', query: parsed.text,
+	const pathText = segmentList.join('/');
+	const answer = (value, by, leaf, leafList, alternativeList = [], version = undefined) => ({
+		status: 'found', value: formatApply(value, parsed.formatList), by, leaf, leafList, alternativeList, ...(version ? { version } : {}), message: '', query: parsed.text,
 	});
 	const missing = (message) => ({ status: 'missing', value: '', leafList: [], alternativeList: [], message, query: parsed.text });
+	// the value one leaf holds: its head, or the version the query names
+	const leafAnswer = (leaf, alternativeList = []) => {
+		const versionList = cvLeafVersionListGet(leaf);
+		const one = parsed.version ? versionList.find((version) => String(version.id) === parsed.version) : versionList.find((version) => version.isHead);
+		if (!one) return missing(`${pathText} has no version ${parsed.version} (it has ${versionList.map((version) => version.id).join(', ')})`);
+		return answer(one.value, 'stored', leaf, [leaf], alternativeList, { id: one.id, isHead: one.isHead, isPinned: parsed.version !== '', count: versionList.length });
+	};
 	if (segmentList.length === 0) return missing('an empty query');
 	if (parsed.derive) {
+		if (parsed.version) return missing(`${parsed.derive} is worked out of a date and has no versions: name one on the year (${pathText}/year${CV_VERSION_MARK}${parsed.version})`);
 		const value = deriveResolve(info, parsed, dateNow);
 		if (value !== undefined) return answer(value, 'derive', undefined, [leafOf(info, [...segmentList, 'year'])]);
-		return missing(`no date holds ${segmentList.join('/')}`);
+		return missing(`no date holds ${pathText}`);
 	}
 	const exact = assetPathIndexGet(info.index, segmentList);
-	if (exact) return answer(exact.value, 'stored', exact, [exact]);
+	if (exact) return leafAnswer(exact);
 	// a name asked for as a whole: its last and first parts joined, in the order of its language.
 	// the parts go where the query has none: name/jp/kanji reads name/jp/last/kanji
 	if (!segmentList.includes('first') && !segmentList.includes('last')) {
@@ -196,11 +321,12 @@ export function cvQueryResolve(info, text, context = {}) {
 			const partFirst = leafOf(info, [...before, 'first', ...after]);
 			if (!partLast || !partFirst) continue;
 			const partList = segmentList.includes('en') ? [partFirst, partLast] : [partLast, partFirst];
+			if (parsed.version) return missing(`${pathText} is joined of ${partList.length} values and has no versions of its own: name one on a part (${partList[0].path}${CV_VERSION_MARK}${parsed.version})`);
 			return answer(partList.map((leaf) => leaf.value).join(' '), 'join', undefined, partList);
 		}
 	}
 	const belowList = assetPathIndexBelowList(info.index, segmentList);
-	if (belowList.length > 0) return answer(belowList[0].value, 'stored', belowList[0], [belowList[0]], belowList.slice(1));
+	if (belowList.length > 0) return leafAnswer(belowList[0], belowList.slice(1));
 	// another script of the same value, in the same place of the path. scripts derive from each
 	// other (katakana from hiragana and back), so a query already being tried is not tried again
 	const queryTriedSet = new Set([...(context.queryTriedSet ?? []), segmentList.join('/')]);
@@ -208,12 +334,13 @@ export function cvQueryResolve(info, text, context = {}) {
 		for (const source of CV_SCRIPT_SOURCE_BY_SCRIPT[segmentList[at]] ?? []) {
 			const textSource = [...segmentList.slice(0, at), source.segment, ...segmentList.slice(at + 1)].join('/');
 			if (queryTriedSet.has(textSource)) continue;
-			const resolved = cvQueryResolve(info, textSource, { ...context, queryTriedSet });
+			// the version named is one of the value the script is read off
+			const resolved = cvQueryResolve(info, cvQueryVersionSet(textSource, parsed.version), { ...context, queryTriedSet });
 			if (resolved.status !== 'found') continue;
-			return answer(source.convert(resolved.value), 'script', undefined, resolved.leafList);
+			return answer(source.convert(resolved.value), 'script', undefined, resolved.leafList, [], resolved.version);
 		}
 	}
-	return missing(`nothing holds ${segmentList.join('/')}`);
+	return missing(`nothing holds ${pathText}`);
 }
 
 // what can follow a query being typed: the segments that continue the path typed so far (the last
@@ -221,7 +348,7 @@ export function cvQueryResolve(info, text, context = {}) {
 // values with the query reaching each the way it was typed:
 //   { segmentList: [{ segment, count }], leafList: [{ leaf, query }], typedList }
 export function cvQueryComplete(info, text, limit = 12) {
-	const partList = String(text ?? '').split('/');
+	const partList = cvQueryVersionSplit(text).path.split('/');
 	const lastRaw = String(partList.pop() ?? '').trim().toLowerCase();
 	const lastList = [...new Set([lastRaw, cvSegmentNormalize(lastRaw)])];
 	const typedList = partList.map(cvSegmentNormalize).filter(Boolean);
@@ -245,28 +372,42 @@ export function cvQueryComplete(info, text, limit = 12) {
 
 // ---------- choosing a query path: /query in a cell ----------
 
-// the items of /query for the path typed so far (a slash action's itemListGet, cv-query-slash.js):
+// the items of /query for the path typed so far (a slash action's itemListGet, jp/cv-query-cell.js):
 // what is below the folder typed, one level at a time, each with its value, so that a path is
 // chosen segment by segment:
 //   name/        the folders below name (jp/, en/, last/, first/, ...), going on when chosen
 //   name/jp/la   those starting with "la": last/; and the path itself when it reads a value
 //   name/jp/last the path itself first ({{name/jp/last}}: 山田), then last/ to go on
-// -> [{ id, kind: 'dir' | 'value' | 'query', label, detail, query?, paramNext? }]
-//   dir     a folder: paramNext is the parameter going on inside it (its values counted in detail)
-//   value   a value below the folder typed: query is its path, detail its value
-//   query   the typed path itself, when it reads a value (a default, a joined name, a script)
-export function cvQuerySlashItemListGet(info, param, context = {}, limit = 40) {
+//   pr/jp@       the versions of the value the path reads, the head first (#versions-of-a-value)
+//   hobby/jp     a path nothing holds: offered as a new value (isNewOffered)
+// -> [{ id, kind: 'dir' | 'value' | 'query' | 'version' | 'new', label, detail, query?, paramNext? }]
+//   dir      a folder: paramNext is the parameter going on inside it (its values counted in detail)
+//   value    a value below the folder typed: query is its path, detail its value
+//   query    the typed path itself, when it reads a value (a default, a joined name, a script)
+//   version  a version of the value the typed path reads: query names it (pr/jp@2)
+//   new      the typed path, which nothing holds: query is the path of a value to be made
+// option: isNewOffered (a path nothing holds is offered as a new value; default false)
+export function cvQuerySlashItemListGet(info, param, context = {}, limit = 40, { isNewOffered = false } = {}) {
 	const text = String(param ?? '').trimStart();
+	const versionSplit = cvQueryVersionSplit(text);
+	if (versionSplit.isVersionTyped) return cvQueryVersionItemListGet(info, versionSplit.path, text.slice(text.lastIndexOf(CV_VERSION_MARK) + 1), context).slice(0, limit);
 	const indexSlash = text.lastIndexOf('/');
 	const folderText = text.slice(0, indexSlash + 1);
 	const prefixRaw = text.slice(indexSlash + 1).trim().toLowerCase();
 	const prefixList = [...new Set([prefixRaw, cvSegmentNormalize(prefixRaw)])];
 	const typedList = folderText.split('/').map(cvSegmentNormalize).filter(Boolean);
-	const valueShow = (value) => (String(value).startsWith('data:') ? '(image)' : String(value).replace(/\n/g, ' / '));
 	const itemList = [];
+	let isRead = false;
 	if (prefixRaw) {
 		const resolved = cvQueryResolve(info, text, context);
-		if (resolved.status === 'found') itemList.push({ id: `query:${text}`, kind: 'query', label: text, detail: valueShow(resolved.value), query: text });
+		if (resolved.status === 'found') {
+			isRead = true;
+			itemList.push({ id: `query:${text}`, kind: 'query', label: text, detail: cvValueShow(resolved.value), query: text });
+			// a value kept in several versions: the walk goes on into them
+			if (resolved.version && resolved.version.count > 1) {
+				itemList.push({ id: `dir:${text}${CV_VERSION_MARK}`, kind: 'dir', label: `${text}${CV_VERSION_MARK}`, detail: `${resolved.version.count} versions, the head is ${resolved.version.id}`, paramNext: `${text}${CV_VERSION_MARK}` });
+			}
+		}
 	}
 	const node = assetPathIndexNodeGet(info.index, typedList);
 	for (const child of node?.childByKey.values() ?? []) {
@@ -274,13 +415,94 @@ export function cvQuerySlashItemListGet(info, param, context = {}, limit = 40) {
 		if (prefixRaw && !prefixList.some((prefix) => segment.startsWith(prefix))) continue;
 		const leaf = child.entryList[0];
 		const query = `${folderText}${segment}`;
-		if (leaf && !(prefixRaw && query === text)) itemList.push({ id: `value:${query}`, kind: 'value', label: segment, detail: valueShow(leaf.value), query });
+		if (leaf && !(prefixRaw && query === text)) itemList.push({ id: `value:${query}`, kind: 'value', label: segment, detail: cvValueShow(leaf.value), query });
 		if (child.childByKey.size > 0) {
 			const count = child.entryBelowList.length;
 			itemList.push({ id: `dir:${query}`, kind: 'dir', label: `${segment}/`, detail: `${count} value${count === 1 ? '' : 's'}`, paramNext: `${query}/` });
 		}
 	}
-	return itemList.slice(0, limit);
+	// a path nothing holds, neither a value nor a folder: a value to be made there
+	const itemNew = isNewOffered && prefixRaw && !isRead ? cvQueryNewItemGet(info, text) : undefined;
+	return [...itemList.slice(0, itemNew ? limit - 1 : limit), ...(itemNew ? [itemNew] : [])];
+}
+
+// a value as a line of a menu shows it: an image named, line breaks as " / "
+function cvValueShow(value) {
+	return String(value).startsWith('data:') ? '(image)' : String(value).replace(/\n/g, ' / ');
+}
+
+// the versions of the value a path reads, as items of /query: the head first, then the others
+// newest first, narrowed by what is typed after "@" (a number, or "head"); none when the path
+// reads no single value
+function cvQueryVersionItemListGet(info, path, typedInput, context) {
+	const resolved = cvQueryResolve(info, path, context);
+	const leaf = resolved.status === 'found' ? (resolved.leaf ?? (resolved.by === 'script' ? resolved.leafList[0] : undefined)) : undefined;
+	if (!leaf) return [];
+	const typed = String(typedInput ?? '').trim().toLowerCase();
+	const versionList = cvLeafVersionListGet(leaf);
+	const itemList = [];
+	const head = versionList.find((one) => one.isHead);
+	if (CV_VERSION_HEAD.startsWith(typed)) itemList.push({ id: `version:${path}@head`, kind: 'version', label: `${CV_VERSION_MARK}${CV_VERSION_HEAD}`, detail: `follows the head (now version ${head?.id}): ${cvValueShow(head?.value ?? '')}`, query: path });
+	for (const one of [...versionList].reverse()) {
+		if (typed && !String(one.id).startsWith(typed)) continue;
+		itemList.push({
+			id: `version:${path}@${one.id}`,
+			kind: 'version',
+			label: `${CV_VERSION_MARK}${one.id}`,
+			detail: [one.isHead ? 'head' : '', one.note, cvValueShow(one.value)].filter(Boolean).join(' · '),
+			query: `${path}${CV_VERSION_MARK}${one.id}`,
+			time: one.time,
+		});
+	}
+	return itemList;
+}
+
+// ---------- a new value: /new in a cell, a path nothing holds ----------
+
+// why a value cannot be made at a path ('' when it can): its segments are words of a path, the
+// last is no modifier (a format or a derivation, which names no value), and nothing is there
+export function cvQueryNewProblemGet(info, text) {
+	const source = cvQueryVersionSplit(text);
+	if (source.isVersionTyped) return 'a new value has no version yet: its path ends before "@"';
+	const rawList = source.path.split('/').map((one) => one.trim()).filter(Boolean);
+	if (rawList.length === 0) return 'a path names the new value: name/jp, work/acme/jp/name';
+	const bad = rawList.find((one) => !CV_SEGMENT_NEW_REGEX.test(one));
+	if (bad !== undefined) return `${JSON.stringify(bad)} is no segment of a path: letters, digits, "-" and "_" (no space, no / { } [ ] , @ | $)`;
+	const segmentList = rawList.map(cvSegmentNormalize);
+	const last = segmentList[segmentList.length - 1];
+	if (CV_FORMAT_LIST.includes(last) || CV_DERIVE_LIST.includes(last)) return `${last} is read off a value, never kept: end the path with a name of its own`;
+	if (assetPathIndexGet(info.index, segmentList)) return `${segmentList.join('/')} holds a value already`;
+	if (assetPathIndexNodeGet(info.index, segmentList)?.entryBelowList.length > 0) return `${segmentList.join('/')} is a folder holding values: name a value inside it`;
+	return '';
+}
+
+// a segment a new path may be made of: no character of the grammar of paths, of tokens or of versions
+const CV_SEGMENT_NEW_REGEX = /^[^\s/{}[\],@|$#!%^&*~][^\s/{}[\],@|$]*$/;
+
+// the item offering the typed path as a new value, or undefined when none can be made there
+function cvQueryNewItemGet(info, text) {
+	if (cvQueryNewProblemGet(info, text) !== '') return undefined;
+	const path = cvQueryParse(text).segmentList.join('/');
+	const place = cvLeafPlaceGet(info, path);
+	const where = !place ? '' : place.assetKey ? (place.keyPath.length < cvQueryParse(path).segmentList.length ? 'added under what holds its start' : 'added') : `a new item ${place.pathNew}`;
+	return { id: `new:${path}`, kind: 'new', label: path, detail: `a new value of the profile${where ? `, ${where}` : ''}`, query: path };
+}
+
+// the items of /new for the path typed so far: the folders to go on under (as /query lists them,
+// the values left out: a new value is no existing one), then the path itself as a new value, or
+// why none can be made there. a path that reads a value already is offered as that value
+// -> [{ id, kind: 'dir' | 'new' | 'query' | 'note', label, detail, query?, paramNext? }]
+export function cvQueryNewSlashItemListGet(info, param, context = {}, limit = 40) {
+	const text = String(param ?? '').trimStart();
+	const indexSlash = text.lastIndexOf('/');
+	const prefixRaw = text.slice(indexSlash + 1).trim();
+	const itemList = cvQuerySlashItemListGet(info, cvQueryVersionSplit(text).path, context, limit).filter((item) => item.kind === 'dir' && !item.paramNext.endsWith(CV_VERSION_MARK));
+	if (!prefixRaw) return itemList;
+	const itemNew = cvQueryNewItemGet(info, text);
+	if (itemNew) return [itemNew, ...itemList];
+	const exact = assetPathIndexGet(info.index, cvQueryParse(text).segmentList);
+	if (exact) return [{ id: `query:${text}`, kind: 'query', label: text, detail: `holds a value already: ${cvValueShow(exact.value)}`, query: cvQueryParse(text).segmentList.join('/') }, ...itemList];
+	return [...itemList, { id: `note:${text}`, kind: 'note', label: cvQueryNewProblemGet(info, text), detail: '' }];
 }
 
 // ---------- text with queries ----------
@@ -526,9 +748,11 @@ export function cvEntryListResolve(info, text) {
 
 // ---------- writing ----------
 
-// the data with the value at a key path set, the rest shared; made of mappings where keys are missing
+// the data with the value at a key path set, the rest shared; made of mappings where keys are missing.
+// a value kept with versions is never replaced by a plain one: the plain value is written into
+// its head (in place), so that a writer knowing no versions loses none of them
 export function cvDataSet(data, keyPath, value) {
-	if (keyPath.length === 0) return value;
+	if (keyPath.length === 0) return cvVersionedIs(data) && leafRawIs(value) ? versionedWrite(data, value, { mode: 'inPlace' }).value : value;
 	const [key, ...rest] = keyPath;
 	const node = Array.isArray(data) ? [...data] : { ...(mappingIs(data) ? data : {}) };
 	node[key] = cvDataSet(node[key], rest, value);
@@ -549,6 +773,104 @@ export function cvDataRemove(data, keyPath) {
 	if (mappingIs(inner) && Object.keys(inner).length === 0 && !Array.isArray(node)) delete node[key];
 	else node[key] = inner;
 	return node;
+}
+
+// ---------- writing a value by its versions ----------
+
+// a value (plain, or kept with versions) with something written into it:
+//   mode 'inPlace'      the version named (versionId; none: the head) says value from now on. a
+//                       plain value stays plain
+//   mode 'newVersion'   a new version holds value: its id the largest so far + 1, its time and
+//                       note as given. it becomes the head unless isHeadMoved is false (the
+//                       version of a place pinned to one: the head stays what it was)
+// -> { value, versionId }: the value as the data keeps it now, the version written;
+//    { message } when the version named is none of its versions
+function versionedWrite(valueBefore, raw, { mode = 'inPlace', versionId, isHeadMoved = true, time = '', note = '' } = {}) {
+	const versioned = cvVersionedIs(valueBefore) ? versionedRead(valueBefore) : undefined;
+	// its versions as the data writes them: a plain value is its version 1
+	const versionList = versioned
+		? valueBefore[CV_VERSION_KEY].versionList.filter((one) => versioned.versionList.some((kept) => kept.id === Number(one?.id)))
+		: (leafRawIs(valueBefore) ? [{ id: 1, value: valueBefore }] : []);
+	const head = versioned?.head ?? 1;
+	const build = (listNext, headNext) => ({ [CV_VERSION_KEY]: { head: headNext, versionList: listNext } });
+	if (mode === 'newVersion') {
+		const idNew = versionList.reduce((max, one) => Math.max(max, Number(one.id)), 0) + 1;
+		const versionNew = { id: idNew, value: raw, ...(time ? { time } : {}), ...(note ? { note } : {}) };
+		// nothing was there: the first version of a value is written plainly
+		if (versionList.length === 0) return { value: raw, versionId: 1 };
+		return { value: build([...versionList, versionNew], isHeadMoved ? idNew : head), versionId: idNew };
+	}
+	const idTarget = versionId === undefined || versionId === null || versionId === '' ? head : Number(versionId);
+	if (!versioned) {
+		if (idTarget !== 1) return { message: `it has no version ${versionId} (it has 1)` };
+		return { value: raw, versionId: 1 };
+	}
+	if (!versionList.some((one) => Number(one.id) === idTarget)) return { message: `it has no version ${versionId} (it has ${versionList.map((one) => one.id).join(', ')})` };
+	return { value: build(versionList.map((one) => (Number(one.id) === idTarget ? { ...one, value: raw } : one)), head), versionId: idTarget };
+}
+
+function dataAtGet(data, keyPath) {
+	return keyPath.reduce((value, key) => (value !== null && typeof value === 'object' ? value[key] : undefined), data);
+}
+
+// the data with a value written at a key path by its versions (versionedWrite: mode, versionId,
+// isHeadMoved, time, note): { data, versionId }, or { message } when the version named is none
+export function cvValueDataSet(data, keyPath, raw, option = {}) {
+	const written = versionedWrite(dataAtGet(data, keyPath), raw, option);
+	if (written.message) return { message: written.message };
+	// the value as kept is put there whole: cvDataSet would write a plain one into the head
+	return { data: dataPut(data, keyPath, written.value), versionId: written.versionId };
+}
+
+// the value at a key path replaced whole, versions and all (cvDataSet keeps the versions of what is there)
+function dataPut(data, keyPath, value) {
+	if (keyPath.length === 0) return value;
+	const [key, ...rest] = keyPath;
+	const node = Array.isArray(data) ? [...data] : { ...(mappingIs(data) ? data : {}) };
+	node[key] = dataPut(node[key], rest, value);
+	return node;
+}
+
+// the data with another version of the value at a key path as its head (a version checked out):
+// { data }, or { message }. a plain value has one version, its head already
+export function cvValueVersionHeadSet(data, keyPath, versionId) {
+	const value = dataAtGet(data, keyPath);
+	const id = Number(versionId);
+	const versioned = cvVersionedIs(value) ? versionedRead(value) : undefined;
+	if (!versioned) return id === 1 && leafRawIs(value) ? { data } : { message: `it has no version ${versionId}` };
+	if (!versioned.versionList.some((one) => one.id === id)) return { message: `it has no version ${versionId} (it has ${versioned.versionList.map((one) => one.id).join(', ')})` };
+	return { data: dataPut(data, keyPath, { [CV_VERSION_KEY]: { ...value[CV_VERSION_KEY], head: id } }) };
+}
+
+// the data without one version of the value at a key path: never its head (another version is
+// made the head first), so a value always reads something. its other versions keep their ids
+export function cvValueVersionRemove(data, keyPath, versionId) {
+	const value = dataAtGet(data, keyPath);
+	const id = Number(versionId);
+	const versioned = cvVersionedIs(value) ? versionedRead(value) : undefined;
+	if (!versioned || !versioned.versionList.some((one) => one.id === id)) return { message: `it has no version ${versionId}` };
+	if (versioned.head === id) return { message: `version ${id} is the head: make another version the head first` };
+	const versionList = value[CV_VERSION_KEY].versionList.filter((one) => Number(one?.id) !== id);
+	return { data: dataPut(data, keyPath, { [CV_VERSION_KEY]: { ...value[CV_VERSION_KEY], versionList } }) };
+}
+
+// the data with the note of one version of the value at a key path set ('' takes it away). a
+// plain value is written with its versions then, since a plain value has nowhere to keep a note
+export function cvValueVersionNoteSet(data, keyPath, versionId, noteInput) {
+	const value = dataAtGet(data, keyPath);
+	const id = Number(versionId);
+	const note = String(noteInput ?? '').trim();
+	if (!cvVersionedIs(value)) {
+		if (id !== 1 || !leafRawIs(value)) return { message: `it has no version ${versionId}` };
+		return note === '' ? { data } : { data: dataPut(data, keyPath, { [CV_VERSION_KEY]: { head: 1, versionList: [{ id: 1, value, note }] } }) };
+	}
+	if (!value[CV_VERSION_KEY].versionList.some((one) => Number(one?.id) === id)) return { message: `it has no version ${versionId}` };
+	const versionList = value[CV_VERSION_KEY].versionList.map((one) => {
+		if (Number(one?.id) !== id) return one;
+		const { note: _noteBefore, ...rest } = one;
+		return note === '' ? rest : { ...rest, note };
+	});
+	return { data: dataPut(data, keyPath, { [CV_VERSION_KEY]: { ...value[CV_VERSION_KEY], versionList } }) };
 }
 
 // a stored text as its leaf keeps it: lines back into a list when it was one

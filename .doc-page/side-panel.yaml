@@ -13,6 +13,7 @@ sidePanelById:
           - doc: ~cv/doc/cv-jp.md
           - doc: ~cv/doc/we-jp.md
           - doc: ~cv/doc/cv-badge.md
+          - doc: ~cv/doc/cv-portal.md
           # the playground: a document git ignores, made from .doc-page/playground/cv.md; its item
           # stays while the document does not exist, and opens a page offering to create it
           - id: cv-playground

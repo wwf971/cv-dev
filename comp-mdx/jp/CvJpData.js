@@ -1,3 +1,4 @@
+import { cellStyleTextBareGet, cellTextConcat, cellTextSlice } from '@wwf971/react-doc/cell-text';
 import { cvEntryListResolve, cvQueryParse, cvSegmentNormalize, cvTextExpand } from '../query/CvQuery.js';
 import { WE_JP_PART_LIST, WE_JP_TEMPLATE_DEFAULT, weJpCareerBuild } from './WeJpData.js';
 
@@ -440,7 +441,8 @@ export function cvJpCellGet(cellId, { template, instance, info, context, rawDefa
 		...expanded,
 		textExpanded: expanded.textKept,
 		isQueryFree: !expanded.partList.some((part) => part.kind === 'query'),
-		text: context?.cellTextGet ? context.cellTextGet(raw) : expanded.text,
+		// plain: without the markup of words written in a style (react-doc: main/doc_page_impl_edit_cell.md#styles)
+		text: context?.cellTextGet ? context.cellTextGet(raw) : cellStyleTextBareGet(expanded.text),
 	};
 }
 
@@ -455,26 +457,35 @@ const LINE_LABEL_REGEX = /^(\s*(?:【([^】\n]{1,24})】|\[([^\]\n]{1,24})\](?!\
 const LINE_BULLET_REGEX = /^(\s*)([・•◦▪‣]|[-*](?=\s)|\(\d{1,2}\)|\d{1,2}[.)）](?=\s)|[①-⑳])[ \t　]*(.*)$/;
 
 // the lines of a text as a block draws them (doc/cv-sheet.md#blocks): a text stays one string of
-// words and tokens, and how a line starts says what it is, the way such a text is written by hand:
+// words and tokens, and how a line starts says what it is, the way such a text is written by hand
+// (read in its words: a line written in a style, [[■ 得意な分野|b]], is the heading it reads as):
 //   blank     an empty line: a gap between paragraphs
 //   heading   ■ …, 【…】 or ＜…＞ alone: a small heading
 //   label     【役割】…, [GitHub] … or ［GitHub］…: a label, then what it says; labels one under another line up
 //   bullet    ・… - … (1) … 1. …: an item of a list, its lines going on under its text
 //   text      anything else: a paragraph
 // -> [{ kind, text, start, mark?, label? }]
-//   text    what is drawn of the line after its mark or label, tokens as written
-//   start   where that text starts in the line: a token changed in it is written back there
+//   text    what is drawn of the line after its mark or label, as kept: tokens as written, words
+//           in their styles
+//   start   where that text starts in the line, in its bare text (without the markup of styles):
+//           a token changed in it is written back there
+// a styled segment never holds a line break, so every line of a text as kept reads alone
 export function cvJpTextLineListBuild(textInput) {
 	const text = String(textInput ?? '');
 	if (text === '') return [];
-	return text.split('\n').map((line) => {
+	return text.split('\n').map((lineKept) => {
+		const line = cellStyleTextBareGet(lineKept);
+		const textFrom = (start, end) => cellTextSlice(lineKept, start, end);
 		if (line.trim() === '') return { kind: 'blank', text: '', start: line.length };
-		if (LINE_HEADING_REGEX.test(line)) return { kind: 'heading', text: line.trim(), start: line.length - line.trimStart().length };
+		if (LINE_HEADING_REGEX.test(line)) {
+			const start = line.length - line.trimStart().length;
+			return { kind: 'heading', text: textFrom(start, line.trimEnd().length), start };
+		}
 		const label = LINE_LABEL_REGEX.exec(line);
-		if (label) return { kind: 'label', label: label[2] ?? label[3] ?? label[4], text: label[5], start: label[1].length };
+		if (label) return { kind: 'label', label: label[2] ?? label[3] ?? label[4], text: textFrom(label[1].length), start: label[1].length };
 		const bullet = LINE_BULLET_REGEX.exec(line);
-		if (bullet && bullet[3] !== '') return { kind: 'bullet', mark: bullet[2], text: bullet[3], start: line.length - bullet[3].length };
-		return { kind: 'text', text: line, start: 0 };
+		if (bullet && bullet[3] !== '') return { kind: 'bullet', mark: bullet[2], text: textFrom(line.length - bullet[3].length), start: line.length - bullet[3].length };
+		return { kind: 'text', text: lineKept, start: 0 };
 	});
 }
 
@@ -482,7 +493,7 @@ export function cvJpTextLineListBuild(textInput) {
 export function cvJpTextLineReplace(textInput, lineIndex, start, textNext) {
 	const lineList = String(textInput ?? '').split('\n');
 	if (lineIndex < 0 || lineIndex >= lineList.length) return String(textInput ?? '');
-	lineList[lineIndex] = `${lineList[lineIndex].slice(0, start)}${textNext}`;
+	lineList[lineIndex] = cellTextConcat(cellTextSlice(lineList[lineIndex], 0, start), textNext);
 	return lineList.join('\n');
 }
 

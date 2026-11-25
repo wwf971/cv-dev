@@ -274,10 +274,12 @@ The cells of a sheet are cells of react-doc's **cell editing kit** (react-doc: `
 [the project](~docs:root/project.md)      a link to a document, resolved and followed as a link of a document
 {{@frontend:w5p…#example/name/en/first}}  a view of an object of the page, or of something inside one
 東京都千代田区                              words only this paper says
+[[強み|b,color=#c0392b]]                   words in a style: bold, a color, a highlight, a size, a font
 ```
 
 - **A brace token without a sigil is a query.** It is the sheet's own kind of token: written `{{path}}`, drawn as the value the query reads, typed with `/query` or by typing `{{`. One starting with `/badge/` is a [badge](cv-badge.md), one starting with `era:` a year with its era, one starting with `period:` a period. The other kinds are react-doc's, and a cell accepts them all. What follows a `|` in a token is how it is drawn in its place (the size of a badge), never part of what it names.
-- **The plain text of a cell** (`cell.text`: every token as text, a link as its label, a badge as its name) is what is compared and what decides whether something optional is drawn; `missingList` names the queries nothing answers.
+- **The plain text of a cell** (`cell.text`: every token as text, a link as its label, a badge as its name, no markup of a style) is what is compared and what decides whether something optional is drawn; `missingList` names the queries nothing answers.
+- **Words take styles** (react-doc: `main/doc_page_impl_edit_cell.md#styles`). In an open cell the words are drawn in their styles while typed, and words selected have a bar under them (bold, italic, a line under or through them, a color, a highlight, a size, a font); a token has no style. The text keeps them as styled segments, `[[words|b]]`, which no line break and no token lies in, so a block is still read a line at a time: what a line is (a heading, a label, an item of a list) is read in its words, whatever style it is written in (`cvJpTextLineListBuild`). **A value of the profile that is a text takes styles too**: the usual text of a block is one query (`{{motivation/jp}}`), whose words are in the profile, so they are styled where that value is typed, in the card of the query (a value of several lines, longer than a line of the card, or written in styles, is typed there in a surface with the same bar), and drawn in their styles wherever a paper reads it.
 - **A value of any profile can be named from anywhere**, not only from a paper reading it: `frontend:{profile id}#example/name/jp/first` is a reference of the page's object registry, which a paragraph or a cell of another object writes with `/object`, walking Profile → the profile → its partition → the path. The profile answers that walk itself ([Query paths: from outside a CV](cv-query.md#from-outside-a-cv)).
 
 ## A year with its era
@@ -327,7 +329,13 @@ a cell     the text in the cell                           Enter saves, Shift+Ent
            {{ in it, or /query (or /q)                    a value of the profile, chosen a segment at a time:
                                                           {{name/ lists jp/, en/, last/, first/ with how many
                                                           values each holds; a folder chosen goes on inside it,
-                                                          a value (shown with what it reads) writes {{name/jp/last/kanji}}
+                                                          a value (shown with what it reads) writes {{name/jp/last/kanji}};
+                                                          "@" after a path lists the versions of its value
+                                                          ({{pr/jp@2}}: that version, whatever its head becomes);
+                                                          a path nothing holds is offered as a new value
+           /new in it, or //new inside that walk          a value the profile does not hold yet: its path (a folder
+                                                          to go on under, then its name), then its value typed in
+                                                          the card that opens (cv-query.md#a-new-value-where-it-is-named)
            /badge in it                                   a badge of the profile, a folder at a time (cv-badge.md)
            /era in it                                     a year with its era above it: one typed, or a date of the profile
            /period in it                                  a period, its start over a vertical line over its end: one typed,
@@ -341,7 +349,10 @@ a cell     the text in the cell                           Enter saves, Shift+Ent
                                                           kept there by Save (or Enter, or leaving it), for every
                                                           paper of the partition, put back by Cancel (or Esc); one
                                                           value of one line saved by Save or Enter closes the card
-                                                          (a click on the token opens it again); a
+                                                          (a click on the token opens it again); its versions
+                                                          (cv-query.md#versions-of-a-value): New version keeps what
+                                                          is typed as another one, the chip beside its path lists
+                                                          them, one made the head or pinned to this cell; a
                                                           value of several lines: Ctrl/⌘ + Enter; a value made of others (a
                                                           whole name, name/jp/kanji: its last and its first part)
                                                           each of them typed in place; nothing holding it: a place

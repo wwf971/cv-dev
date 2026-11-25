@@ -1,0 +1,306 @@
+/* The portal Archive room (CvPortalRoom.jsx): the canvas of the room filling the window, and over
+   it what is said in words: the way to the place, a few buttons, the keys, the paper taken out. */
+.cv-room {
+	position: relative;
+	height: 100%;
+	overflow: hidden;
+	font-size: 13px;
+	color: #f3ede0;
+	background: #1d1a16;
+}
+
+.cv-room-stage {
+	position: absolute;
+	inset: 0;
+	outline: none;
+	cursor: grab;
+	touch-action: none;
+}
+
+.cv-room-stage:active {
+	cursor: grabbing;
+}
+
+.cv-room-canvas {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+/* a paper taken out is laid at the right: the room keeps the rest */
+.cv-room[data-file-open] .cv-room-stage {
+	right: min(62vw, 880px);
+}
+
+/* the way to the place, at the top in the middle (the portal switcher floats at the top left) */
+.cv-room-path {
+	position: absolute;
+	top: 10px;
+	left: 50%;
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	max-width: calc(100% - 520px);
+	padding: 3px 8px;
+	overflow: hidden;
+	white-space: nowrap;
+	background: rgb(20 17 13 / 0.72);
+	border: 1px solid rgb(255 244 220 / 0.16);
+	border-radius: 999px;
+	transform: translateX(-50%);
+	backdrop-filter: blur(6px);
+}
+
+/* beside a paper the room is narrow: the way to the place goes under the switcher and the buttons */
+.cv-room[data-file-open] .cv-room-path {
+	top: 52px;
+	left: 12px;
+	max-width: calc(100% - min(62vw, 880px) - 24px);
+	transform: none;
+}
+
+.cv-room[data-file-open] .cv-room-button span {
+	display: none;
+}
+
+.cv-room-path-step {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	color: rgb(243 237 224 / 0.55);
+}
+
+.cv-room-path button {
+	padding: 2px 6px;
+	font: inherit;
+	color: rgb(243 237 224 / 0.75);
+	cursor: pointer;
+	background: transparent;
+	border: 0;
+	border-radius: 999px;
+}
+
+.cv-room-path button:hover {
+	color: #fff;
+	background: rgb(255 244 220 / 0.12);
+}
+
+.cv-room-path button[aria-current='page'] {
+	font-weight: 600;
+	color: #fff;
+}
+
+.cv-room-tools {
+	position: absolute;
+	top: 10px;
+	right: 12px;
+	display: flex;
+	gap: 6px;
+}
+
+.cv-room[data-file-open] .cv-room-tools {
+	right: calc(min(62vw, 880px) + 12px);
+}
+
+.cv-room-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 28px;
+	padding: 0 10px;
+	font: inherit;
+	color: #f3ede0;
+	cursor: pointer;
+	background: rgb(20 17 13 / 0.72);
+	border: 1px solid rgb(255 244 220 / 0.2);
+	border-radius: 6px;
+	backdrop-filter: blur(6px);
+}
+
+.cv-room-button:hover:not(:disabled) {
+	background: rgb(60 50 36 / 0.85);
+}
+
+.cv-room-button[aria-pressed='true'] {
+	color: #1d1a16;
+	background: #e9c98a;
+	border-color: #e9c98a;
+}
+
+.cv-room-button:disabled {
+	cursor: default;
+	opacity: 0.5;
+}
+
+/* what the pointer is on, said beside it: placed by a transform the loop sets */
+.cv-room-hover {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 30;
+	display: flex;
+	flex-direction: column;
+	max-width: 280px;
+	padding: 4px 9px;
+	pointer-events: none;
+	background: rgb(20 17 13 / 0.9);
+	border: 1px solid rgb(255 244 220 / 0.2);
+	border-radius: 6px;
+}
+
+.cv-room-hover span {
+	font-size: 12px;
+	color: rgb(243 237 224 / 0.7);
+}
+
+.cv-room-help {
+	position: absolute;
+	bottom: 12px;
+	left: 14px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 14px;
+	padding: 5px 10px;
+	font-size: 12px;
+	color: rgb(243 237 224 / 0.8);
+	pointer-events: none;
+	background: rgb(20 17 13 / 0.6);
+	border-radius: 6px;
+}
+
+.cv-room-help-quiet {
+	opacity: 0.6;
+}
+
+.cv-room-help-warn {
+	color: #ffcf7a;
+}
+
+.cv-room-help kbd {
+	display: inline-block;
+	min-width: 1.5em;
+	margin-right: 2px;
+	padding: 0 4px;
+	font: inherit;
+	font-size: 11px;
+	text-align: center;
+	color: #fff;
+	background: rgb(255 244 220 / 0.14);
+	border: 1px solid rgb(255 244 220 / 0.25);
+	border-radius: 4px;
+}
+
+/* ---------- the paper taken out: the page's own look, beside the room ---------- */
+.cv-room-file {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	flex-direction: column;
+	width: min(62vw, 880px);
+	color: var(--color-fd-foreground);
+	background: var(--color-fd-background);
+	border-left: 1px solid var(--color-fd-border);
+	box-shadow: -12px 0 30px rgb(0 0 0 / 0.35);
+}
+
+.cv-room-file-head {
+	display: flex;
+	flex: none;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 12px 8px 16px;
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+.cv-room-file-head strong {
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.cv-room-file-kind {
+	flex: none;
+	padding: 1px 8px;
+	font-size: 12px;
+	color: var(--color-fd-muted-foreground);
+	border: 1px solid var(--color-fd-border);
+	border-radius: 999px;
+}
+
+.cv-room-file-path {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	font-size: 12px;
+	color: var(--color-fd-muted-foreground);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.cv-room-file .cv-room-button {
+	color: var(--color-fd-foreground);
+	background: transparent;
+	border-color: var(--color-fd-border);
+}
+
+.cv-room-file-body {
+	flex: 1 1 auto;
+	min-height: 0;
+	padding: 12px 16px 24px;
+	overflow: auto;
+	overscroll-behavior: contain;
+}
+
+.cv-room-file-note {
+	margin: 1rem 0;
+	color: var(--color-fd-muted-foreground);
+}
+
+/* a folder taken out: what it holds, as rows a click enters (doc/cv-portal.md#folders) */
+.cv-room-folder-table .folder-body-row {
+	cursor: pointer;
+}
+
+.cv-room-folder-name {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 500;
+}
+
+/* the kraft of a folder hanging in the room */
+.cv-room-folder-name svg[data-folder] {
+	color: #a8743a;
+	fill: color-mix(in srgb, #a8743a 30%, transparent);
+}
+
+.cv-room-folder-detail,
+.cv-room-name-default {
+	color: var(--color-fd-muted-foreground);
+}
+
+.cv-room-name-default {
+	font-style: italic;
+}
+
+.cv-room-fallback {
+	position: absolute;
+	inset: 60px 20px 20px;
+	overflow: auto;
+}
+
+.cv-room-fallback ul {
+	padding: 0;
+	list-style: none;
+}
+
+.cv-room-fallback li {
+	margin: 6px 0;
+}
+
+.cv-room-hover[hidden] {
+	display: none;
+}

@@ -1,0 +1,11 @@
+# The portals of the package cv (doc/cv-portal.md; react-doc: main/doc_page_impl_portal.md): each a
+# component rendered by the host of a portal in the placement portal, in the whole window, never
+# written as a block. A group of the component folder beside the modes: what the portals share
+# (archive/) and each look in a folder of its own (desk/, room/).
+compList:
+  - tagName: CvPortalDesk
+    entry: ./cv-portal-comp.js
+    export: CvPortalDeskDefine
+  - tagName: CvPortalRoom
+    entry: ./cv-portal-comp.js
+    export: CvPortalRoomDefine

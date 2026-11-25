@@ -51,7 +51,8 @@ import './CvJp.css';
 //   param.profile    the profile read when the paper names none (else metadata.profile of the object)
 //
 // isPaperChoiceHidden: drawn inside the mode Papers (CvJpList.jsx), whose path bar chooses the paper,
-// the sheet has no choice of its own
+// the sheet has no choice of its own. param.isPaperChoiceHidden says the same where the sheet is
+// drawn as a mode by something that chooses the paper itself (a portal: comp-mdx/portal/)
 //
 // What does not fit is said, never drawn as an empty paper (doc/cv-sheet.md#when-something-does-not-fit):
 // a problem of what the paper reads (its profile, its template, the partition) is a line above the
@@ -668,7 +669,7 @@ export const CvJpSheet = observer(function CvJpSheet({ data = {}, config = {}, i
 							<span className="doc-cv-list-muted">Name</span>
 							<CvPaperNameField history={history} service={service} asset={instanceAsset} name={paperName} onMessage={store.messageSet} />
 						</span>
-					) : instanceList.length > 1 && !isPaperChoiceHidden ? (
+					) : instanceList.length > 1 && !isPaperChoiceHidden && param.isPaperChoiceHidden !== true ? (
 						<select aria-label="The paper" className="doc-cv-jp-select" value={instanceAsset.key} onChange={(event) => { store.instanceSet(event.target.value); }}>
 							{cvInstanceByPartitionGet(instanceList).map(([groupLabel, assetList]) => (
 								<optgroup key={groupLabel} label={groupLabel}>

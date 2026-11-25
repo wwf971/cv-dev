@@ -14,7 +14,8 @@ typeList:
     kindList:
       # values of one subject, each a key path inside the item (doc/cv-query.md#how-the-information-is-stored):
       # any tree of mappings, lists and plain values; a mapping with a year is a dated entry, its year,
-      # month and day numbers (or a text, while it is typed)
+      # month and day numbers (or a text, while it is typed); a mapping holding $version is one value
+      # kept with its versions
       - id: info
         label: Information
         content:
@@ -25,17 +26,51 @@ typeList:
             $defs:
               value:
                 anyOf:
-                  - { type: [string, number, boolean, "null"] }
+                  - { $ref: "#/$defs/plain" }
                   - { type: array, items: { $ref: "#/$defs/value" } }
+                  - { $ref: "#/$defs/versioned" }
                   - { $ref: "#/$defs/entry" }
-                  - { type: object, not: { required: [year] }, additionalProperties: { $ref: "#/$defs/value" } }
+                  - { type: object, not: { anyOf: [{ required: [year] }, { required: [$version] }] }, additionalProperties: { $ref: "#/$defs/value" } }
+              # what one value says: a text, a number, or several lines
+              plain: { type: [string, number, boolean, "null"] }
+              leaf:
+                anyOf:
+                  - { $ref: "#/$defs/plain" }
+                  - { type: array, items: { $ref: "#/$defs/plain" } }
+              # a value kept with versions (doc/cv-query.md#versions-of-a-value): its versions, each with
+              # its number, and which of them is its head. "$version" is no segment of a path
+              versioned:
+                type: object
+                required: [$version]
+                additionalProperties: false
+                properties:
+                  $version:
+                    type: object
+                    required: [head, versionList]
+                    additionalProperties: false
+                    properties:
+                      head: { type: integer, minimum: 1 }
+                      versionList:
+                        type: array
+                        minItems: 1
+                        items:
+                          type: object
+                          required: [id, value]
+                          additionalProperties: false
+                          properties:
+                            id: { type: integer, minimum: 1 }
+                            value: { $ref: "#/$defs/leaf" }
+                            # when it was saved (react-doc's time text, 20261125_10123300+09), what it is for
+                            time: { type: string }
+                            note: { type: string }
+              # a number of a date: itself, a text while it is typed, or kept with versions
               entry:
                 type: object
                 required: [year]
                 properties:
-                  year: { anyOf: [{ type: integer, minimum: 1000, maximum: 9999 }, { type: string }] }
-                  month: { anyOf: [{ type: integer, minimum: 1, maximum: 12 }, { type: string }] }
-                  day: { anyOf: [{ type: integer, minimum: 1, maximum: 31 }, { type: string }] }
+                  year: { anyOf: [{ type: integer, minimum: 1000, maximum: 9999 }, { type: string }, { $ref: "#/$defs/versioned" }] }
+                  month: { anyOf: [{ type: integer, minimum: 1, maximum: 12 }, { type: string }, { $ref: "#/$defs/versioned" }] }
+                  day: { anyOf: [{ type: integer, minimum: 1, maximum: 31 }, { type: string }, { $ref: "#/$defs/versioned" }] }
                 additionalProperties: { $ref: "#/$defs/value" }
       # a badge: a certification badge, a logo, any small image a CV shows beside a line; one data
       # item per badge, /{partition}/badge/aws/saa/v1, holding its name and its image (doc/cv-badge.md)
@@ -236,6 +271,40 @@ typeList:
                     width: { type: number, minimum: 0 }
                     isHidden: { type: boolean }
         groupPath: view
+      # the folders of the papers of a partition, as the reader files them in the portals (doc/cv-portal.md#folders):
+      # one item a partition, at /{partition}/arrange/archive. folders of a drawer (cv, we, template), each in
+      # a folder of its drawer or in the drawer itself; where each paper lies, by the key of its item; and the
+      # order of everything in a place by rank (LexoRank: react-doc main/doc_page_impl_config.md#ranks). A paper
+      # is not changed by being filed
+      - id: arrange
+        label: Folders
+        description: the folders of the papers of a partition and the order of what each holds
+        content:
+          form: data
+          langList: [yaml]
+          schema:
+            type: object
+            properties:
+              folderList:
+                type: array
+                items:
+                  type: object
+                  required: [id, drawer]
+                  properties:
+                    id: { type: string }
+                    name: { type: string }
+                    drawer: { enum: [cv, we, template] }
+                    # the id of the folder it lies in; absent: the drawer itself
+                    parent: { type: string }
+                    rank: &rank { type: string, pattern: "^[0-9a-z]*[1-9a-z]$" }
+              placeByKey:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    folder: { type: string }
+                    rank: *rank
+        groupPath: arrange
     partitionList: *partitionList
     modeList:
       # pathParam: the mode shows one thing of the object, named by an inner path in its parameter
@@ -243,3 +312,19 @@ typeList:
       # (react-doc: main/doc_page_impl_obj_frontend.md#things-inside-an-object-inner-paths)
       - { id: sheet, label: Sheet, comp: CvJpSheet, isDefault: true, pathParam: instance, description: "one CV or work experience, edited in place" }
       - { id: list, label: Papers, comp: CvJpList, category: edit, description: "the CVs, the work experiences and the templates; a new paper" }
+    # the portals every papers object provides (doc/cv-portal.md; react-doc: main/doc_page_impl_portal.md):
+    # the archive of a person's papers as an app in the whole window, in two looks over one state
+    # (comp-mdx/portal/archive/). an object adjusts or leaves out one of them in portal.yaml of its folder
+    portalList:
+      - id: desk
+        label: Desk
+        description: the papers as a desktop app, cabinets and drawers at the left, a paper on its sheet
+        color: "#33414f"
+        comp: CvPortalDesk
+        deviceList: [browser, desktop]
+      - id: room
+        label: Archive room
+        description: the papers as a room of file cabinets, walked with the keyboard and the mouse
+        color: "#8a5a2b"
+        comp: CvPortalRoom
+        deviceList: [browser, desktop]

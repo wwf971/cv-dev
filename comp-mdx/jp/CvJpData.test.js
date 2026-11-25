@@ -171,6 +171,24 @@ test('the lines of a block: how a line starts says what it is', () => {
 	assert.equal(cvJpTextLineReplace(text, 1, label.start, 'three'), '・one {{/badge/a}}\n【役割】three');
 });
 
+test('the lines of a block written in styles: read in their words, drawn with their styles', () => {
+	// a style over a whole line, its mark included, does not hide what the line is
+	const lineList = cvJpTextLineListBuild('[[■ 得意な分野|b]]\n[[・React|color=#c0392b]] と [[TypeScript|b]]\n[[【役割】|b]]設計と[[実装|u]]\nplain [[bold|b]]');
+	assert.deepEqual(lineList.map((line) => [line.kind, line.label ?? line.mark ?? '', line.text, line.start]), [
+		['heading', '', '[[■ 得意な分野|b]]', 0],
+		['bullet', '・', '[[React|color=#c0392b]] と [[TypeScript|b]]', 1],
+		['label', '役割', '設計と[[実装|u]]', 4],
+		['text', '', 'plain [[bold|b]]', 0],
+	]);
+	// what is drawn of a line is written back after its mark, the mark keeping its style
+	const text = '[[・one|b]] {{/badge/a}}\ntwo';
+	const [bullet] = cvJpTextLineListBuild(text);
+	assert.equal(bullet.text, '[[one|b]] {{/badge/a}}');
+	assert.equal(cvJpTextLineReplace(text, 0, bullet.start, '[[one|b]]'), '[[・one|b]]\ntwo');
+	// the plain text of a cell holds no markup
+	assert.equal(cvJpCellGet('pr', { template: cvJpTemplateRead({ ...CV_JP_TEMPLATE_DEFAULT, cellById: { pr: '[[強み|b]]は{{name/jp/first}}' } }), instance: cvJpInstanceRead({}), info, context }).text, '強みは太郎');
+});
+
 test('the sections of a paper: the template\'s, its own blocks, what it leaves out, its own order', () => {
 	const sectionOf = (data) => cvJpSectionListResolve(template, cvJpInstanceRead(data)).map((section) => `${section.id}${section.isHidden ? '-' : ''}${section.isOwn ? '*' : ''}`);
 	assert.deepEqual(sectionOf({}), ['basic', 'history', 'license', 'motivation']);

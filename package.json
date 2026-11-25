@@ -3,8 +3,14 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "A react-doc package (doc-package.yaml is its config). Not an npm package; this file marks the folder's .js modules as ES modules for node (tests).",
+  "description": "A react-doc package (doc-package.yaml is its config). Not an npm package; this file marks the folder's .js modules as ES modules for node (tests) and names what its portals are drawn with (doc/cv-portal.md): Material UI for the desk, three.js for the archive room. react and react-dom are the page's own (.npmrc: no copy of them is installed here).",
   "scripts": {
-    "test": "node --import ./test/react-doc-resolve.js --test comp-mdx/query/CvQuery.test.js comp-mdx/query/CvProfile.test.js comp-mdx/query/CvBadge.test.js comp-mdx/query/CvInfoTree.test.js comp-mdx/query/CvInfoExplore.test.js comp-mdx/jp/CvJpData.test.js comp-mdx/jp/WeJpData.test.js comp-mdx/jp/CvJpPaperTree.test.js comp-mdx/jp/CvJpPaperTable.test.js comp-mdx/jp/cv-edit-history.test.js"
+    "test": "node --import ./test/react-doc-resolve.js --test comp-mdx/query/CvQuery.test.js comp-mdx/query/CvQueryVersion.test.js comp-mdx/query/CvProfile.test.js comp-mdx/query/CvBadge.test.js comp-mdx/query/CvInfoTree.test.js comp-mdx/query/CvInfoExplore.test.js comp-mdx/jp/CvJpData.test.js comp-mdx/jp/WeJpData.test.js comp-mdx/jp/CvJpPaperTree.test.js comp-mdx/jp/CvJpPaperTable.test.js comp-mdx/jp/cv-edit-history.test.js comp-mdx/portal/archive/CvArchiveModel.test.js comp-mdx/portal/room/CvRoomLayout.test.js"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^7.3.0",
+    "three": "^0.170.0"
   }
 }

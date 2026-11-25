@@ -1,0 +1,241 @@
+/* The portal Desk (CvPortalDesk.jsx): a bar, the cabinets at the left, the place shown at the right.
+   Material UI draws its controls; these rules lay the panes out and give the shared table
+   (FolderView of react-comp-misc) the look of the desk. */
+.cv-desk {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+}
+
+.cv-desk-bar {
+	display: flex;
+	flex: none;
+	align-items: center;
+	gap: 10px;
+	height: 48px;
+	padding: 0 14px;
+	background: var(--color-fd-card, var(--color-fd-background));
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+.cv-desk-find {
+	flex: 0 1 300px;
+	min-width: 140px;
+	margin-inline-start: 8px;
+}
+
+.cv-desk-space {
+	flex: 1 1 auto;
+}
+
+.cv-desk-body {
+	display: flex;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+/* the cabinets and their drawers: a column of its own, scrolling by itself */
+.cv-desk-side {
+	flex: none;
+	width: 248px;
+	padding: 10px 8px;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	background: var(--color-fd-card, var(--color-fd-background));
+	border-right: 1px solid var(--color-fd-border);
+}
+
+.cv-desk-side-title {
+	display: block;
+	padding: 14px 10px 4px;
+	font-weight: 600;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.cv-desk-count {
+	flex: none;
+	min-width: 1.4em;
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+	color: var(--color-fd-muted-foreground);
+	text-align: right;
+}
+
+.cv-desk-main {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: 16px 24px 32px;
+	overflow: auto;
+	overscroll-behavior: contain;
+}
+
+.cv-desk-path {
+	margin-bottom: 14px;
+}
+
+.cv-desk-card-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 12px;
+}
+
+.cv-desk-card-list {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.cv-desk-file-path {
+	margin-inline-start: auto;
+}
+
+/* a paper: its sheet on the ground of the desk, the sheet's own bar above it */
+.cv-desk-sheet,
+.cv-desk-profile {
+	padding: 12px 16px 20px;
+	background: var(--color-fd-card, var(--color-fd-background));
+	border: 1px solid var(--color-fd-border);
+	border-radius: 6px;
+}
+
+/* ---------- the table of files: FolderView in the look of the desk ---------- */
+.cv-desk-table {
+	position: relative;
+	overflow: hidden;
+	background: var(--color-fd-card, var(--color-fd-background));
+	border: 1px solid var(--color-fd-border);
+	border-radius: 6px;
+}
+
+.cv-desk-table .folder-view-container {
+	border: 0;
+	border-radius: 0;
+}
+
+.cv-desk-table .folder-view-switcher-content.has-body-height {
+	overscroll-behavior-y: contain;
+}
+
+.cv-desk-table .folder-header {
+	font-size: 12.5px;
+	font-weight: 500;
+	color: var(--color-fd-muted-foreground);
+	background: color-mix(in srgb, var(--color-fd-muted) 55%, var(--color-fd-background));
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+.cv-desk-table .folder-header-cell,
+.cv-desk-table .folder-body-cell {
+	padding: 6px 12px;
+	border-right: 0;
+}
+
+.cv-desk-table .folder-body {
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+/* a click on a row enters its file; every row one height, which the height of the table counts by */
+.cv-desk-table .folder-header {
+	box-sizing: border-box;
+	height: 36px;
+}
+
+.cv-desk-table .folder-body .folder-body-row {
+	box-sizing: border-box;
+	height: 36px;
+	border-right: 0;
+	border-bottom: 1px solid color-mix(in srgb, var(--color-fd-border) 70%, transparent);
+	cursor: pointer;
+}
+
+.cv-desk-table .folder-body.selection-none .folder-body-row:hover {
+	background: color-mix(in srgb, var(--color-fd-muted, #8881) 60%, transparent);
+}
+
+.cv-desk-cell-name {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 500;
+}
+
+.cv-desk-cell-muted {
+	color: var(--color-fd-muted-foreground);
+}
+
+/* ---------- folders (doc/cv-portal.md#folders) ---------- */
+
+/* the blue of what is being placed: the line and the frame of a drop, as FolderView draws its own */
+.cv-desk {
+	--cv-desk-accent: #2b7fff;
+}
+
+/* a folder: the color of a manila folder, in the light and the dark */
+.cv-desk-folder-icon {
+	flex: none;
+	color: #c08a2e;
+	fill: color-mix(in srgb, #e2b25a 35%, transparent);
+}
+
+/* a name not given: the grey default */
+.cv-desk-name-default {
+	color: var(--color-fd-muted-foreground);
+	font-style: italic;
+}
+
+/* a name typed in place: the row keeps its height, a quiet frame says where the words go */
+.cv-desk-name-edit {
+	display: inline-flex;
+	min-width: 10em;
+}
+
+.cv-desk-name-edit [contenteditable] {
+	min-width: 100%;
+	padding: 0 4px;
+	border-radius: 4px;
+	outline: 2px solid color-mix(in srgb, var(--cv-desk-accent) 70%, transparent);
+	outline-offset: 0;
+	background: var(--color-fd-background);
+	cursor: text;
+}
+
+/* a drawer or a folder at the left, or a step of the path, taking what is dragged */
+.cv-desk-drop[data-drop-over] {
+	outline: 2px solid var(--cv-desk-accent);
+	outline-offset: -2px;
+	background: color-mix(in srgb, var(--cv-desk-accent) 12%, transparent);
+	border-radius: 4px;
+}
+
+/* a step of the path: room around its words for the frame, its place unmoved */
+.cv-desk-path .cv-desk-drop {
+	padding: 1px 5px;
+	margin: -1px -5px;
+}
+
+.cv-desk-table .folder-body-row.reorderable {
+	cursor: grab;
+}
+
+.cv-desk-menu {
+	min-width: 180px;
+}
+
+/* a narrow window: the cabinets above the place */
+.cv-desk[data-device='mobile'] .cv-desk-body {
+	flex-direction: column;
+}
+
+.cv-desk[data-device='mobile'] .cv-desk-side {
+	width: auto;
+	max-height: 34vh;
+	border-right: 0;
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+.cv-desk[data-device='mobile'] .cv-desk-find {
+	display: none;
+}

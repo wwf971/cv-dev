@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, GitCommitVertical, X } from 'lucide-react';
 
 // Explicit Save and Cancel for values typed in place in a card (the card of a value of the profile,
 // the card of a period): the field being typed is known, and two buttons act on it as its keys do.
@@ -17,6 +17,10 @@ import { Check, X } from 'lucide-react';
 // intentTake(), asked in the onCommit of a field: whether the value is kept by Save or Enter (the
 // author said so) rather than by leaving the field. A card closes itself after such a save when it
 // holds one simple value (CvProfileValuePanel).
+//
+// A value kept with versions (doc/cv-query.md#versions-of-a-value) has a third button, New version
+// (isNewVersionOffered of CvSaveCancel): saveNew() keeps the field as Save does, and modeTake(),
+// asked in the same onCommit, says 'newVersion' then ('inPlace' otherwise).
 export function useCvValueEdit() {
 	// the field being typed: { key, value: as it was, draft: as typed }
 	const [active, activeSet] = useState(null);
@@ -24,6 +28,8 @@ export function useCvValueEdit() {
 	const buttonsRef = useRef(null);
 	// 'save' once Save is pressed or Enter typed, until the value is kept or another field is entered
 	const intentRef = useRef('');
+	// how the value being kept is written: 'newVersion' once New version is pressed
+	const modeRef = useRef('inPlace');
 	const bind = (key, value) => {
 		const valueText = String(value ?? '');
 		return {
@@ -34,6 +40,7 @@ export function useCvValueEdit() {
 			commitRootRef: buttonsRef,
 			onFocus: () => {
 				intentRef.current = '';
+				modeRef.current = 'inPlace';
 				activeSet({ key, value: valueText, draft: valueText });
 			},
 			// Enter keeps the value as Save does (EditValueInline leaves the field on it)
@@ -54,6 +61,24 @@ export function useCvValueEdit() {
 			intentRef.current = 'save';
 			element?.blur();
 		},
+		// the same, kept as a new version of the value
+		saveNew: () => {
+			intentRef.current = 'save';
+			modeRef.current = 'newVersion';
+			element?.blur();
+		},
+		// the field of a key takes the focus, its text selected to its end (a card opened to type one)
+		focus: (key) => {
+			const node = elementByKey.current.get(key);
+			if (!node) return false;
+			node.focus({ preventScroll: true });
+			const selection = window.getSelection?.();
+			if (selection) {
+				selection.selectAllChildren(node);
+				selection.collapseToEnd();
+			}
+			return true;
+		},
 		// as Esc: the value put back, the field left, nothing written
 		cancel: () => {
 			intentRef.current = '';
@@ -66,11 +91,18 @@ export function useCvValueEdit() {
 			intentRef.current = '';
 			return isSave;
 		},
+		modeTake: () => {
+			const mode = modeRef.current;
+			modeRef.current = 'inPlace';
+			return mode;
+		},
 	};
 }
 
-// the two buttons, in the look of the page's Save and Cancel (react-doc's EditActions)
-export function CvSaveCancel({ edit, saveTitle = 'Keep it (Enter)', cancelTitle = 'Put it back (Esc)' }) {
+// the two buttons, in the look of the page's Save and Cancel (react-doc's EditActions); with
+// isNewVersionOffered a third between them, keeping what is typed as a new version of the value
+// (edit.saveNew), where Save rewrites the version shown
+export function CvSaveCancel({ edit, saveTitle = 'Keep it (Enter)', cancelTitle = 'Put it back (Esc)', isNewVersionOffered = false, newVersionTitle = 'Keep it as a new version: the version shown stays as it was' }) {
 	// the field keeps the focus until a button acts: a press does not move it
 	const focusKeep = (event) => event.preventDefault();
 	return (
@@ -78,6 +110,11 @@ export function CvSaveCancel({ edit, saveTitle = 'Keep it (Enter)', cancelTitle 
 			<button type="button" className="doc-button" data-primary="" disabled={!edit.isChanged} title={saveTitle} onMouseDown={focusKeep} onClick={edit.save}>
 				<Check size={12} strokeWidth={2.2} aria-hidden="true" /><span>Save</span>
 			</button>
+			{isNewVersionOffered && edit.saveNew ? (
+				<button type="button" className="doc-button" disabled={!edit.isChanged} title={newVersionTitle} onMouseDown={focusKeep} onClick={edit.saveNew}>
+					<GitCommitVertical size={12} strokeWidth={2.2} aria-hidden="true" /><span>New version</span>
+				</button>
+			) : null}
 			<button type="button" className="doc-button" disabled={!edit.isChanged} title={cancelTitle} onMouseDown={focusKeep} onClick={edit.cancel}>
 				<X size={12} strokeWidth={2.2} aria-hidden="true" /><span>Cancel</span>
 			</button>

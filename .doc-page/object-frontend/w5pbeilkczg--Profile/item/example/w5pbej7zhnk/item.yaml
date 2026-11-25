@@ -13,9 +13,9 @@ versionList:
   - versionId: w5pbej81ct2
     versionIdPrevList: []
     time: 20261108_02170702+09
-    note: info of the frontend object Profile sample of the package
-    size: 367
-    hash: 197d85aea08a51a5cba7f1528089aa72ae375dd4
+    note: "motivation/jp: the note of version 1"
+    size: 906
+    hash: 8258ae7302192efcf16c40ac3a66b378b06eb74d
     isLocked: false
     dependencyList: []
 eventList:
@@ -26,3 +26,9 @@ eventList:
     time: 20261108_07093397+09
     placeFrom: ~cv:cv/.doc-page/object-frontend/w5pbeilkczg--Profile sample/item
     placeTo: ~cv:cv/.doc-page/object-frontend/w5pbeilkczg--Profile sample/item/example
+  - eventType: updateInPlace
+    time: 20261125_23543182+09
+    versionId: w5pbej81ct2
+  - eventType: updateInPlace
+    time: 20261125_23543478+09
+    versionId: w5pbej81ct2

@@ -1,4 +1,4 @@
-import { cvInfoBuild, cvQueryResolve, cvQuerySlashItemListGet } from './CvQuery.js';
+import { cvInfoBuild, cvQueryNewProblemGet, cvQueryResolve, cvQuerySlashItemListGet } from './CvQuery.js';
 
 // The information of a profile as its object says now: every data item of the kind "info", read
 // through the object's api: { info, countLoading, countAll, problemList }.
@@ -134,7 +134,9 @@ export function cvLeafPatternGet(leaf) {
 // else's business. So an inner path of a profile is a partition and a query path:
 //
 //   example/name/jp/first       the value of the query name/jp/first in the partition example
-//   example/name/               completing: the folders and values below name, as /query lists them
+//   example/pr/jp@2             its version 2, whatever its head is (doc/cv-query.md#versions-of-a-value)
+//   example/name/               completing: the folders and values below name, as /query lists them,
+//                               a path nothing holds offered as a value to be made (isNew)
 //
 // (a profile whose items have no partition: the query alone.) The two functions below are what
 // the mode Information exposes as objectInner (cv-comp.js): react-doc asks them when a
@@ -150,14 +152,19 @@ export function cvProfileInnerSplit(profile, path) {
 	return { partition: first, query: text.slice(indexSlash + 1) };
 }
 
-// what an inner path names: { status: found | unknown | loading, path, label, detail, kind, text?, message }
+// what an inner path names: { status: found | unknown | loading, path, label, detail, kind, text?, typeId?, message }
 export function cvProfileInnerResolve(profile, path, dateNow = new Date()) {
 	const { partition, query } = cvProfileInnerSplit(profile, path);
 	const pathKept = [partition, query].filter(Boolean).join('/');
 	const read = cvProfileRead(profile, {}, partition);
 	if (read.countLoading > 0) return { status: 'loading', path: pathKept, label: query, detail: '', kind: 'value', message: '' };
 	const resolved = cvQueryResolve(read.info, query, { dateNow });
-	if (resolved.status !== 'found') return { status: 'unknown', path: pathKept, label: query, detail: '', kind: 'value', message: resolved.message };
+	if (resolved.status !== 'found') {
+		// a path nothing holds, where a value may be made: still a value of the profile, so the
+		// card of what names it is the card of a value, which is where it is typed and added
+		const isMakeable = cvQueryNewProblemGet(read.info, query) === '';
+		return { status: 'unknown', path: pathKept, label: query, detail: '', kind: 'value', ...(isMakeable ? { typeId: CV_PROFILE_VALUE_TYPE } : {}), message: resolved.message };
+	}
 	const value = String(resolved.value);
 	return {
 		status: 'found',
@@ -175,7 +182,8 @@ export function cvProfileInnerResolve(profile, path, dateNow = new Date()) {
 }
 
 // the candidates completing a typed inner path: the partitions first, then what /query lists
-// in the partition typed: { status, itemList: [{ kind: 'dir' | 'item', path, label, detail }] }
+// in the partition typed: { status, itemList: [{ kind: 'dir' | 'item', path, label, detail, isNew? }] }
+// (isNew: nothing holds the path, a value is made there where the reference is worked on)
 export function cvProfileInnerComplete(profile, text, dateNow = new Date()) {
 	const typed = String(text ?? '').trim().replace(/^\/+/, '');
 	// the partitions holding information: one declared and still empty has nothing to walk into
@@ -195,10 +203,10 @@ export function cvProfileInnerComplete(profile, text, dateNow = new Date()) {
 	const read = cvProfileRead(profile, {}, partition);
 	if (read.countLoading > 0) return { status: 'loading', itemList };
 	const prefix = partition ? `${partition}/` : '';
-	for (const item of cvQuerySlashItemListGet(read.info, query, { dateNow })) {
+	for (const item of cvQuerySlashItemListGet(read.info, query, { dateNow }, 40, { isNewOffered: true })) {
 		itemList.push(item.kind === 'dir'
 			? { kind: 'dir', path: `${prefix}${item.paramNext}`, label: item.label, detail: item.detail }
-			: { kind: 'item', path: `${prefix}${item.query}`, label: item.label, detail: item.detail });
+			: { kind: 'item', path: `${prefix}${item.query}`, label: item.label, detail: item.detail, ...(item.kind === 'new' ? { isNew: true } : {}) });
 	}
 	return { status: 'done', itemList };
 }

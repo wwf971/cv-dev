@@ -62,7 +62,7 @@ a/b/{c/d/}{e, f}                a/b/c/d/e/f  a/b/c/d/f/e  a/b/d/c/e/f  a/b/d/c/f
 
 ## How a query answers
 
-A query is a concrete path, no group or choice in it, then **modifiers** at its end (formats, a derivation: below). Segments are compared through the spellings below, case aside.
+A query is a concrete path, no group or choice in it, then **modifiers** at its end (formats, a derivation: below), then `@` and a **version** when it reads one ([Versions of a value](#versions-of-a-value)). Segments are compared through the spellings below, case aside.
 
 ```text
 1. the leaf at exactly that path
@@ -125,6 +125,52 @@ end: { year: 2022, month: 3, jp: … }
 
 A path with values below it is a **folder**, and the folders below a path are a list a form may draw without anyone writing that list down: the career of a work experience is the folders below `work` (the employers), each with the folders below its `project` ([The career](we-jp.md#the-career)). What a form reads of each is then an ordinary query, `work/sample-systems/jp/name`. So a thing with several values of its own (an employer, a project) is a folder, usually one data item; a thing that is one dated line (a degree, a licence) is an entry.
 
+## Versions of a value
+
+A value can be kept in several **versions**: the 自己PR as it was sent last spring and as it is now, an address before and after a move. One of them is its **head**, which a query reads; a query ending with `@` and a version reads that version, whatever the head becomes.
+
+```text
+pr/jp           the head: 第三稿                       the place follows the head
+pr/jp@2         its version 2: 第二稿                  the place is pinned to it
+pr/jp@head      the head, said out loud: the same as pr/jp
+name/jp/first/katakana@1    a script read off version 1 of the hiragana
+pr/jp@7         nothing: it has no version 7 (it has 1, 2, 3)
+```
+
+**How it is kept.** A value written plainly is its version 1, and stays written so until it gets a second one. From then on its versions stand where the value stood, under one reserved key:
+
+```yaml
+# the data item at /example/info/pr
+jp:
+  $version:
+    head: 3                       # what a query naming no version reads
+    versionList:
+      - { id: 1, value: 第一稿, time: 20261120_21041000+09 }
+      - { id: 2, value: 第二稿, time: 20261122_09301200+09, note: 商社向け }
+      - { id: 3, value: 第三稿, time: 20261125_10123300+09 }
+en: plain                         # one version, its head: written plainly
+```
+
+- **`$version` is no segment of a path**: no segment starts with `$`, so the key is never a level a query walks, and a value with versions is still **one leaf** at its path (`pr/jp`), listed, found and completed as before.
+- **A version's id is a number**, given in order and never used again: taking version 2 out leaves 1 and 3, and the next is 4. So a place pinned to a version never comes to read another one.
+- **Each version says when it was saved** (`time`, react-doc's time text, shown with its zone) and may have a **note** saying what it is for. A value made before it had versions has no time for its version 1.
+- **What is worked out has no versions of its own**: a whole name joined of its parts, an era or an age read off a date. A version is named on what is kept (`name/jp/last/kanji@1`, `birth/year@1`), and the answer says so.
+- **It is read defensively**: an entry of `versionList` without a whole id or a value is passed over, an id met twice keeps its first, a head naming no version is the last one, and a value none of whose versions can be read is a problem shown in the mode Information.
+
+**How it is written.** Two saves, as an asset item of react-doc has them (react-doc: `main/doc_page_impl_asset.md#save-modes`), and one move:
+
+| | what happens | the head |
+| --- | --- | --- |
+| **Save** (in place) | the version read says the new text; its id, time and note stay | stays |
+| **New version** | a new version holds the text, with the time it was made | moves to it, when the place follows the head; stays, when the place is pinned (the place is pinned to the new version) |
+| **Set as head** | another version becomes the head: every place following the head reads it | moves |
+
+The rule of **New version** is one sentence: *the new version is what this place reads*. A place following the head is the head's reader, so the head moves and every other place following it changes too; a place pinned to a version made a variant of its own, so only that place changes. A version is taken out with **Delete**, never the head; a place pinned to a version that is gone reads nothing, and says which versions there are.
+
+**Where it is done.** In the card of a value ([A value where it is named](#a-value-where-it-is-named)): the chip beside its path says what the place reads (`v3 head`, `v2 pinned`) and opens the list of its versions, where one is made the head, pinned here (the token becomes `{{pr/jp@2}}`), let go again (**Follow head**), given a note or taken out. While a query is typed, `@` lists the versions of the value its path reads (`{{pr/jp@`), the head first.
+
+Whoever writes a value without knowing versions (a row of a history, a number of a period) writes its head in place: `cvDataSet` never replaces a value kept with versions by a plain one, so none is lost.
+
 ## In a text
 
 A text of a cell of a paper is words, with queries in double braces wherever wanted. A text without braces is hard-coded, so both are one mechanism:
@@ -137,7 +183,7 @@ A text of a cell of a paper is words, with queries in double braces wherever wan
 
 A query in braces is the sheet's kind of **token** in react-doc's cell editing kit, beside the kinds every cell has, a link and a view of an object ([The cells](cv-sheet.md#the-cells)); a brace token starting with a sigil (`{{@…}}`) is one of those and not a query. Three more are the sheet's own and read the profile too: a badge (`{{/badge/aws/saa}}`), a year with its era above it (`{{era:birth}}`, [A year with its era](cv-sheet.md#a-year-with-its-era)), which is the query of that year drawn another way, and a period (`{{period:work/sample-systems}}`, [A period](cv-sheet.md#a-period)), which reads the two dates of a folder.
 
-While a cell is edited, the query at the caret completes once `{{` is typed (or `/query`): the segments that can follow what is typed (in every order a group allows), with how many values lie below each, and the values themselves, each with the query reaching it the way it was typed.
+While a cell is edited, the query at the caret completes once `{{` is typed (or `/query`): the segments that can follow what is typed (in every order a group allows), with how many values lie below each, and the values themselves, each with the query reaching it the way it was typed. `@` after a path lists the versions of its value ([Versions of a value](#versions-of-a-value)), and a path nothing holds is offered as a new value ([A new value where it is named](#a-new-value-where-it-is-named)).
 
 ## From outside a CV
 
@@ -145,6 +191,7 @@ A CV reads the profile it names, in its own partition. Anything else of the page
 
 ```text
 frontend:w5pbeilkczg#example/name/jp/first        the value 太郎, drawn as that text in a line
+frontend:w5pbeilkczg#example/pr/jp@2              one version of a value, whatever its head is
 ```
 
 This is react-doc's convention for naming something inside a frontend object (react-doc: `main/doc_page_impl_obj_frontend.md#things-inside-an-object-inner-paths`), with one difference from most objects: what is inside a profile is its **values**, not its data items, since a value is what a reader looks for and how the data is cut into items is nobody else's business. So the profile says what an inner path is itself: its mode Information exposes `objectInner` (`cv-comp.js`), two functions of `query/CvProfile.js`:
@@ -207,7 +254,7 @@ The **tree** draws every level under the one above it, by the canonical paths: `
 
 ## A value where it is named
 
-A value of the profile is changed where something names it, not only in this panel. **Its card** (`profile/CvProfileValuePanel.jsx`) shows what a query reads and types it in place, with **Save** and **Cancel** under it (`cv-value-edit.jsx`; Enter, or leaving the field, saves too, Esc puts it back): one value kept (saved by Save or Enter, it closes the card: the work is done, and a click on the token opens it again), each value a composite one is made of (a whole name, katakana read off hiragana), or, when nothing holds the path, a place to type one, added where the path names it (`cv-profile-value.js`: a whole number stays a number when the value was one; a text is kept as typed). It says where the value is kept, the partition, and that every paper of it reads it.
+A value of the profile is changed where something names it, not only in this panel. **Its card** (`profile/CvProfileValuePanel.jsx`) shows what a query reads and types it in place, with **Save** and **Cancel** under it (`cv-value-edit.jsx`; Enter, or leaving the field, saves too, Esc puts it back): one value kept (saved by Save or Enter, it closes the card: the work is done, and a click on the token opens it again), each value a composite one is made of (a whole name, katakana read off hiragana), or, when nothing holds the path, a place to type one, added where the path names it (`cv-profile-value.js`: a whole number stays a number when the value was one; a text is kept as typed). It says where the value is kept, the partition, and that every paper of it reads it. One value kept also says which of its versions is read here and keeps what is typed in that version or as a new one ([Versions of a value](#versions-of-a-value)).
 
 It is the card of two tokens alike: a query in a cell of a paper (`{{address/jp/postal}}`, marked while the cell is typed: [Editing in place](cv-sheet.md#editing-in-place)), and a token naming the value from any cell of any page, by react-doc's object registry (`{{@frontend:{profile}#example/address/jp/postal}}`). For the second, the profile answers a type of its own for its values (`cv.profile.value`, the `typeId` of `cvProfileInnerResolve`) and exposes the card as the view of that type in the context `panel` (`CvProfileValueView`, react-doc: `main/doc_page_impl_edit_cell.md#the-card-of-a-token`). A value is changed there only while the document is edited and the profile can be written; otherwise the card reads, and says why.
 
@@ -219,6 +266,33 @@ param:
   view: tree               # the view shown first: explorer (the default) | tree
 ```
 
+## A new value where it is named
+
+A value that does not exist yet is made **where it is first named**, in the cell being typed, without going to the profile:
+
+```text
+{{hobby/jp                    nothing holds this path
+  ＋ hobby/jp   a new value of the profile, a new item /info/hobby
+  Enter                       the cell says {{hobby/jp}}, and the card of that token opens under it,
+                              its field focused: "Its value: typed here, it is added"
+  読書 Enter                  the value is added to the profile, the card closes, typing goes on
+```
+
+Three ways lead there, and all end with the same token and the same card:
+
+| typed | what it is |
+| --- | --- |
+| a path nothing holds, after `{{` or `/query ` | the walk offers it as new, last in its list: every letter of the path typed out (`hobby/jp`), or a new segment under folders chosen on the way (`work/sample-systems/jp/` then `motto`) |
+| `/new ` | the action for it: the same walk listing folders only (the places to go on under), the path typed offered first as the new value; a path that holds a value already is offered as that value |
+| `//new` inside a walk (`{{work/sample-systems//new`) | a **command of the place**: `/` where a segment would start lists what can be done there, and `/new` goes on with that place in the action above (react-doc: `main/doc_page_impl_edit_slash.md#commands-inside-a-path`) |
+
+- **Where it goes** is where its path names it ([Who writes it](#who-writes-it)): below the deepest mapping or item a start of the path names, the rest of the path becoming keys, else a new item named by its first segment. The row of the menu says which (`added under what holds its start`, `a new item /info/hobby`), and the card says the partition: the paper's own.
+- **What can be new**: a path of plain segments (letters of any script, digits, `-`, `_`; no space and none of `/ { } [ ] , @ | $`), whose last segment is no modifier (`uppercase-all`, `era`: read off a value, never kept), where nothing is yet. A folder holding values is no place for a value of its own: one is named inside it. `cvQueryNewProblemGet` says why not.
+- **Nothing is written until a value is typed**: the token names a path nothing holds, which a cell may do anyway, and leaving the card empty leaves the profile as it was.
+- It is offered while the profile can be written (the document edited, the partition writable); otherwise `/new` says why not.
+
+From any other cell of the page, a value is made the same way through the walk of `/object`: the profile completes a path nothing holds as a thing to be made (`isNew` of `cvProfileInnerComplete`), the reference is written, and its card is this card.
+
 ## Who writes it
 
 Everything goes through the object's api: the mode Information above changes, removes and adds values. A sheet writes a value of the profile from the card of a cell, and makes a new employer or project of a career ([Japanese-style work experience](we-jp.md#editing-it)). Agents use the standard apis (react-doc: `main/doc_page_impl_obj_frontend.md#in-the-object-registry`).
@@ -227,14 +301,20 @@ Everything goes through the object's api: the mode Information above changes, re
 
 ```text
 comp-mdx/query/CvQuery.js        the information of a profile (leaves, mappings, entries, the index), queries, completion,
-                                 entries, where a value goes
+                                 entries, where a value goes; the versions of a value (read, named by a query, written in
+                                 place or as a new one, the head moved); a path that may be made a new value
 comp-mdx/query/CvProfile.js      a profile read through its object's api, partitions; a profile from outside: what an
                                  inner path names and completes
 comp-mdx/query/CvText.js         scripts, eras, ages
 comp-mdx/query/CvInfoExplore.js  the values walked: what lies next to a path, a group one item; what words find; pure
 comp-mdx/query/CvInfoTree.js     the values as a tree: folders by shared paths, levels in any order, the rows drawn; pure
-comp-mdx/query/CvQuery.test.js, CvInfoExplore.test.js, CvInfoTree.test.js   npm test; test/react-doc-resolve.js finds
-                                 react-doc's asset-path for node
+comp-mdx/query/CvQuery.test.js, CvQueryVersion.test.js, CvInfoExplore.test.js, CvInfoTree.test.js   npm test;
+                                 test/react-doc-resolve.js finds react-doc's asset-path for node
+comp-mdx/profile/cv-profile-value.js   one value written where its path names it, by its versions; a version made the head,
+                                 taken out, given a note
+comp-mdx/profile/CvProfileValuePanel.jsx   the card of a value: typed in place, its versions
+comp-mdx/jp/cv-query-cell.js     the query as a token of a cell: /query and {{ (the walk, the versions after "@", a path
+                                 nothing holds as a new value, the commands of a place), /new
 comp-mdx/profile/CvProfileInfo.jsx     the mode Information: its panel, tabs, tools, the choice of a view
 comp-mdx/profile/CvProfileExplore.jsx  the explorer: its path bar, its items, a group with its members
 comp-mdx/profile/CvProfileTree.jsx     the tree: its folders, the mark of a level in any order

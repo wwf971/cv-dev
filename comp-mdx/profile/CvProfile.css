@@ -702,6 +702,173 @@
 
 .doc-cv-save-cancel {
 	display: inline-flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
 	align-items: center;
+	gap: 0.25rem;
+}
+
+/* ---------- the versions of a value (doc/cv-query.md#versions-of-a-value) ---------- */
+/* the path, and at its right the version read here */
+.doc-cv-value-panel-head {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+
+.doc-cv-value-panel-head > .doc-cv-value-panel-path {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+/* v3 head / v2 pinned: a small button, which opens the list of the versions */
+.doc-cv-value-version-chip {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.05rem 0.35rem;
+	font-size: 0.7rem;
+	line-height: 1.4;
+	color: var(--color-fd-muted-foreground);
+	white-space: nowrap;
+	cursor: pointer;
+	background: transparent;
+	border: 1px solid var(--color-fd-border);
+	border-radius: 999px;
+}
+
+.doc-cv-value-version-chip:hover,
+.doc-cv-value-version-chip[aria-expanded='true'] {
+	color: var(--color-fd-foreground);
+	background: var(--color-fd-accent);
+}
+
+.doc-cv-value-version-chip-id {
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	color: var(--color-fd-foreground);
+}
+
+/* a place pinned to a version reads it whatever the head is: said in the primary color */
+.doc-cv-value-version-chip[data-state='pinned'] {
+	color: var(--color-fd-primary);
+	border-color: color-mix(in srgb, var(--color-fd-primary) 55%, transparent);
+}
+
+.doc-cv-value-version {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	padding-top: 0.4rem;
+	border-top: 1px solid var(--color-fd-border);
+}
+
+/* the table of the versions: FolderView of react-comp-misc in the page's look, as the table of
+   papers (jp/CvJp.css), compact */
+.doc-cv-value-version-table {
+	position: relative;
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.3rem;
+	overflow: hidden;
+}
+
+.doc-cv-value-version-table .folder-view-container {
+	border: 0;
+	border-radius: 0;
+}
+
+.doc-cv-value-version-table .folder-view-switcher-content.has-body-height {
+	overscroll-behavior-y: contain;
+}
+
+.doc-cv-value-version-table .folder-header {
+	font-size: 0.7rem;
+	font-weight: 500;
+	color: var(--color-fd-muted-foreground);
+	background: color-mix(in srgb, var(--color-fd-muted) 55%, var(--color-fd-background));
+	border-bottom: 1px solid var(--color-fd-border);
+}
+
+.doc-cv-value-version-table .folder-header-cell,
+.doc-cv-value-version-table .folder-body-cell {
+	padding: 0.15rem 0.4rem;
+	border-right: 0;
+}
+
+.doc-cv-value-version-table .folder-body {
+	font-size: 0.75rem;
+	line-height: 1.4;
+}
+
+.doc-cv-value-version-table .folder-body .folder-body-row {
+	border-right: 0;
+	border-bottom: 1px solid color-mix(in srgb, var(--color-fd-border) 60%, transparent);
+	cursor: default;
+}
+
+.doc-cv-value-version-id {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.doc-cv-value-version-badge {
+	padding: 0 0.25rem;
+	font-size: 0.62rem;
+	line-height: 1.5;
+	color: var(--color-fd-muted-foreground);
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.25rem;
+}
+
+.doc-cv-value-version-badge[data-kind='head'] {
+	color: var(--color-fd-foreground);
+	background: var(--color-fd-accent);
+}
+
+.doc-cv-value-version-badge[data-kind='here'] {
+	color: var(--color-fd-primary);
+	border-color: color-mix(in srgb, var(--color-fd-primary) 55%, transparent);
+}
+
+.doc-cv-value-version-note-mark {
+	color: var(--color-fd-muted-foreground);
+}
+
+/* the note of the version chosen: its label, then the note typed in place */
+.doc-cv-value-version-note {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: baseline;
+	gap: 0.4rem;
+	font-size: 0.75rem;
+}
+
+.doc-cv-value-version-note-text {
+	display: block;
+	min-height: 1.3rem;
+	padding: 0.05rem 0.35rem;
+	overflow-wrap: anywhere;
+	border: 1px solid var(--color-fd-border);
+	border-radius: 0.3rem;
+}
+
+.doc-cv-value-version-note-text[data-readonly] {
+	border-style: dashed;
+}
+
+.doc-cv-value-version-note-text:focus {
+	border-color: var(--color-fd-muted-foreground);
+	outline: none;
+}
+
+/* what is done with the version chosen: under the table, so choosing never moves a row */
+.doc-cv-value-version-actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
 	gap: 0.25rem;
 }

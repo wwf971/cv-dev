@@ -1,4 +1,5 @@
 import { paginationBreakLastFitting } from '@wwf971/react-doc/pagination';
+import { cellStyleTextBareGet, cellTextSlice } from '@wwf971/react-doc/cell-text';
 import { CV_JP_CELL_DEFAULT, CV_JP_ROW_OPTIONAL_LIST } from './CvJpData.js';
 import { cvJpRowBreakParse } from './cv-page-break.js';
 
@@ -192,9 +193,15 @@ function historyRowInsideCutGet(data, measured, space, rowIdBefore) {
 }
 
 // the head: the rows up to the row cut, and the row cut with its text up to the place; the tail: the
-// row going on (its year, month and note not said again: they are the head's), then the rest
+// row going on (its year, month and note not said again: they are the head's), then the rest.
+// offset: where the badge ends in the bare text of the row (the token's end, as the cell editing kit
+// counts it): the text as kept is cut there, its words keeping their styles
 function historyRowInsideSplit(data, { group: groupCut, row: rowCut, key, offset }) {
 	const text = String(rowCut.text ?? '');
+	const bare = cellStyleTextBareGet(text);
+	// no space at the cut: none ends the head, none starts the row going on
+	const headEnd = bare.slice(0, offset).trimEnd().length;
+	const tailStart = bare.length - bare.slice(offset).trimStart().length;
 	const head = { ...data, isCutBelow: true, groupList: [] };
 	const tail = { ...data, groupList: [] };
 	let isCut = false;
@@ -211,8 +218,8 @@ function historyRowInsideSplit(data, { group: groupCut, row: rowCut, key, offset
 		const at = group.rowList.indexOf(rowCut);
 		// isCutInside: it goes on on the next page, so the rules drawn under it to the bottom of the page
 		// are its own (no rule between it and them)
-		head.groupList.push({ ...group, rowList: [...group.rowList.slice(0, at), { ...rowCut, text: text.slice(0, offset).trimEnd(), isCutInside: true }] });
-		const rowGoingOn = { ...rowCut, year: '', month: '', note: '', text: text.slice(offset).replace(/^\s+/, ''), isContinued: true };
+		head.groupList.push({ ...group, rowList: [...group.rowList.slice(0, at), { ...rowCut, text: cellTextSlice(text, 0, headEnd), isCutInside: true }] });
+		const rowGoingOn = { ...rowCut, year: '', month: '', note: '', text: cellTextSlice(text, tailStart), isContinued: true };
 		tail.groupList.push({ ...group, rowList: [rowGoingOn, ...group.rowList.slice(at + 1)], isContinued: true });
 	}
 	return { head, tail, breakKey: key };

@@ -5,12 +5,16 @@ description: A Japanese-style CV and a Japanese-style work experience drawn from
 
 Two frontend objects of this package draw what follows: a **profile**, and the **papers** that read it, a CV (cv-jp) and a work experience (we-jp). The person is made up, and lives in the partition `example` ([partitions](README.md#partitions)). While the package is served alone (`react-doc dev <this folder>`) everything here is edited in place, and the edits are written into its sample objects; where a workspace lists or mounts the package, the same page is read-only. To try all of it without changing the example, use the [playground](cv.playground.md).
 
+The same papers are also an app of their own: open **Desk** or **Archive room** from the control at the top left of the page ([The portals](cv-portal.md)).
+
 ## A CV
 
 Every cell says words, or holds a query of the profile in double braces ([The sheet](cv-sheet.md), [Japanese-style CV](cv-jp.md)). Switch the page to edit mode (**Edit** in its toolbar): the sheet then has an **Edit** of its own, at the right edge of the paper; press it and click a cell. In reading mode the sheet only reads, and so do the lists below.
 
 - **A cell** becomes editable itself, showing its words and `{{queries}}` while the others show what they read; a card under it holds the rest, and nothing of the sheet moves. Type words only this CV says, `{{` (or `/q `) to choose a value of the profile a segment at a time, `/link` for a link to a document, `/object` for a view of an object of the page, or change the value in the profile for every paper from the card.
 - **Words selected** in a cell: the card offers to keep them in the profile and name them here by a path.
+- **A value has versions** ([Versions of a value](cv-query.md#versions-of-a-value)): 志望の動機 below reads `motivation/jp`, which the example keeps in two versions. Click its cell, then the chip `v2 head` in its card: the list of its versions, where the first is made the head again, or pinned to this cell alone (`{{motivation/jp@1}}`). What is typed in the card is kept in the version read (**Save**) or as another one (**New version**).
+- **A value that does not exist yet** is made where it is named ([A new value where it is named](cv-query.md#a-new-value-where-it-is-named)): type `{{hobby/jp` in a cell and choose the row offering it as new, or `/new`; the card that opens takes its value.
 - **A row** of a history opens all its fields in place (Tab goes through them); drag the grip at its left to put it elsewhere in its list, or hide it in this CV (the profile keeps it). Ctrl/⌘ + Z takes back what was changed.
 - **[Badges](cv-badge.md)** of the profile stand in the last licence, one row for the three AWS certifications: each token says `{{/badge/aws/saa|size=56,caption}}`, so they stand as a grid, each with its caption of the profile under it. Click one to select it, and its card stands to its right: any size in px, its text here or in the profile.
 - **Era above years** in the bar turns the era above the years of the rows off and on, for this CV; `/era` in any cell writes a year with its era.

@@ -34,6 +34,12 @@ for partition in $partition_list; do
 	fi
 done
 
+# what the portals of the package are drawn with (Material UI, three.js: package.json, doc/cv-portal.md)
+# is installed into the export, by its lock file: the export holds no node_modules
+if [ -f "$exported/package-lock.json" ]; then
+	(cd "$exported" && npm ci --no-audit --no-fund)
+fi
+
 node "$react_doc/main/frontend/cli/doc-cli.js" build "$exported" --out "$out" --force
 rm -r "$exported"
 if [ "$1" = "--build-only" ]; then
