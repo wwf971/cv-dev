@@ -1,0 +1,4 @@
+var e=`# react and react-dom are the page's own (react-doc dedupes them): the peers of Material UI are not
+# installed a second time here
+legacy-peer-deps=true
+`;export{e as default};
